@@ -1,0 +1,55 @@
+# %%
+# Author: joerg.klausen@meteoswiss.ch
+import os
+import re
+import shutil
+import time
+
+
+# %%
+def organize_files(cfg: dict) -> int:
+    """Move files found in <root>/<folders to subfolders organized by year, month(, day)
+
+    Args:
+        cfg (dict): must contain elements 
+            "root" (str): path to parent of folders; 
+            "folders" (list): list of folders where files are expected; 
+            for each element in "folders", an entry 
+                "name of folder" (dict): 
+                    "pattern" (str): a regular expression matching the files to be moved:
+                    "buckets" ("daily"|"monthly"): determines if subfolders are generated for days or only for months.
+
+    Raises:
+        ValueError: raised if value for buckets is not recognized.
+
+    Returns:
+        int: number of files moved.
+    """
+    n = 0
+    for folder in cfg["folders"]:
+        src = os.path.join(cfg["root"], folder)
+        files = os.listdir(src)
+        for file in files:
+            name = re.search(cfg[folder]["pattern"], file)
+            if name: 
+                dtm = time.strptime(re.search(r"\d{8}", name.group()).group(), "%Y%m%d")
+                if cfg[folder]["buckets"] in "daily":
+                    dst = os.path.join(src, 
+                                       str(dtm.tm_year), "{:02d}".format(dtm.tm_mon), "{:02d}".format(dtm.tm_mday))
+                elif cfg[folder]["buckets"] in "monthly":
+                    dst = os.path.join(src, 
+                                       str(dtm.tm_year), "{:02d}".format(dtm.tm_mon))
+                else:
+                    raise ValueError("'buckets' unknown.")
+                os.makedirs(dst, exist_ok=True)
+                print(f"{os.path.join(src, file)} > {os.path.join(dst, file)}")
+                shutil.move(src=os.path.join(src, file),
+                            dst=os.path.join(dst, file))
+                n += 1
+    return n
+
+
+# %%
+if __name__ == "__main__":
+    pass
+

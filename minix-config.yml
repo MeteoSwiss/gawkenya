@@ -1,0 +1,34 @@
+mkn:
+  root: C:/users/mkn/documents/mkndaq/data
+  file_name: file_coverage.json
+  folders:
+    - aerosol
+    - ae33/data
+    - meteo
+    - tei49c
+    - tei49i
+    - g2401
+  aerosol: 
+    pattern: mkn_\d{8}T\d{6}Z.tar(|.gz)
+    buckets: daily
+    expected: 24
+  ae33/data: 
+    pattern: ae33-\d{12}.(zip|dat)
+    buckets: daily
+    expected: 144
+  meteo: 
+    pattern: VRXA00.\d{12}
+    buckets: daily
+    expected: 144
+  tei49c: 
+    pattern: tei49c-\d{12}.(zip|dat)
+    buckets: daily
+    expected: 144
+  tei49i: 
+    pattern: tei49i-\d{12}.(zip|dat)
+    buckets: daily
+    expected: 144
+  g2401: 
+    pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
+    buckets: daily
+    expected: 24
