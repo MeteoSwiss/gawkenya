@@ -2,4 +2,5 @@ matplotlib
 Pandas
 Polars
 PyYaml
+requests
 shutil
