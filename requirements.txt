@@ -1,4 +1,5 @@
 matplotlib
-PyYaml
 Pandas
+Polars
+PyYaml
 shutil
