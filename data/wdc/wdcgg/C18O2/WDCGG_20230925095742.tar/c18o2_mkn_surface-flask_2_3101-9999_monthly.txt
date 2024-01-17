@@ -1,0 +1,338 @@
+# header_lines : 278
+# Data_Set_Name : c18o2_mkn_surface-flask_2_3101-9999_monthly
+# Data_Set_Version : 0002-1005-1103-01-02-3101_2022-07-05-1524
+# Data_Set_Fair_Use : For Scientific purposes, access to these data is unlimited and provided without charge. By their use you accept that an offer of co-authorship will be made through personal contact with the contributors whenever substantial use is made of their data. In all cases, an acknowledgement must be made to the contributors and to the data centre when these data are used within a publication.
+# Data_Set_DOI : 
+# Data_Set_Citation_Format : 
+#
+# GLOBAL ATTRIBUTES
+#
+# site_gaw_id : MKN
+# site_gaw_type : GAW Global
+# site_name : Mt. Kenya
+# site_country/territory : Kenya
+# site_wmo_region : REGION I (Africa)
+# site_address1 : 
+# site_address2 : 
+# site_address3 : 
+# site_latitude : -0.0621999986
+# site_longitude : 37.2971992493
+# site_elevation : 3678
+# site_elevation_unit : m
+# site_lst2utc : UTC+03:00
+# site_climate_zone : Cfb
+# site_climate_zone:comment : Warm temperate climate, fully humid, warm summer
+# dataset_creation_date : 2022-07-12
+# dataset_parameter : c18o2
+# dataset_parameter_large_class : Greenhouse Gas
+# dataset_parameter_small_class : 
+# dataset_parameter_name_1 : CO2 [O-18]
+# dataset_parameter_name_2 : carbon dioxide-18O2
+# dataset_parameter_name_3 : 
+# dataset_parameter_name_4 : 
+# dataset_parameter_name_5 : 
+# dataset_project : surface-flask
+# dataset_platform : fixed station
+# dataset_selection : All monthly data
+# dataset_selection_tag : monthly
+# dataset_time_zone : UTC
+# dataset_start_date : 2003-12-01T00:00:00Z
+# dataset_end_date : 2011-06-01T00:00:00Z
+# dataset_statistic_code : 1
+# dataset_statistic : contributor
+# dataset_description : The INSTAAR-NOAA scale was known to be +0.82 per mil different from other labs measuring the d18O of CO2 in air, due to the temperature of the carbonate reaction that established the original CO2-in-air reference (Masarie et al., 2001; Allison et al., 2003). The application of a +0.82 per mil scale adjustment has been made as of November 2006 based on the results of the following comparisons: the CLASSIC cylinders; standards prepared by Hitoshi Mukai's NARCIS I and II; CO2 in air samples from W. Brand; flask inter comparisons with CSIRO (Cape Grim); and IAEA standard materials.
+# dataset_description : If air is sampled without drying, oxygen can exchange between carbon dioxide and water vapor in the flasks, in some cases entirely masking the desired signal (Gemery et al, 1996). While pair agreement flagging identifies most of the problem flasks, some flasks still have good pair aggreement and are within the normal range of acceptable values, even though they are biased by the influence of water vapor (Evans, 2008).
+# dataset_description : Comparisons between d18O of CO2 and specific humidity, calculated from the National Climatic Data Center (NCDC), show that at tropical and semi-tropical NOAA/ESRL sites, d18O of CO2 of non-dried samples has a seasonal cycle that is strongly anti-correlated to the specific humidity, while the d18O of dried samples display a seasonal cycle that occurs 1-2 months earlier than the specific humidity seasonal cycle. The latter phasing is expected, given the seasonal phasing between climate over the ocean and land; the former is consistent with a small, but measurable isotope exchange in the flasks.
+# dataset_description : Based on investigations by Evans et al (2008), a threshold of specific humidity, below which non-dried air flask samples can be considered unaltered, has been set at 12 g/kg, and this filter has been applied to the d18O of CO2 database. For example, for sites where specific humidity exceeds 12 g/kg, each non-dried flask sample has been matched to a NCDC measurement of specific humidity within
+# dataset_description : a 4-hour window. If specific humidity for that sample exceeded 12 g/kg, the SIL measurement for d18O is flagged with a 'W' (for wet) in the first position. If specific humidity data was unavailable, the sample is also flagged. Unfortunately there are several sites where the specific humidity is always above 12 g/kg (including CHR, GMI, POCN00, POCN05, POCN10, POCN15, POCS05, POCS10, POCS15, RPB, SEY, and SMO); therefore all data sampled without drying are flagged.
+# dataset_description : This approach segregates suspect and reliable data, providing a much-improved record of d18O of CO2 over the past two decades.
+# dataset_aim_of_observation_code : 1
+# dataset_aim_of_observation : Background observation
+# dataset_buffer_code : 3101
+# dataset_buffer : sil
+# dataset_buffer:comment : INSTAAR Stable Isotope Laboratory
+# dataset_footnote_code : 9999
+# dataset_footnote : default
+# dataset_footnote:comment : default
+# dataset_processing : Samples are run daily from a cylinder whose isotope value is known: this "trap" tank alerts us to any problems with the mass spectrometer or extraction system. We also use this cylinder to calculate uncertainty, which we define as the standard deviation of ten runs' worth of trap measurements. Usually four trap samples are run a day, of which all but the first are used (due to known irregularities caused by the tank regulator). For each run, the uncertainty is calculated from the trap data from that run, regardless of its flagging, and the previous nine runs of unflagged data. (For example, if the current run is flagged, that trap data will be used in the uncertainty calculation; however, the next day's run will not use the flagged data in its uncertainty calculation. Presumably, whatever caused one run to be flagged will have been repaired.) As of November 2009, uncertanty is calculated with each run, and has been back-calculated to 2004. On the Optima (flask measurement system) uncertainty averages 0.014 permil for d13C and 0.035 permil for d18O; for the Isoprime (PFP system), uncertainty averages 0.017 permil for d13C and 0.04 permil for d18O.
+# dataset_hr_mean_processing : 
+# dataset_da_mean_processing : 
+# dataset_mo_mean_processing : Monthly means are produced for each site by first averaging all valid measurement results in the event file with a unique sample date and time. Values are then extracted at weekly intervals from a smooth curve (Thoning et al., 1989) fitted to the averaged data and these weekly values are averaged for each month to give the monthly means recorded in the files. Flagged data are excluded from the curve fitting process. Some sites are excluded from the monthly mean directory because sparse data or a short record does not allow a reasonable curve fit. Also, if there are 3 or more consecutive months without data, monthly means are not calculated for these months.
+# dataset_transition_flag : 0
+# dataset_transition_comment : Dataset was made from entire historical data provided from contributor from 2018 new WDCGG website open onward
+# dataset_reference_total_listed : 22
+# dataset_reference_1_name : For more publications see the Stable Isotope Lab web site at: 
+# dataset_reference_1_name : http://instaar.colorado.edu/research/labs-groups/stable-isotope-laboratory/publications-detail/
+# dataset_reference_2_name : Assonov, S.S., and Brenninkmeijer, C.A.M. 2003. On the 17O correction for CO2 mass spectrometric isotopic analysis. Rapid Communications in Mass Spectrometry 17(10): 1007-1016.
+# dataset_reference_3_name : Battle. M., M.L. Bender, P.P. Tans, J.W.C. White, J.T. Ellis, T. Conway, and R.J. Francey. 2000. Global carbon sinks and their variability inferred from the atmospheric O2 and d13C. Science 287: 2467-2470.
+# dataset_reference_4_name : Brand, W.A., S.S. Assonov, and T.B. Coplen. 2009. Correction for the 17O interference in d13C measurements when analyzing CO2 with stable isotope mass spectrometry (IUPAC Technical Report). Journal of Pure and Applied Chemistry 82(8): 1719-1733.
+# dataset_reference_5_name : Ciais, P., P.P. Tans, J.W.C. White, M. Trolier, R.J. Francey, J.A. Berry, D.R. Randall, R.J. Sellers, J.G. Collatz and D.S. Schimel. 1995. Partitioning of ocean and land uptake of CO2 as inferred by d13C measurements  from the NOAA/CMDL global air sampling network, Journal of Geophysical Research 100: 5051-5070.
+# dataset_reference_6_name : Ciais, P., P.P. Tans, M. Trolier, J.W.C. White and R.J. Francey. 1995. A  large northern hemisphere terrestrial CO2 sink indicated by the 13C/12C ratio  of atmospheric CO2. Science 269: 1098-1102.
+# dataset_reference_7_name : Ciais, P., A.S. Denning, P.P. Tans, J.A. Berry, D.A. Randall, G.J. Collatz, P.J. Sellers, J.W.C. White, M. Trolier, H.A.J. Meyer, R.J. Francey, P. Monfray, and M. Heimann. 1997. A three-dimensional synthesis study of d18O in atmospheric CO2. 1. Surface fluxes. Journal of Geophysical Research 102: 5857-5872.
+# dataset_reference_8_name : Ciais, P., P.P. Tans, A.S. Denning, R.J. Francey, M. Trolier, H.A.J. Meyer, J.W.C. White, J.A. Berry, D.A. Randall, G.J. Collatz, P.J. Sellers, P. Monfray, and M. Heimann. 1997. A three-dimensional synthesis study of d18O  in atmospheric CO2. 2. Simulations with the TM2 transport model. Journal of Geophysical Research 102: 5873-5883.
+# dataset_reference_9_name : Conway, T.J., P.P. Tans, L.S. Waterman, K.W. Thoning, D.R. Kitzis, K.A. Masarie, and N. Zhang. 1994. Evidence for interannual variability of the  carbon cycle from the NOAA/CMDL global air sampling network. Journal of Geophysical Research 99: 22831- 22855.
+# dataset_reference_10_name : Cuntz, M., P. Ciais, G. Hoffmann, C.E. Allison, R.J. Francey, W. Knorr, P.P. Tans, J.W.C. White, I. Levin. 2003. A comprehensive global three- dimensional model of delta O-18 in atmospheric  CO2: 2. Mapping the atmospheric signal. Journal of Geophysical, Research- Atmospheres 108(D17): article 4528.
+# dataset_reference_11_name : Evans, C.U. 2008. d18O of atmospheric carbon dioxide: Towards the development of an artifact free database from the NOAA/ESRL Carbon Cycle Cooperative Global Air Sampling Network. Masters Thesis, INSTAAR, University of Colorado, Boulder.
+# dataset_reference_12_name : Francey, R.J., P.P. Tans, C.E. Allison, I.G. Enting, J.W.C. White and M. Trolier. 1995. Changes in oceanic and terrestrial carbon uptake since 1982. Nature 373: 326-330.
+# dataset_reference_13_name : Gemery, P.A., M. Trolier, and J.W.C. White. 1996. Oxygen isotope exchange  between carbon dioxide and water following atmospheric sampling using glass  flasks. Journal of Geophysical Research - Atmospheres 101: 14415-14420.
+# dataset_reference_14_name : Ghosh, P., M. Patecki, M. Rothe and W.A. Brand. 2005. Calcite-CO2 mixed into CO2-free Air: A New CO2 in-Air Stable Isotope Reference Material for the VPDB Scale. Rapid Communications in Mass Spectrometry 19: 1097-1119.
+# dataset_reference_15_name : Miller, J.B., P.P. Tans, J.W.C. White, T.J. Conway, B.H. Vaughn. 2003. The atmospheric signal of terrestrial carbon isotopic discrimination and its implication for partitioning carbon fluxes. Tellus Series B-Chemical and Physical Meteorology 55(2): 197-206.
+# dataset_reference_16_name : Mook, W.G. and J. Jongsma. 1987. Measurement of the N2O correction for 13C/12C ratios of atmospheric CO2 by removal of N2O. Tellus 39B: 96-99.
+# dataset_reference_17_name : Tans, P.P., T.J. Conway, and T. Nakazawa. 1989a. Latitudinal distribution of  the sources and sinks of atmospheric carbon dioxide from surface observations and an atmospheric transport model. Journal of Geophysical Research 94: 5151-5172.
+# dataset_reference_18_name : Tans, P.P, K.W. Thoning, W.P. Elliott, and T.J. Conway. 1989b. Background atmospheric CO2 patterns from weekly flask samples at Barrow, Alaska: Optimal signal recovery and error estimates, in NOAA Tech. Memo. (ERL ARL- 173). Environmental Research Laboratories, Boulder, CO, 131 pp.
+# dataset_reference_19_name : Tans, P.P., I.Y. Fung, and T. Takahashi. 1990. Observational constraints on the global atmospheric CO2 budget. Science 247: 1431-1438.
+# dataset_reference_20_name : Thoning, K.W., P.P. Tans, and W.D. Komhyr. 1989. Atmospheric carbon dioxide  at Mauna Loa Observatory 2. Analysis of the NOAA GMCC data, 1974-1985, Journal of Geophysical Research 94: 8549-8565.
+# dataset_reference_21_name : Trolier, M., J.W.C. White, P.P. Tans, K.A. Masarie and P.A. Gemery. 1996. Monitoring the isotopic composition of atmospheric CO2: measurements from the NOAA Global Air Sampling Network. Journal of Geophysical Research 101: 25897-25916.
+# dataset_reference_22_name : Vaughn, B., Ferretti, D., Miller, J. & White, J. 2004: Stable isotope measurements of atmospheric CO2 and CH4. Handbook of Stable Isotope Analytical Techniques, vol 1, ch.14, Elsiever, 1248 p.
+# contributor_organization_code : 2
+# contributor_acronym : NOAA
+# contributor_name : Global Monitoring Laboratory, NOAA
+# contributor_address1 : NOAA/ESRL
+# contributor_address2 : R/GML1
+# contributor_address3 : 325 Broadway Boulder, CO 80305-3328
+# contributor_country/territory : United States of America
+# contributor_url : https://gml.noaa.gov/
+# contact_total_listed : 3
+# contact_1_name : James White
+# contact_1_address1 : Institute of Arctic and Alpine Research
+# contact_1_address2 : Campus Box 450
+# contact_1_address3 : University of Colorado, Boulder, CO 80309-0450
+# contact_1_country/territory : United States of America
+# contact_1_organization : Institute of Arctic and Alpine Research, University of Colorado
+# contact_1_organization_acronym : INSTAAR
+# contact_1_organization_url : https://instaar.colorado.edu/
+# contact_1_email : James.White@colorado.edu
+# contact_1_tel : (303) 492-5494
+# contact_1_fax : (303) 492-6388
+# contact_2_name : Bruce H Vaughn
+# contact_2_address1 : Institute of Arctic and Alpine Research
+# contact_2_address2 : Campus Box 450
+# contact_2_address3 : University of Colorado, Boulder, CO 80309-0450
+# contact_2_country/territory : United States of America
+# contact_2_organization : Institute of Arctic and Alpine Research, University of Colorado
+# contact_2_organization_acronym : INSTAAR
+# contact_2_organization_url : https://instaar.colorado.edu/
+# contact_2_email : Bruce.Vaughn@colorado.edu
+# contact_2_tel : (303) 492-7985
+# contact_2_fax : (303) 492-6388
+# contact_3_name : Sylvia Michel
+# contact_3_address1 : Institute of Arctic and Alpine Research
+# contact_3_address2 : Campus Box 450
+# contact_3_address3 : University of Colorado, Boulder, CO 80309-0450
+# contact_3_country/territory : United States of America
+# contact_3_organization : Institute of Arctic and Alpine Research, University of Colorado
+# contact_3_organization_acronym : INSTAAR
+# contact_3_organization_url : https://instaar.colorado.edu/
+# contact_3_email : sylvia.michel@colorado.edu
+# contact_3_tel : (303)735-5850
+# contact_3_fax : (303) 492-6388
+# collaborator_total_listed : 1
+# collaborator_1_organization_code : 40
+# collaborator_1_acronym : KMD
+# collaborator_1_name : Kenya Meteorological Department
+# collaborator_1_address1 : Kenyan Meteorological Department Kenya Meteorological Department
+# collaborator_1_address2 : KMD
+# collaborator_1_address3 : Dagoretti Corner P.O. Box 30259 00100 Nairobi
+# collaborator_1_country/territory : Kenya
+# collaborator_1_url : 
+# ORG_QCflag_description : NOAA ESRL uses a 3-column quality control flag where each column is defined as follows:
+# ORG_QCflag_description : column 1 REJECTION flag. An alphanumeric other than a period (.) in the FIRST column indicates a sample with obvious problems during collection or analysis. This measurement should not be interpreted.
+# ORG_QCflag_description : 
+# ORG_QCflag_description : column 2 SELECTION flag. An alphanumeric other than a period (.) in the SECOND column indicates a sample that is likely valid but does not meet selection criteria determined by the goals of a particular investigation.
+# ORG_QCflag_description : 
+# ORG_QCflag_description : column 3 INFORMATION flag. An alphanumeric other than a period (.) in the THIRD column provides additional information about the collection or analysis of the sample.
+# ORG_QCflag_description : 
+# ORG_QCflag_description : WARNING: A "P" in t" in the 3rd column of the QC flag indicates the measurement result is preliminary and has not yet been carefully examined by the PI. The "P" flag is removed once the quality of the measurement has been determined.
+# ORG_QCflag_description : 
+# ORG_QCflag_description : Samples are collected in pairs, and in order for a value to be retained, the flask pair difference must meet the threshold tolerance for the specific instrument being used. For samples analyzed prior to 1996 pairs must agree to within 0.09 per mil for C13 and 0.15 per mil for O18. For post-1996 analyses, done on both Optima and Isoprime mass spectrometers, pairs must agree to within 0.06 per mil for C13 and 0.12 per mil for O18.
+# ORG_QCflag_description : 
+# ORG_QCflag_description : Typically, pairs are flagged for pair rejection more frequently for d18O of CO2 than for d13C of CO2. The reason for the lower success rate in O18 pair agreement is likely related to the isotopic exchange of water vapor and CO2 in the flask during storage and analysis. This is dramatically demonstrated in the particularly low pair agreements at high humidity, low latitude sites. See Section 7, Data-General Comments for more details on the O18 data set.
+# ORG_QCflag_description : 
+# ORG_QCflag_description : FLAG DEFINITIONS
+# ORG_QCflag_description : *********************Reject flags (1st flag character)********************
+# ORG_QCflag_description : Automatic flags - applied daily during data reduction by a processing program
+# ORG_QCflag_description : A problems in analysis or data reduction. Typically, the A is applied when the working references run at the beginning, middle, or end of the run have a standard deviation higher than 0.04 or 0.08 permil for d13C and d18O, respectively. For measurements prior to 1996, values differ by more than 0.075 and 0.14 permil, respectively.
+# ORG_QCflag_description : 
+# ORG_QCflag_description :    + bad pair (high member). Values differ by more than 0.06 or 0.12 permil for d13C and d18O, respectively. For measurements prior to 1996, values differ by more than 0.09 and 0.15 permil, respectively)
+# ORG_QCflag_description :    - bad pair (low menber). See above.
+# ORG_QCflag_description :    H The trap tank run on the same day has an average d13C or d18O value greater than 0.15 or 0.3 permil above its long term averages, respectively (since 2005.)
+# ORG_QCflag_description :    L The trap tank run on the same day has an average d13C or d18O value less than 0.15 or 0.3 permil above its long term averages, respectively (since 2005.)
+# ORG_QCflag_description :    . good flask
+# ORG_QCflag_description : 
+# ORG_QCflag_description : Flags applied periodically by code
+# ORG_QCflag_description :    C flagged for CO2 mole fraction (by NOAA CO2 measurement lab)
+# ORG_QCflag_description :    W flask sampled 'wet' (applied to o18 data only). See comments.
+# ORG_QCflag_description :    N/n problem due to sample collection (inherited from CO2 measurements)
+# ORG_QCflag_description : 
+# ORG_QCflag_description : Hand flags - applied by hand or in software (REFLAG) to selected flasks
+# ORG_QCflag_description :    ! hand flag
+# ORG_QCflag_description : 
+# ORG_QCflag_description : *******************Non-background flags (2nd flag character)****************
+# ORG_QCflag_description : ground flags - applied by outlier-identification software (CCG_FILTER)
+# ORG_QCflag_description :    X  Outlier by more than 3-sigma from a CCGVU curve
+# ORG_QCflag_description :    x  Outlier by more than 3-sigma in CO2 concentration
+# ORG_QCflag_description :    .  Good flask
+# ORG_QCflag_description : 
+# ORG_QCflag_description : Hand flags - applied by hand to selected flasks
+# ORG_QCflag_description :    !   hand flag
+# ORG_QCflag_description : 
+# ORG_QCflag_description : *********************Retain flags (3rd flag character)***********************
+# ORG_QCflag_description : Automatic flags - applied during data reduction (by the processing program)
+# ORG_QCflag_description :    S - single flask (flask without a pair mate)
+# ORG_QCflag_description :    o - no trap data available for comparisons
+# ORG_QCflag_description :    H  The trap tank run on the same day has an average d13C or d18O value greater than 0.045 or 0.09 permil above its long term averages, respectively (since 2005.)
+# ORG_QCflag_description :    L  The trap tank run on the same day has an average d13C or d18O value less than 0.045 or 0.09 permil above its long term averages, respectively (since 2005.)
+# ORG_QCflag_description :    P  Data has poor precision in dual inlet analysis: greater than 0.02 permil for d13C and 0.03 permil for d18O (since 2005).
+# ORG_QCflag_description :    T  The trap tank run on the same day has high standard deviation of its (typically) three measurements: above 0.08 permil and 0.16 permil for d13C and d18O respectively (since 2005).
+# ORG_QCflag_description : 
+# ORG_QCflag_description : Additional flags
+# ORG_QCflag_description :    L   linked flask (0.5-liter flask analyzed together with its mate)
+# ORG_QCflag_description :    I   flask also analyzed by another lab (aliquot taken)
+# ORG_QCflag_description :    i   same as "I" above, but displaced a previous flag in this field.
+# ORG_QCflag_description :    .   no comments
+# intake_height_total_listed : See data part
+# instrument_total_listed : 1
+# instrument_1 : Unknown
+# instrument_1_measurement_method_type_code : 11
+# instrument_1_measurement_method_name : Mass spectrometry
+# instrument_1_start_date : 2003-12-01T00:00:00Z
+# instrument_1_end_date : 2011-06-01T00:00:00Z
+# scale_total_listed : 1
+# scale_1_code : 112
+# scale_1_name : PDB
+# scale_1_start_date : 2003-12-01T00:00:00Z
+# scale_1_end_date : 2011-06-01T00:00:00Z
+# observation_status_code : 2
+# observation_status : Temporarily suspended
+# measurement_calibration : PDB (Pee Dee Bellemnite) is a carbonate, and its link to CO2-in-air standards differs among laboratories.  Ongoing intercomparison experiments are essential for assessing the comparability of isotope measurements from one lab with another (Masarie et al., 2001; Allison et al., 2003; Ghosh, P., Patecki, M., Rothe, M. and Brand, W.A. 2005). Measurement accuracy based on results from intercomparison experiments is 0.03 per mil.
+# sampling_frequency_code : 2
+# sampling_frequency : weekly
+#
+# VARIABLE ATTRIBUTES
+#
+# site_gaw_id:long_name : unique_station/mobile_identifiers.
+# site_gaw_id:comment : 3-letter site identification code as defined by GAWSIS for stationary platforms
+# time_components:_FillValue : -999 or -9
+# time_components:long_name : integer_components_of_UTC_date/time
+# time_components:order : year, month, day, hour, minute, second
+# time_components:comment : Air sample collection time (UTC) represented as a 6-element array [year, month, day, hour, minute, second]. Calendar time components as integers.
+# value:_FillValue : -999.999
+# value:units : permil
+# value:long_name : measured_isotope_ratio_of_trace_gas_in_dry_air
+# value:comment : Reported mole fraction, isotope ratio or radioactivity. Units depend on trace gas species.
+# value_unc:_FillValue : -999.999
+# value_unc:units : permil
+# value_unc:long_name : estimated_uncertainty_in_reported_value
+# value_unc:comment : Standard deviation of the reported mean value when nvalue is greater than 1. Units depend on trace gas species.
+# nvalue:_FillValue : -9
+# nvalue:long_name : number_of_measurements_contributing_to_reported_value
+# nvalue:comment : Number of individual measurements used to compute reported values.
+# latitude:_FillValue : -999.999999999
+# latitude:standard_name : latitude
+# latitude:long_name : sample_latitude_in_decimal_degrees
+# latitude:units : degrees_north
+# latitude:comment : Latitude of sampling location in decimal degrees (north: +; south: -)
+# longitude:_FillValue : -999.999999999
+# longitude:standard_name : longitude
+# longitude:long_name : sample_longitude_in_decimal_degrees
+# longitude:units : degrees_east
+# longitude:comment : Longitude of sampling location in decimal degrees (east: +; west: -)
+# altitude:_FillValue : -999.999
+# altitude:standard_name : altitude
+# altitude:long_name : sample_altitude_in_meters_above_sea_level
+# altitude:units : m
+# altitude:comment : Altitude (elevation + intake height) of air sample collection. Units are meters above sea level (masl).
+# elevation:_FillValue : -999.999
+# elevation:standard_name : elevation
+# elevation:long_name : surface_elevation_in_meters_above_sea_level
+# elevation:units : m
+# elevation:comment : Station height (m) above sea level
+# intake_height:_FillValue : -999.999
+# intake_height:long_name : sample_intake_height_in_meters_above_ground_level
+# intake_height:units : m
+# intake_height:comment : Sampling height (depth) of air (seawater) above ground (below sea level) (height: +; depth: -) (m)
+# flask_no:_FillValue : -999.999
+# flask_no:long_name : sample_flask_no
+# flask_no:comment : Identification code (or number) of flask used for observation
+# ORG_QCflag:_FillValue : -999.999
+# ORG_QCflag:long_name : original_quality_control_flag
+# ORG_QCflag:comment : Details of original data quality control flags should be specified by contributors in metadata.
+# QCflag:_FillValue : -9
+# QCflag:long_name : quality_control_flag
+# QCflag:comment : 1 Valid (background) data considered "background"
+# QCflag:comment : 2 Valid data considered valid other than "background," or all valid data without categorization
+# QCflag:comment : 3 Invalid data considered unfit for use (questionable/erroneous/absent data)
+# QCflag:comment : Details of correspondence between original data quality control flags and WDCGG data flags should be specified by contributors in metadata.
+# instrument:_FillValue : -9
+# instrument:long_name : instrument_ID_to_detect_atmospheric_parameter
+# instrument:comment : A numeric field that identifies the instrument.
+# measurement_method:_FillValue : -9
+# measurement_method:long_name : measurement_method_history
+# measurement_method:comment : A numeric field that identifies the measurement method.
+# scale:_FillValue : -9
+# scale:long_name : calibration_scale_history
+# scale:comment : A numeric field that identifies the calibration scale. Measurements are relative to reported calibration scale.
+#
+# VARIABLE ORDER
+#
+# site_gaw_id year month day hour minute second year month day hour minute second value value_unc nvalue latitude longitude altitude elevation intake_height flask_no ORG_QCflag QCflag instrument measurement_method scale
+MKN 2003 12 01 00 00 00 -999 -9 -9 -9 -9 -9 1.137 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 01 01 00 00 00 -999 -9 -9 -9 -9 -9 1.045 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 02 01 00 00 00 -999 -9 -9 -9 -9 -9 0.958 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 03 01 00 00 00 -999 -9 -9 -9 -9 -9 1.108 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 04 01 00 00 00 -999 -9 -9 -9 -9 -9 1.235 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 05 01 00 00 00 -999 -9 -9 -9 -9 -9 1.272 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1.517 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1.637 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 08 01 00 00 00 -999 -9 -9 -9 -9 -9 1.357 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 09 01 00 00 00 -999 -9 -9 -9 -9 -9 1.118 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2004 10 01 00 00 00 -999 -9 -9 -9 -9 -9 1.029 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 02 01 00 00 00 -999 -9 -9 -9 -9 -9 0.941 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 03 01 00 00 00 -999 -9 -9 -9 -9 -9 1.054 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 04 01 00 00 00 -999 -9 -9 -9 -9 -9 1.162 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 05 01 00 00 00 -999 -9 -9 -9 -9 -9 1.199 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1.428 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1.510 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 08 01 00 00 00 -999 -9 -9 -9 -9 -9 1.276 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2005 12 01 00 00 00 -999 -9 -9 -9 -9 -9 1.160 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 01 01 00 00 00 -999 -9 -9 -9 -9 -9 1.002 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 02 01 00 00 00 -999 -9 -9 -9 -9 -9 0.864 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 03 01 00 00 00 -999 -9 -9 -9 -9 -9 0.948 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 04 01 00 00 00 -999 -9 -9 -9 -9 -9 0.984 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 05 01 00 00 00 -999 -9 -9 -9 -9 -9 0.935 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1.112 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1.208 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2006 08 01 00 00 00 -999 -9 -9 -9 -9 -9 0.985 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2008 10 01 00 00 00 -999 -9 -9 -9 -9 -9 1.048 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2008 11 01 00 00 00 -999 -9 -9 -9 -9 -9 1.112 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2008 12 01 00 00 00 -999 -9 -9 -9 -9 -9 1.050 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 01 01 00 00 00 -999 -9 -9 -9 -9 -9 0.787 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 02 01 00 00 00 -999 -9 -9 -9 -9 -9 0.562 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 03 01 00 00 00 -999 -9 -9 -9 -9 -9 0.635 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 04 01 00 00 00 -999 -9 -9 -9 -9 -9 0.741 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 05 01 00 00 00 -999 -9 -9 -9 -9 -9 0.771 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1.010 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1.146 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 08 01 00 00 00 -999 -9 -9 -9 -9 -9 0.976 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 09 01 00 00 00 -999 -9 -9 -9 -9 -9 0.876 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 10 01 00 00 00 -999 -9 -9 -9 -9 -9 0.922 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 11 01 00 00 00 -999 -9 -9 -9 -9 -9 0.935 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2009 12 01 00 00 00 -999 -9 -9 -9 -9 -9 0.944 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 01 01 00 00 00 -999 -9 -9 -9 -9 -9 0.830 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 02 01 00 00 00 -999 -9 -9 -9 -9 -9 0.713 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 03 01 00 00 00 -999 -9 -9 -9 -9 -9 0.863 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 04 01 00 00 00 -999 -9 -9 -9 -9 -9 1.036 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 05 01 00 00 00 -999 -9 -9 -9 -9 -9 1.109 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1.370 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1.495 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 08 01 00 00 00 -999 -9 -9 -9 -9 -9 1.218 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 09 01 00 00 00 -999 -9 -9 -9 -9 -9 0.981 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 10 01 00 00 00 -999 -9 -9 -9 -9 -9 0.882 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 11 01 00 00 00 -999 -9 -9 -9 -9 -9 0.796 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2010 12 01 00 00 00 -999 -9 -9 -9 -9 -9 0.805 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2011 01 01 00 00 00 -999 -9 -9 -9 -9 -9 0.752 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2011 02 01 00 00 00 -999 -9 -9 -9 -9 -9 0.654 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2011 03 01 00 00 00 -999 -9 -9 -9 -9 -9 0.724 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2011 04 01 00 00 00 -999 -9 -9 -9 -9 -9 0.775 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2011 05 01 00 00 00 -999 -9 -9 -9 -9 -9 0.782 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112
+MKN 2011 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1.000 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 1 11 112

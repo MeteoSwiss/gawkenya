@@ -20,7 +20,7 @@ class AE33:
         print("AE33 initialized.")
 
 
-    def extract_zipfile_to_dataframe(self, path: str, sep="|") -> (pl.DataFrame, str):
+    def extract_zipfile_to_dataframe(self, path: str, sep="|") -> tuple([pl.DataFrame, str]):
         """Read AE33 data file into a polars dataframe
 
         Args:
@@ -34,7 +34,7 @@ class AE33:
         Usage:
         >>> path = "~/Public/git/gawkenya/data/ae33/ae33-202310190000.zip"
         >>> ae33 = AE33()
-        >>> df = ae33.extract_file(file=file)
+        >>> df = ae33.extract_zipfile_to_dataframe(path=path)
         >>> len(df)
         """
         df = pl.DataFrame()
@@ -71,7 +71,7 @@ class AE33:
             return df, str(err)
 
 
-    def zipfiles_to_parquet(self, source: str, target: str, plot: bool=True, verbose: bool=True, remove_early_data: bool=True) -> (pl.DataFrame, dict):
+    def zipfiles_to_parquet(self, source: str, target: str, plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
         """Extract and compile AE33 zipfiles found in source and its sub-folders to polars DataFrame, save as parquet files in target. Optionally plot the data.
 
         Args:
@@ -104,10 +104,6 @@ class AE33:
             result = result.unique()
             result = result.sort("DateTime")
 
-            # remove data prior to installation
-            if remove_early_data:
-                result = result.filter(pl.col('DateTime') > pl.lit('2022-12-09').str.strptime(pl.Date))
-            
             # store result as parquet file
             result.write_parquet(os.path.join(target, 'ae33.parquet'))
 
@@ -116,7 +112,7 @@ class AE33:
                 self.plot_aethalometer_data(result)
 
             # write errors to json file
-            with open(os.path.join(target, 'errors.json'), "w") as fh:
+            with open(os.path.join(target, 'ae33.errors.json'), "w") as fh:
                 json.dump(errors, fh)
 
             return result, errors
@@ -172,7 +168,7 @@ class AE33:
             print(err)
 
 
-    def remove_extremes(self, df: pl.DataFrame, q=0.00001) -> (pl.DataFrame, dict):
+    def remove_extremes(self, df: pl.DataFrame, q=0.00001) -> tuple([pl.DataFrame, dict]):
         """Remove extreme BC values from polars DataFrame. Extremes are defined using quantiles.
 
         Args:

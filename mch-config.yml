@@ -7,6 +7,7 @@ mkn:
     - meteo
     - tei49c
     - tei49i
+    # - tei49i_2
     - g2401
   aerosol: 
     pattern: mkn_\d{8}T\d{6}Z.tar(|.gz)
@@ -28,6 +29,10 @@ mkn:
     pattern: tei49i-\d{12}.(zip|dat)
     buckets: daily
     expected: 144
+  # tei49i_2: 
+  #   pattern: tei49i_2-\d{12}.(zip|dat)
+  #   buckets: daily
+  #   expected: 144
   g2401: 
     pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
     buckets: daily

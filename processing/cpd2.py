@@ -178,7 +178,7 @@ class CPD2:
                     self.plot_dataframe(result, type=k)
 
             # write errors to json file
-            with open(os.path.join(target, 'errors.json'), "w") as fh:
+            with open(os.path.join(target, f"{k}.errors.json"), "w") as fh:
                 json.dump(errors, fh)
 
             return errors
@@ -297,8 +297,3 @@ class CPD2:
             plt.show()
         except Exception as err:
             print(err)
-
-# cpd2 = CPD2()
-# X = cpd2.extract_tarball_to_dataframe('/home/zue/users/jkl/Public/git/gawkenya/data/aerosol/mkn_20231020T190006Z.tar.gz')
-# cpd2.plot_dataframe(X, "A11a")
-# cpd2.plot_dataframe(X, "S11a")            

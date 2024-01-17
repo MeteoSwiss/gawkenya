@@ -3,132 +3,305 @@ import os
 import logging
 from asyncio.log import logger
 import glob
-import shutil
-import time
+import json
+import matplotlib as plt
+import polars as pl
 import re
+import shutil
 import zipfile
-import pandas as pd
-import sqlite3
 
 # %%
 class Thermo:
 
-    def __init__(self, config=None):
+    def __init__(self, log: str='thermo.log'):
         try:
+            if os.path.exists(os.path.dirname(log)):
+                filename = log
+            else:
+                filepath = os.makedirs(os.path.dirname(log), exist_ok=True)
+                filename = os.path.join(filepath, os.path.basename(log))
             logger = logging.getLogger(__name__)
-            logging.basicConfig(filename="thermo.log", filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            logging.basicConfig(filename=filename, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
             logger.info("Class 'Thermo' initialized successfully.")
 
-            # assign variables
-            self.config = config
+            self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
+                           'tei49i': [pl.Utf8]*5 + [pl.Float64]*2 + [pl.Int64]*2 + [pl.Float64]*6,}
 
         except Exception as err:
             logger = logging.getLogger(__name__)
             logger.error("Error initializing class 'Thermo'.", err)
 
 
-    def extract_file(self, file: str, log=True) -> pd.DataFrame:
+    def extract_thermo_to_dataframe(self, file: str, dtm="dtm", log=True) -> tuple([pl.DataFrame, str, str]):
         """
-        Open a file, determine its type from the file name, then extract content into a Pandas dataframe.
+        Extract a Thermo file into a Polars dataframe.
 
         Args:
             file (str): full path to file.
+            dtm (str): Name for dateTime column to be generated.
             log (bln): Should activities be logged to 'thermo.log'? Defaults to True.
+
+        Returns:
+            pl.DataFrame: DataFrame with DateTime and source columns added to data
+            str: Errors encountered
+            str: File (=instrument) type
         """
-        try:
-            msg = f"Extracting file {file}."
+        file_type = "tei49c" if bool(re.search("tei49c", file)) else "tei49i" if bool(re.search("tei49i", file)) else "unknown"
+
+        if bool(re.search(file_type, file)):
             if log:
-                logger.info(msg)
-    
-            # df = pd.DataFrame()
+                logger.info(f"Extracting file {file}.")
 
-            if bool(re.search('.zip', file)):
-                zf = zipfile.ZipFile(file)
-                tmp = zf.open(zf.namelist()[0])
-                df = pd.read_csv(tmp, sep="\s+")
-            else:
-                df = pd.read_csv(file, sep="\s+", engine='python')
+            try:
+                if bool(re.search('.zip', file)):
+                    zf = zipfile.ZipFile(file)
+                    df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+                else:
+                    df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
 
-            df['dtm'] = pd.to_datetime(df['pcdate'] + ' ' + df['pctime'], format="%Y-%m-%d %H:%M:%S")
-            df['source'] = file
-            if 'hio3' in df.columns:
-                df.drop(columns='hio3', inplace=True)
-            df.set_index('dtm', inplace=True)
+                if "hio3" in df.columns:
+                    df = df.drop("hio3")
+                
+                df = df.with_columns(pl.lit(file).alias('source'),
+                                     pl.format("{} {}", "pcdate", "pctime").str.to_datetime(time_zone="UTC").dt.round("1m").alias(dtm))
 
-            if not df.empty:
-                for column in df:
-                    if df[column].dtype == 'float64':
-                        df[column] = pd.to_numeric(df[column], downcast='float')
-                    if df[column].dtype == 'int64':
-                        df[column] = pd.to_numeric(df[column], downcast='integer')
-            return df
+                return df, None, file_type
 
-        except Exception as err:
-            logger.error(err)
-            return pd.DataFrame()
+            except Exception as err:
+                logger.error(err)
+                return pl.DataFrame(), str(err), None
 
-    
-    def extract_files(self, path: str, pattern=["tei49c", "tei49i"], recursive=False, archive=None, remove_duplicates=True, save=None, log=True) -> pd.DataFrame:
-        """
-        Scan a directory and combine file content into a Pandas dataframe.
+
+    def compile_thermo_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
+        """Extract and compile Thermo bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
-            path (str): path to directory.
-            recursive (bln): Should sub-directories be considered? Defaults to False.
-            pattern (list): Pattern for recognition of bulletin files. Defaults to ["tei49c", "tei49i"]
-            archive (str): If specified, files are moved to <path>/<archive>. Defaults to None.
-            remove_duplicates (bln): Remove duplicates found in resulting data frame? Defaults to True.
-            save (str): If one of ["csv", "json", "pkl"], resulting data frame is persisted to file. Defaults to None.
-            log (bln): Should activities be logged to 'thermo.log'? Defaults to True.
+            source (str): Root path to directory to process. <base> will be appended to path. Sub-directories will also be considered.
+            target (str): Root path to directory where .parquet files will be stored.  <base> will be appended to path.
+            base (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
+            dtm (str): Name of dateTime column.
+            archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
+            issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+            verbose (bool, optional): Should information on process be written to console? Defaults to True.
+            log (bool, optional): Should activities be logged? Defaults to True.
+        Returns:
+            Nothing
         """
+        source = os.path.join(source, base)
+        target = os.path.join(target, base)
+        os.makedirs(target, exist_ok=True)
+        if archive:
+            archive = os.path.join(archive, base)
+
+        result = pl.DataFrame()
+        errors = dict()
+        
         try:
-            msg = f"Extracting files found at '{path}' with pattern '{pattern}' ..."
-            if log:
-                logger.info(msg)
-    
-            df = pd.DataFrame()
-
-            for p in pattern:
-                if recursive:
-                    pathname = os.path.join(path, f"**/{p}")
-                else:
-                    pathname = os.path.join(path, f"{p}")
-                files = glob.glob(pathname=pathname, recursive=recursive) 
-                msg = f"Found {len(files)} files to extract and combine."
-                if log:
-                    logger.info(msg)
-
+            # process files
+            if verbose:
+                print(f"Processing source {source} ...")
+            for root, dirs, files in os.walk(source):
+                n = (len(source) - len(root) + 1)
+                relative_path = root[n:] if n < 0 else ""
                 for file in files:
-                    df = pd.concat([df, self.extract_file(file=file, log=log)])
-                    if archive:
-                        dst = file.replace("incoming", "archive")
-                        os.makedirs(os.path.dirname(dst), exist_ok=True)
-                        shutil.move(src=file, dst=dst)
+                    if verbose:
+                        print(f"Processing {file} ...")
+                    src = os.path.join(root, file)
+                    tmp, err, file_type = self.extract_thermo_to_dataframe(src, log=log)
+                    if err:
+                        errors.update({file: err})
+                        if issues:
+                            dst = os.path.join(issues, relative_path)
+                            os.makedirs(dst, exist_ok=True)
+                            shutil.move(src=src, dst=os.path.join(dst, file))
+                            print(f"issue: {src} > {dst}")
+                    elif archive:
+                        dst = os.path.join(archive, relative_path)
+                        os.makedirs(dst, exist_ok=True)
+                        shutil.move(src=src, dst=os.path.join(dst, file))
+                        # print(f"archive: {src} > {dst}")
+                    result = pl.concat([result, tmp], how='diagonal')
 
-                if remove_duplicates:
-                    numrows = len(df)
-                    df.drop_duplicates(subset=df.columns[df.columns != "source"], inplace=True)
-                    if len(df) < numrows:
-                        logger.info(f"{numrows-len(df)} duplicate entries were found and removed.")
+            # remove duplicates, sort data
+            result = result.unique()
+            result = result.sort(dtm)
 
-                if save:
-                    dst = os.path.join(path, f"{p}-{time.strftime('%Y%m%d%H%M%S')}.{save}")
-                    if save=="csv":
-                        df.to_csv(dst)
-                    elif save=="json":
-                        df.to_json(dst)
-                    elif save=="pickle":
-                        df.to_pickle(dst)
-                    else: 
-                        raise ValueError("'save' must be one of ['csv', 'json', 'pickle'].")
-                    if log:
-                        logger.info(f"Results saved in '{dst}'.")
+            # store result as parquet file
+            result.write_parquet(os.path.join(target, f"{file_type}.parquet"))
 
-            return df
+            # write errors to json file
+            with open(os.path.join(target, f"{file_type}.errors.json"), "w") as fh:
+                json.dump(errors, fh)
+
+            # return result, errors
+            return None
 
         except Exception as err:
-            logger.error(err)
-            return pd.DataFrame()
+            print(err)
+
+
+    def remove_extremes(self, df: pl.DataFrame, variable: str, q=0.001) -> tuple([pl.DataFrame, dict]):
+        """Remove extreme values from polars DataFrame. Extremes are defined using quantiles.
+
+        Args:
+            df (pl.DataFrame): Thermo data
+            q (float, optional): Quantile defining extreme values, i.e., values outside [>=q, <=(1-q)]. Defaults to 0.00001.
+
+        Returns:
+            pl.DataFrame: polars DataFrame of data that are retained
+            dict: cutoffs giving the lower and upper boundaries
+
+        [TODO] Instead of removing the extremes from the dataframe, it would be better to flag them. Also, use flags to filter first.
+        """
+        cutoffs = dict()
+        try:
+            lower = df[variable].quantile(q)
+            upper = df[variable].quantile(1-q)
+            df = df.filter((pl.col(variable) >= lower) & (pl.col(variable) <= upper))
+            cutoffs[variable] = {'lower': lower, 'upper': upper}
+            return df, cutoffs
+
+        except Exception as err:
+            print(err)
+
+
+    def plot_data(self, df: pl.DataFrame, dtm: str="dtm", variable: str="o3", start:str=None, end:str=None, title:str="Thermo Data", ylim=None) -> None:
+        """Plot a polars DataFrame containing Thermo data.
+
+        Args:
+            df (pl.DataFrame): Polars DataFrame, with columns depending on <type>
+            dtm (str, optional): name of dateTime variable
+            variable (str): ...
+            start (str): ...
+            end (str): ...
+            title (str): Title of plot. Defaults to "Thermo Data"
+        """
+        try:
+            df = df.sort(dtm)
+
+            if start:
+                df = df.filter(pl.col(dtm) >= pl.lit(start).str.strptime(pl.Date))
+            if end:
+                df = df.filter(pl.col(dtm) <= pl.lit(end).str.strptime(pl.Date))
+
+            plt.figure(figsize=(12, 6))
+            plt.scatter(df[dtm], df[variable], c='blue', marker="o", s=2)
+
+            if ylim:
+                plt.ylim(ylim)
+            # plt.legend(legend)
+            plt.suptitle(title)
+            # plt.title(subtitle)
+            plt.xlabel("DateTime")
+            plt.ylabel(variable)
+            plt.show()
+        except Exception as err:
+            print(err)
+
+
+    # def extract_file(self, file: str, log=True) -> pd.DataFrame:
+    #     """
+    #     Open a file, determine its type from the file name, then extract content into a Pandas dataframe.
+
+    #     Args:
+    #         file (str): full path to file.
+    #         log (bln): Should activities be logged to 'thermo.log'? Defaults to True.
+    #     """
+    #     try:
+    #         msg = f"Extracting file {file}."
+    #         if log:
+    #             logger.info(msg)
+    
+    #         # df = pd.DataFrame()
+
+    #         if bool(re.search('.zip', file)):
+    #             zf = zipfile.ZipFile(file)
+    #             tmp = zf.open(zf.namelist()[0])
+    #             df = pd.read_csv(tmp, sep="\s+")
+    #         else:
+    #             df = pd.read_csv(file, sep="\s+", engine='python')
+
+    #         df['dtm'] = pd.to_datetime(df['pcdate'] + ' ' + df['pctime'], format="%Y-%m-%d %H:%M:%S")
+    #         df['source'] = file
+    #         if 'hio3' in df.columns:
+    #             df.drop(columns='hio3', inplace=True)
+    #         df.set_index('dtm', inplace=True)
+
+    #         if not df.empty:
+    #             for column in df:
+    #                 if df[column].dtype == 'float64':
+    #                     df[column] = pd.to_numeric(df[column], downcast='float')
+    #                 if df[column].dtype == 'int64':
+    #                     df[column] = pd.to_numeric(df[column], downcast='integer')
+    #         return df
+
+    #     except Exception as err:
+    #         logger.error(err)
+    #         return pd.DataFrame()
+
+    
+    # def extract_files(self, path: str, pattern=["tei49c", "tei49i"], recursive=False, archive=None, remove_duplicates=True, save=None, log=True) -> pd.DataFrame:
+    #     """
+    #     Scan a directory and combine file content into a Pandas dataframe.
+
+    #     Args:
+    #         path (str): path to directory.
+    #         recursive (bln): Should sub-directories be considered? Defaults to False.
+    #         pattern (list): Pattern for recognition of bulletin files. Defaults to ["tei49c", "tei49i"]
+    #         archive (str): If specified, files are moved to <path>/<archive>. Defaults to None.
+    #         remove_duplicates (bln): Remove duplicates found in resulting data frame? Defaults to True.
+    #         save (str): If one of ["csv", "json", "pkl"], resulting data frame is persisted to file. Defaults to None.
+    #         log (bln): Should activities be logged to 'thermo.log'? Defaults to True.
+    #     """
+    #     try:
+    #         msg = f"Extracting files found at '{path}' with pattern '{pattern}' ..."
+    #         if log:
+    #             logger.info(msg)
+    
+    #         df = pd.DataFrame()
+
+    #         for p in pattern:
+    #             if recursive:
+    #                 pathname = os.path.join(path, f"**/{p}")
+    #             else:
+    #                 pathname = os.path.join(path, f"{p}")
+    #             files = glob.glob(pathname=pathname, recursive=recursive) 
+    #             msg = f"Found {len(files)} files to extract and combine."
+    #             if log:
+    #                 logger.info(msg)
+
+    #             for file in files:
+    #                 df = pd.concat([df, self.extract_file(file=file, log=log)])
+    #                 if archive:
+    #                     dst = file.replace("incoming", "archive")
+    #                     os.makedirs(os.path.dirname(dst), exist_ok=True)
+    #                     shutil.move(src=file, dst=dst)
+
+    #             if remove_duplicates:
+    #                 numrows = len(df)
+    #                 df.drop_duplicates(subset=df.columns[df.columns != "source"], inplace=True)
+    #                 if len(df) < numrows:
+    #                     logger.info(f"{numrows-len(df)} duplicate entries were found and removed.")
+
+    #             if save:
+    #                 dst = os.path.join(path, f"{p}-{time.strftime('%Y%m%d%H%M%S')}.{save}")
+    #                 if save=="csv":
+    #                     df.to_csv(dst)
+    #                 elif save=="json":
+    #                     df.to_json(dst)
+    #                 elif save=="pickle":
+    #                     df.to_pickle(dst)
+    #                 else: 
+    #                     raise ValueError("'save' must be one of ['csv', 'json', 'pickle'].")
+    #                 if log:
+    #                     logger.info(f"Results saved in '{dst}'.")
+
+    #         return df
+
+    #     except Exception as err:
+    #         logger.error(err)
+    #         return pd.DataFrame()
+
 
     def undo_archiving(self, path, archive="archive", recursive=True, log=True):
         try:

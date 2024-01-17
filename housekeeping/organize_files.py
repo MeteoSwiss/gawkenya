@@ -49,6 +49,49 @@ def organize_files(cfg: dict) -> int:
     return n
 
 
+def move_files(source: str, target: str, pattern: str=None, verbose: bool=True) -> int:
+    """Move files from source and sub-folders to target.
+
+    Args:
+        source (str): Absolute path to source directory
+        target (str): Absolute path to target directory
+        verbose (bool, optional): Print current activity to stdout. Defaults to True.
+    """
+    try:
+        n = 0
+        os.makedirs(target, exist_ok=True)
+        for root, dirs, files in os.walk(source):
+            for file in files:
+                src=os.path.join(root, file)
+                dst=os.path.join(target, file)
+                if pattern:
+                    if bool(re.search(pattern, file)):
+                        # print(f"{pattern}: {src} > {dst}")
+                        shutil.move(src=src, dst=dst)
+                        n += 1
+                else:
+                    # print(f"{src} > {dst}")
+                    # shutil.move(src=src, dst=dst)
+                    n += 1
+                if verbose:
+                    print(f"{n}: {src} > {dst}")
+
+            # remove empty directories
+            try:
+                os.rmdir(root)
+            except:
+                pass
+
+        if verbose:
+            print(f"Done, {n} files moved from {source} to {target}.")
+        return n
+    except Exception as err:
+        print(err)
+        if verbose:
+            print(f"{n} files moved from {source} to {target} before encountering above error.")
+        return n
+
+
 # %%
 if __name__ == "__main__":
     pass

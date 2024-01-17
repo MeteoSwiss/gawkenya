@@ -1,0 +1,505 @@
+# header_lines : 189
+# Data_Set_Name : sf6_mkn_surface-flask_2_3001-9999_event
+# Data_Set_Version : 0002-1005-1004-01-02-3001_2023-08-29-1238
+# Data_Set_Fair_Use : For Scientific purposes, access to these data is unlimited and provided without charge. By their use you accept that an offer of co-authorship will be made through personal contact with the contributors whenever substantial use is made of their data. In all cases, an acknowledgement must be made to the contributors and to the data centre when these data are used within a publication.
+# Data_Set_DOI : 10.15138/p646-pa37
+# Data_Set_Citation_Format : 
+#
+# GLOBAL ATTRIBUTES
+#
+# site_gaw_id : MKN
+# site_gaw_type : GAW Global
+# site_name : Mt. Kenya
+# site_country/territory : Kenya
+# site_wmo_region : REGION I (Africa)
+# site_address1 : 
+# site_address2 : 
+# site_address3 : 
+# site_latitude : -0.0621999986
+# site_longitude : 37.2971992493
+# site_elevation : 3678
+# site_elevation_unit : m
+# site_lst2utc : UTC+03:00
+# site_climate_zone : Cfb
+# site_climate_zone:comment : Warm temperate climate, fully humid, warm summer
+# dataset_creation_date : 2023-09-04
+# dataset_parameter : sf6
+# dataset_parameter_large_class : Greenhouse Gas
+# dataset_parameter_small_class : 
+# dataset_parameter_name_1 : SF6
+# dataset_parameter_name_2 : sulfur hexafluoride
+# dataset_parameter_name_3 : 
+# dataset_parameter_name_4 : 
+# dataset_parameter_name_5 : 
+# dataset_project : surface-flask
+# dataset_platform : fixed station
+# dataset_selection : All event data
+# dataset_selection_tag : event
+# dataset_time_zone : UTC
+# dataset_start_date : 2003-12-23T13:15:00Z
+# dataset_end_date : 2011-06-21T08:00:00Z
+# dataset_statistic_code : 1
+# dataset_statistic : contributor
+# dataset_description : Atmospheric SF6 Dry Air Mole Fractions from the NOAA GML Carbon Cycle Cooperative Global Air Sampling Network, 1997-2022
+# dataset_description : 
+# dataset_description : These data are provided by NOAA. Principal investigators include Xin Lan (NOAA). Key partners include Josiah Kariuki (KMD) AND Kenya Meteological Service (KMS).
+# dataset_description : 
+# dataset_description : Please cite the product's citation when using data from this dataset : Lan, X., J.W. Mund, A.M. Crotwell, M.J. Crotwell, E. Moglia,  M. Madronich, D. Neff and K.W. Thoning (2023), Atmospheric Sulfur Hexafluoride  Dry Air Mole Fractions from the NOAA GML Carbon Cycle Cooperative Global Air  Sampling Network, 1997-2022, Version: 2023-08-28, https://doi.org/10.15138/p646-pa37
+# dataset_aim_of_observation_code : 1
+# dataset_aim_of_observation : Background observation
+# dataset_buffer_code : 3001
+# dataset_buffer : ccgg
+# dataset_buffer:comment : NOAA Carbon Cycle Greenhouse Gases
+# dataset_footnote_code : 9999
+# dataset_footnote : default
+# dataset_footnote:comment : default
+# dataset_processing : Value_unc is estimated uncertainty of the reported measurement value.
+# dataset_processing : For measurements using gas chromatography, aliquots of gas from ambient air samples and a cylinder of reference gas are alternately injected into a gas chromatograph (GC) with a sampling valve.  Sulfur hexafluoride (SF6) is separated from other sample components using packed columns and detected with an electron capture detector (ECD). The response of the ECD to SF6 is calibrated off-line about monthly relative to the reference with a suite of standards. Each aliquot of sample is measured relative to the same reference, and SF6 values are calculated from the response function. SF6 measurements are reported in units of picomol/mol (10^-12 mol SF6 per mol of dry air (pmol/mol) or parts per trillion (ppt)) relative to the NOAA 2014 SF6 standard scale. Reproducibility of our measurements (1 sigma) is approximately 0.01 nmol/mol, based on repeated analysis of air from a high-pressure cylinder, or the long-term variability in the differences between measurements of test flasks on the flask-air analysis system and separate measurements of the test gas used to fill the test flasks.
+# dataset_hr_mean_processing : 
+# dataset_da_mean_processing : 
+# dataset_mo_mean_processing : Monthly means are produced for each site by first averaging all valid measurement results in the event file with a unique sample date and time.  Values are then extracted at weekly intervals from a smooth curve (Thoning et al., 1989) fitted to the averaged data and these weekly values are averaged for each month to give the monthly means recorded in the files.  Flagged data are excluded from the curve fitting process.  Some sites are excluded from the monthly mean directory because sparse data or a short record does not allow a reasonable curve fit.  Also, if there are 3 or more consecutive months without data, monthly means are not calculated for these months.
+# dataset_transition_flag : 0
+# dataset_transition_comment : Dataset was made from entire historical data provided from contributor from 2018 new WDCGG website open onward
+# dataset_reference_total_listed : 1
+# dataset_reference_1_name : Lan, X., J.W. Mund, A.M. Crotwell, M.J. Crotwell, E. Moglia,  M. Madronich, D. Neff and K.W. Thoning (2023), Atmospheric Sulfur Hexafluoride  Dry Air Mole Fractions from the NOAA GML Carbon Cycle Cooperative Global Air  Sampling Network, 1997-2022, Version: 2023-08-28, https://doi.org/10.15138/p646-pa37
+# contributor_organization_code : 2
+# contributor_acronym : NOAA
+# contributor_name : Global Monitoring Laboratory, NOAA
+# contributor_address1 : NOAA/ESRL
+# contributor_address2 : R/GML1
+# contributor_address3 : 325 Broadway Boulder, CO 80305-3328
+# contributor_country/territory : United States of America
+# contributor_url : https://gml.noaa.gov/
+# contact_total_listed : 1
+# contact_1_name : Xin Lan
+# contact_1_address1 : NOAA GML
+# contact_1_address2 : 325 Broadway R/GML-1
+# contact_1_address3 : Boulder, CO 80305-3328
+# contact_1_country/territory : United States of America
+# contact_1_organization : Global Monitoring Laboratory, NOAA
+# contact_1_organization_acronym : NOAA
+# contact_1_organization_url : https://gml.noaa.gov/
+# contact_1_email : xin.lan@noaa.gov
+# contact_1_tel : 
+# contact_1_fax : 
+# collaborator_total_listed : 1
+# collaborator_1_organization_code : 40
+# collaborator_1_acronym : KMD
+# collaborator_1_name : Kenya Meteorological Department
+# collaborator_1_address1 : Kenyan Meteorological Department Kenya Meteorological Department
+# collaborator_1_address2 : KMD
+# collaborator_1_address3 : Dagoretti Corner P.O. Box 30259 00100 Nairobi
+# collaborator_1_country/territory : Kenya
+# collaborator_1_url : 
+# collaborator_1_person_total_listed : 1
+# collaborator_1_person_1_name : Josiah Kariuki
+# collaborator_1_person_1_address1 : Kenya Meteorological Department Global Atmosphere Watch
+# collaborator_1_person_1_address2 : P.O. Box 30259
+# collaborator_1_person_1_address3 : 00100 Nairobi  Kenya
+# collaborator_1_person_1_country/territory : Kenya
+# collaborator_1_person_1_email : kmurageh@yahoo.co.uk
+# collaborator_1_person_1_tel : 254 20 576957
+# collaborator_1_person_1_fax : 
+# ORG_QCflag_description : This is the NOAA 3-character quality control flag.  Column 1 is the REJECTION flag. An alphanumeric other than a period (.) in the FIRST column indicates a sample with obvious problems during collection or analysis. This measurement should not be interpreted. Column 2 is the SELECTION flag. An alphanumeric other than a period (.) in the SECOND column indicates a sample that is likely valid but does not meet selection criteria determined by the goals of a particular investigation. For example, it might not have been obtained during 'background' conditions.  Column 3 is the INFORMATION flag. An alphanumeric other than a period (.) in the THIRD column provides additional information about the collection or analysis of the sample. A P in the 3rd column of the QC flag indicates the measurement result is preliminary and has not yet been carefully examined by the PI.  The P flag is removed once the quality of the measurement has been determined.
+# intake_height_total_listed : See data part
+# instrument_total_listed : 1
+# instrument_1 : Unknown
+# instrument_1_measurement_method_type_code : 1
+# instrument_1_measurement_method_name : Gas chromatography (ECD)
+# instrument_1_start_date : 2003-12-23T13:15:00Z
+# instrument_1_end_date : 2011-06-21T08:00:00Z
+# scale_total_listed : 1
+# scale_1_code : 6
+# scale_1_name : WMO SF6 X2014
+# scale_1_start_date : 2003-12-23T13:15:00Z
+# scale_1_end_date : 2011-06-21T08:00:00Z
+# observation_status_code : 1
+# observation_status : Operational/Reporting
+# measurement_calibration : 
+# sampling_frequency_code : 2
+# sampling_frequency : weekly
+#
+# VARIABLE ATTRIBUTES
+#
+# site_gaw_id:long_name : unique_station/mobile_identifiers.
+# site_gaw_id:comment : 3-letter site identification code as defined by GAWSIS for stationary platforms
+# time_components:_FillValue : -999 or -9
+# time_components:long_name : integer_components_of_UTC_date/time
+# time_components:order : year, month, day, hour, minute, second
+# time_components:comment : Air sample collection time (UTC) represented as a 6-element array [year, month, day, hour, minute, second]. Calendar time components as integers.
+# value:_FillValue : -999.999
+# value:units : ppt
+# value:long_name : measured_mole_fraction_of_trace_gas_in_dry_air
+# value:comment : Reported mole fraction, isotope ratio or radioactivity. Units depend on trace gas species.
+# value_unc:_FillValue : -999.999
+# value_unc:units : ppt
+# value_unc:long_name : estimated_uncertainty_in_reported_value
+# value_unc:comment : Standard deviation of the reported mean value when nvalue is greater than 1. Units depend on trace gas species.
+# nvalue:_FillValue : -9
+# nvalue:long_name : number_of_measurements_contributing_to_reported_value
+# nvalue:comment : Number of individual measurements used to compute reported values.
+# latitude:_FillValue : -999.999999999
+# latitude:standard_name : latitude
+# latitude:long_name : sample_latitude_in_decimal_degrees
+# latitude:units : degrees_north
+# latitude:comment : Latitude of sampling location in decimal degrees (north: +; south: -)
+# longitude:_FillValue : -999.999999999
+# longitude:standard_name : longitude
+# longitude:long_name : sample_longitude_in_decimal_degrees
+# longitude:units : degrees_east
+# longitude:comment : Longitude of sampling location in decimal degrees (east: +; west: -)
+# altitude:_FillValue : -999.999
+# altitude:standard_name : altitude
+# altitude:long_name : sample_altitude_in_meters_above_sea_level
+# altitude:units : m
+# altitude:comment : Altitude (elevation + intake height) of air sample collection. Units are meters above sea level (masl).
+# elevation:_FillValue : -999.999
+# elevation:standard_name : elevation
+# elevation:long_name : surface_elevation_in_meters_above_sea_level
+# elevation:units : m
+# elevation:comment : Station height (m) above sea level
+# intake_height:_FillValue : -999.999
+# intake_height:long_name : sample_intake_height_in_meters_above_ground_level
+# intake_height:units : m
+# intake_height:comment : Sampling height (depth) of air (seawater) above ground (below sea level) (height: +; depth: -) (m)
+# flask_no:_FillValue : -999.999
+# flask_no:long_name : sample_flask_no
+# flask_no:comment : Identification code (or number) of flask used for observation
+# ORG_QCflag:_FillValue : -999.999
+# ORG_QCflag:long_name : original_quality_control_flag
+# ORG_QCflag:comment : Details of original data quality control flags should be specified by contributors in metadata.
+# QCflag:_FillValue : -9
+# QCflag:long_name : quality_control_flag
+# QCflag:comment : 1 Valid (background) data considered "background"
+# QCflag:comment : 2 Valid data considered valid other than "background," or all valid data without categorization
+# QCflag:comment : 3 Invalid data considered unfit for use (questionable/erroneous/absent data)
+# QCflag:comment : Details of correspondence between original data quality control flags and WDCGG data flags should be specified by contributors in metadata.
+# instrument:_FillValue : -9
+# instrument:long_name : instrument_ID_to_detect_atmospheric_parameter
+# instrument:comment : A numeric field that identifies the instrument.
+# measurement_method:_FillValue : -9
+# measurement_method:long_name : measurement_method_history
+# measurement_method:comment : A numeric field that identifies the measurement method.
+# scale:_FillValue : -9
+# scale:long_name : calibration_scale_history
+# scale:comment : A numeric field that identifies the calibration scale. Measurements are relative to reported calibration scale.
+#
+# VARIABLE ORDER
+#
+# site_gaw_id year month day hour minute second year month day hour minute second value value_unc nvalue latitude longitude altitude elevation intake_height flask_no ORG_QCflag QCflag instrument measurement_method scale
+MKN 2003 12 23 13 15 00 -999 -9 -9 -9 -9 -9 5.4 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1113-91 ... 1 1 1 6
+MKN 2003 12 23 13 15 00 -999 -9 -9 -9 -9 -9 5.31 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1114-91 ... 1 1 1 6
+MKN 2003 12 30 09 10 00 -999 -9 -9 -9 -9 -9 5.34 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1627-91 ... 1 1 1 6
+MKN 2003 12 30 09 10 00 -999 -9 -9 -9 -9 -9 5.35 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1628-91 ... 1 1 1 6
+MKN 2004 01 07 07 40 00 -999 -9 -9 -9 -9 -9 5.47 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4017-91 ... 1 1 1 6
+MKN 2004 01 07 07 40 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4018-91 ... 1 1 1 6
+MKN 2004 01 13 11 40 00 -999 -9 -9 -9 -9 -9 5.39 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1587-91 ... 1 1 1 6
+MKN 2004 01 13 11 40 00 -999 -9 -9 -9 -9 -9 5.34 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1588-91 ... 1 1 1 6
+MKN 2004 01 20 09 28 00 -999 -9 -9 -9 -9 -9 5.36 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 6365-66 ... 1 1 1 6
+MKN 2004 01 20 09 28 00 -999 -9 -9 -9 -9 -9 5.39 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 6366-66 ... 1 1 1 6
+MKN 2004 01 27 13 10 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 6147-66 ... 1 1 1 6
+MKN 2004 01 27 13 10 00 -999 -9 -9 -9 -9 -9 5.37 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 6148-66 ... 1 1 1 6
+MKN 2004 02 03 10 45 00 -999 -9 -9 -9 -9 -9 5.42 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4455-91 ... 1 1 1 6
+MKN 2004 02 03 10 45 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4456-91 ... 1 1 1 6
+MKN 2004 03 24 12 42 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4163-91 ... 1 1 1 6
+MKN 2004 03 24 12 42 00 -999 -9 -9 -9 -9 -9 5.43 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4164-91 ... 1 1 1 6
+MKN 2004 03 30 10 08 00 -999 -9 -9 -9 -9 -9 5.37 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2617-99 ... 1 1 1 6
+MKN 2004 03 30 10 08 00 -999 -9 -9 -9 -9 -9 5.39 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2618-99 ... 1 1 1 6
+MKN 2004 04 06 10 29 00 -999 -9 -9 -9 -9 -9 5.35 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2611-99 ... 1 1 1 6
+MKN 2004 04 06 10 29 00 -999 -9 -9 -9 -9 -9 5.43 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2612-99 ... 1 1 1 6
+MKN 2004 04 20 11 18 00 -999 -9 -9 -9 -9 -9 5.37 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1859-99 ... 1 1 1 6
+MKN 2004 04 20 11 18 00 -999 -9 -9 -9 -9 -9 5.29 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1860-99 ... 1 1 1 6
+MKN 2004 04 28 10 25 00 -999 -9 -9 -9 -9 -9 5.44 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2101-99 ... 1 1 1 6
+MKN 2004 04 28 10 25 00 -999 -9 -9 -9 -9 -9 5.45 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2102-99 ... 1 1 1 6
+MKN 2004 05 04 13 00 00 -999 -9 -9 -9 -9 -9 5.3 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1867-99 ... 1 1 1 6
+MKN 2004 05 04 13 00 00 -999 -9 -9 -9 -9 -9 5.26 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1868-99 ... 1 1 1 6
+MKN 2004 05 14 10 10 00 -999 -9 -9 -9 -9 -9 5.51 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1833-99 ... 1 1 1 6
+MKN 2004 05 14 10 10 00 -999 -9 -9 -9 -9 -9 5.47 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1834-99 ... 1 1 1 6
+MKN 2004 05 18 10 46 00 -999 -9 -9 -9 -9 -9 5.44 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3363-99 ... 1 1 1 6
+MKN 2004 05 18 10 46 00 -999 -9 -9 -9 -9 -9 5.48 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3364-99 ... 1 1 1 6
+MKN 2004 05 25 10 30 00 -999 -9 -9 -9 -9 -9 5.45 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3365-99 ... 1 1 1 6
+MKN 2004 05 25 10 30 00 -999 -9 -9 -9 -9 -9 5.47 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3366-99 ... 1 1 1 6
+MKN 2004 06 07 12 20 00 -999 -9 -9 -9 -9 -9 5.27 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1629-99 ... 1 1 1 6
+MKN 2004 06 07 12 20 00 -999 -9 -9 -9 -9 -9 5.36 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1630-99 ... 1 1 1 6
+MKN 2004 06 29 07 35 00 -999 -9 -9 -9 -9 -9 5.35 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1615-99 ... 1 1 1 6
+MKN 2004 06 29 07 35 00 -999 -9 -9 -9 -9 -9 5.33 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1616-99 ... 1 1 1 6
+MKN 2004 07 07 09 35 00 -999 -9 -9 -9 -9 -9 5.37 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3703-99 ... 1 1 1 6
+MKN 2004 07 07 09 35 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3704-99 ... 1 1 1 6
+MKN 2004 07 13 07 30 00 -999 -9 -9 -9 -9 -9 5.48 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3221-99 ... 1 1 1 6
+MKN 2004 07 13 07 30 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3222-99 ... 1 1 1 6
+MKN 2004 07 22 07 53 00 -999 -9 -9 -9 -9 -9 5.39 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3227-99 ... 1 1 1 6
+MKN 2004 07 22 07 53 00 -999 -9 -9 -9 -9 -9 5.39 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3228-99 ... 1 1 1 6
+MKN 2004 07 28 08 35 00 -999 -9 -9 -9 -9 -9 5.33 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3235-99 ... 1 1 1 6
+MKN 2004 07 28 08 35 00 -999 -9 -9 -9 -9 -9 5.38 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3236-99 ... 1 1 1 6
+MKN 2004 08 04 08 40 00 -999 -9 -9 -9 -9 -9 5.36 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 809-99 ... 1 1 1 6
+MKN 2004 08 04 08 40 00 -999 -9 -9 -9 -9 -9 5.4 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 810-99 ... 1 1 1 6
+MKN 2004 08 13 08 30 00 -999 -9 -9 -9 -9 -9 5.44 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 297-99 ... 1 1 1 6
+MKN 2004 08 13 08 30 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 298-99 ... 1 1 1 6
+MKN 2004 08 24 08 00 00 -999 -9 -9 -9 -9 -9 5.55 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2287-99 ... 1 1 1 6
+MKN 2004 08 24 08 00 00 -999 -9 -9 -9 -9 -9 5.54 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2288-99 ... 1 1 1 6
+MKN 2004 08 31 09 40 00 -999 -9 -9 -9 -9 -9 5.47 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3535-99 ... 1 1 1 6
+MKN 2004 08 31 09 40 00 -999 -9 -9 -9 -9 -9 5.54 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3536-99 ... 1 1 1 6
+MKN 2004 09 08 08 45 00 -999 -9 -9 -9 -9 -9 5.39 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 905-99 ... 1 1 1 6
+MKN 2004 09 08 08 45 00 -999 -9 -9 -9 -9 -9 5.45 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 906-99 ... 1 1 1 6
+MKN 2004 09 14 08 15 00 -999 -9 -9 -9 -9 -9 5.47 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3901-99 ... 1 1 1 6
+MKN 2004 09 14 08 15 00 -999 -9 -9 -9 -9 -9 5.48 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3902-99 ... 1 1 1 6
+MKN 2004 09 21 07 50 00 -999 -9 -9 -9 -9 -9 5.51 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 871-99 ... 1 1 1 6
+MKN 2004 09 21 07 50 00 -999 -9 -9 -9 -9 -9 5.47 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 872-99 ... 1 1 1 6
+MKN 2004 09 28 07 55 00 -999 -9 -9 -9 -9 -9 5.49 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3953-99 ... 1 1 1 6
+MKN 2004 09 28 07 55 00 -999 -9 -9 -9 -9 -9 5.41 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3954-99 ... 1 1 1 6
+MKN 2004 10 06 08 11 00 -999 -9 -9 -9 -9 -9 5.49 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 749-99 ... 1 1 1 6
+MKN 2004 10 06 08 11 00 -999 -9 -9 -9 -9 -9 5.44 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 750-99 ... 1 1 1 6
+MKN 2004 10 13 07 10 00 -999 -9 -9 -9 -9 -9 5.48 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1673-99 ... 1 1 1 6
+MKN 2004 10 13 07 10 00 -999 -9 -9 -9 -9 -9 5.51 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1674-99 ... 1 1 1 6
+MKN 2005 02 03 08 20 00 -999 -9 -9 -9 -9 -9 5.66 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3897-99 ... 1 1 1 6
+MKN 2005 02 03 08 20 00 -999 -9 -9 -9 -9 -9 5.62 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3898-99 ... 1 1 1 6
+MKN 2005 02 09 09 10 00 -999 -9 -9 -9 -9 -9 5.56 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4101-99 ... 1 1 1 6
+MKN 2005 02 09 09 10 00 -999 -9 -9 -9 -9 -9 5.59 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4102-99 ... 1 1 1 6
+MKN 2005 02 14 08 35 00 -999 -9 -9 -9 -9 -9 5.61 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4103-99 ... 1 1 1 6
+MKN 2005 02 14 08 35 00 -999 -9 -9 -9 -9 -9 5.62 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4104-99 ... 1 1 1 6
+MKN 2005 02 22 09 02 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3295-99 ... 1 1 1 6
+MKN 2005 02 22 09 02 00 -999 -9 -9 -9 -9 -9 5.6 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3296-99 ... 1 1 1 6
+MKN 2005 03 02 08 01 00 -999 -9 -9 -9 -9 -9 5.63 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 901-99 ... 1 1 1 6
+MKN 2005 03 02 08 01 00 -999 -9 -9 -9 -9 -9 5.68 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 902-99 ... 1 1 1 6
+MKN 2005 03 08 09 06 00 -999 -9 -9 -9 -9 -9 5.61 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2635-99 ... 1 1 1 6
+MKN 2005 03 08 09 06 00 -999 -9 -9 -9 -9 -9 5.58 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2636-99 ... 1 1 1 6
+MKN 2005 03 15 09 20 00 -999 -9 -9 -9 -9 -9 5.61 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2195-99 ... 1 1 1 6
+MKN 2005 03 15 09 20 00 -999 -9 -9 -9 -9 -9 5.6 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2196-99 ... 1 1 1 6
+MKN 2005 03 22 08 10 00 -999 -9 -9 -9 -9 -9 5.65 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2457-99 ... 1 1 1 6
+MKN 2005 03 22 08 10 00 -999 -9 -9 -9 -9 -9 5.58 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2458-99 ... 1 1 1 6
+MKN 2005 03 30 11 30 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1821-99 ... 1 1 1 6
+MKN 2005 03 30 11 30 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1822-99 ... 1 1 1 6
+MKN 2005 04 05 08 40 00 -999 -9 -9 -9 -9 -9 5.55 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1255-99 ... 1 1 1 6
+MKN 2005 04 05 08 40 00 -999 -9 -9 -9 -9 -9 5.59 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1256-99 ... 1 1 1 6
+MKN 2005 04 13 08 40 00 -999 -9 -9 -9 -9 -9 5.66 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1065-99 ... 1 1 1 6
+MKN 2005 04 13 08 40 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1066-99 ... 1 1 1 6
+MKN 2005 04 19 08 25 00 -999 -9 -9 -9 -9 -9 5.65 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3561-99 ... 1 1 1 6
+MKN 2005 04 19 08 25 00 -999 -9 -9 -9 -9 -9 5.62 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3562-99 ... 1 1 1 6
+MKN 2005 04 26 09 20 00 -999 -9 -9 -9 -9 -9 5.62 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3063-99 ... 1 1 1 6
+MKN 2005 04 26 09 20 00 -999 -9 -9 -9 -9 -9 5.52 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3064-99 ... 1 1 1 6
+MKN 2005 05 18 08 50 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1701-99 ... 1 1 1 6
+MKN 2005 05 18 08 50 00 -999 -9 -9 -9 -9 -9 5.65 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1702-99 ... 1 1 1 6
+MKN 2005 05 23 08 20 00 -999 -9 -9 -9 -9 -9 5.58 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1671-99 ... 1 1 1 6
+MKN 2005 05 23 08 20 00 -999 -9 -9 -9 -9 -9 5.55 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1672-99 ... 1 1 1 6
+MKN 2005 06 03 08 32 00 -999 -9 -9 -9 -9 -9 5.7 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1183-99 ... 1 1 1 6
+MKN 2005 06 03 08 32 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1184-99 ... 1 1 1 6
+MKN 2005 06 06 08 33 00 -999 -9 -9 -9 -9 -9 5.8 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2775-99 ... 1 1 1 6
+MKN 2005 06 06 08 33 00 -999 -9 -9 -9 -9 -9 5.76 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2776-99 ... 1 1 1 6
+MKN 2005 06 14 10 50 00 -999 -9 -9 -9 -9 -9 5.74 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2607-99 ... 1 1 1 6
+MKN 2005 06 14 10 50 00 -999 -9 -9 -9 -9 -9 5.74 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2608-99 ... 1 1 1 6
+MKN 2005 06 21 08 22 00 -999 -9 -9 -9 -9 -9 5.77 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3777-99 ... 1 1 1 6
+MKN 2005 06 21 08 22 00 -999 -9 -9 -9 -9 -9 5.7 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3778-99 ... 1 1 1 6
+MKN 2005 06 29 08 40 00 -999 -9 -9 -9 -9 -9 5.68 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 63-99 ... 1 1 1 6
+MKN 2005 06 29 08 40 00 -999 -9 -9 -9 -9 -9 5.71 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 64-99 ... 1 1 1 6
+MKN 2005 07 06 08 42 00 -999 -9 -9 -9 -9 -9 5.66 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 729-99 ... 1 1 1 6
+MKN 2005 07 06 08 42 00 -999 -9 -9 -9 -9 -9 5.68 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 730-99 ... 1 1 1 6
+MKN 2005 07 12 07 53 00 -999 -9 -9 -9 -9 -9 5.32 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 731-99 M.. 3 1 1 6
+MKN 2005 07 12 07 53 00 -999 -9 -9 -9 -9 -9 5.55 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 732-99 ... 1 1 1 6
+MKN 2005 07 26 07 53 00 -999 -9 -9 -9 -9 -9 5.6 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3487-99 ... 1 1 1 6
+MKN 2005 07 26 07 53 00 -999 -9 -9 -9 -9 -9 5.63 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3488-99 ... 1 1 1 6
+MKN 2005 08 02 08 15 00 -999 -9 -9 -9 -9 -9 5.71 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1899-99 ... 1 1 1 6
+MKN 2005 08 02 08 15 00 -999 -9 -9 -9 -9 -9 5.64 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1900-99 ... 1 1 1 6
+MKN 2005 08 16 09 42 00 -999 -9 -9 -9 -9 -9 5.66 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3699-99 ... 1 1 1 6
+MKN 2005 08 16 09 42 00 -999 -9 -9 -9 -9 -9 5.62 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3700-99 ... 1 1 1 6
+MKN 2005 12 20 13 53 00 -999 -9 -9 -9 -9 -9 5.73 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3967-99 ... 1 1 1 6
+MKN 2005 12 20 13 53 00 -999 -9 -9 -9 -9 -9 5.78 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3968-99 ... 1 1 1 6
+MKN 2005 12 29 13 10 00 -999 -9 -9 -9 -9 -9 5.83 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3491-99 ... 1 1 1 6
+MKN 2005 12 29 13 10 00 -999 -9 -9 -9 -9 -9 5.8 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3492-99 ... 1 1 1 6
+MKN 2006 01 04 08 06 00 -999 -9 -9 -9 -9 -9 5.78 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2271-99 ... 1 1 1 6
+MKN 2006 01 04 08 06 00 -999 -9 -9 -9 -9 -9 5.86 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2272-99 ... 1 1 1 6
+MKN 2006 01 10 08 00 00 -999 -9 -9 -9 -9 -9 5.87 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2889-99 ... 1 1 1 6
+MKN 2006 01 10 08 00 00 -999 -9 -9 -9 -9 -9 5.75 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2890-99 ... 1 1 1 6
+MKN 2006 01 18 08 08 00 -999 -9 -9 -9 -9 -9 5.8 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 941-99 ... 1 1 1 6
+MKN 2006 01 18 08 08 00 -999 -9 -9 -9 -9 -9 5.82 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 942-99 ... 1 1 1 6
+MKN 2006 01 24 08 07 00 -999 -9 -9 -9 -9 -9 5.81 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1977-99 ... 1 1 1 6
+MKN 2006 01 24 08 07 00 -999 -9 -9 -9 -9 -9 5.78 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1978-99 ... 1 1 1 6
+MKN 2006 02 01 08 45 00 -999 -9 -9 -9 -9 -9 5.81 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 485-99 ... 1 1 1 6
+MKN 2006 02 01 08 45 00 -999 -9 -9 -9 -9 -9 5.83 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 486-99 ... 1 1 1 6
+MKN 2006 02 15 08 10 00 -999 -9 -9 -9 -9 -9 5.85 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3977-99 ... 1 1 1 6
+MKN 2006 02 15 08 10 00 -999 -9 -9 -9 -9 -9 5.87 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3978-99 ... 1 1 1 6
+MKN 2006 02 24 08 45 00 -999 -9 -9 -9 -9 -9 5.82 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 961-99 ... 1 1 1 6
+MKN 2006 02 24 08 45 00 -999 -9 -9 -9 -9 -9 5.86 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 962-99 ... 1 1 1 6
+MKN 2006 02 28 10 30 00 -999 -9 -9 -9 -9 -9 5.83 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3297-99 ... 1 1 1 6
+MKN 2006 02 28 10 30 00 -999 -9 -9 -9 -9 -9 5.85 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3298-99 ... 1 1 1 6
+MKN 2006 03 02 10 00 00 -999 -9 -9 -9 -9 -9 5.86 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2987-99 ... 1 1 1 6
+MKN 2006 03 02 10 00 00 -999 -9 -9 -9 -9 -9 5.9 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2988-99 ... 1 1 1 6
+MKN 2006 03 08 08 50 00 -999 -9 -9 -9 -9 -9 5.92 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1155-99 ... 1 1 1 6
+MKN 2006 03 08 08 50 00 -999 -9 -9 -9 -9 -9 5.86 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1156-99 ... 1 1 1 6
+MKN 2006 03 20 09 00 00 -999 -9 -9 -9 -9 -9 5.87 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2103-99 ... 1 1 1 6
+MKN 2006 03 20 09 00 00 -999 -9 -9 -9 -9 -9 5.79 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2104-99 ... 1 1 1 6
+MKN 2006 03 28 11 33 00 -999 -9 -9 -9 -9 -9 5.89 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3925-99 ... 1 1 1 6
+MKN 2006 03 28 11 33 00 -999 -9 -9 -9 -9 -9 5.81 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3926-99 ... 1 1 1 6
+MKN 2006 04 04 08 22 00 -999 -9 -9 -9 -9 -9 5.85 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 453-99 ... 1 1 1 6
+MKN 2006 04 04 08 22 00 -999 -9 -9 -9 -9 -9 5.79 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 454-99 ... 1 1 1 6
+MKN 2006 04 13 10 53 00 -999 -9 -9 -9 -9 -9 5.83 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2809-99 ... 1 1 1 6
+MKN 2006 04 13 10 53 00 -999 -9 -9 -9 -9 -9 5.85 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2810-99 ... 1 1 1 6
+MKN 2006 04 22 08 52 00 -999 -9 -9 -9 -9 -9 5.66 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3175-99 ... 1 1 1 6
+MKN 2006 04 22 08 52 00 -999 -9 -9 -9 -9 -9 5.78 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3176-99 ... 1 1 1 6
+MKN 2006 04 27 10 30 00 -999 -9 -9 -9 -9 -9 5.79 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1485-99 ... 1 1 1 6
+MKN 2006 04 27 10 30 00 -999 -9 -9 -9 -9 -9 5.73 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1486-99 ... 1 1 1 6
+MKN 2006 05 11 08 40 00 -999 -9 -9 -9 -9 -9 5.79 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3889-99 ... 1 1 1 6
+MKN 2006 05 11 08 40 00 -999 -9 -9 -9 -9 -9 5.82 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3890-99 ... 1 1 1 6
+MKN 2006 05 15 11 52 00 -999 -9 -9 -9 -9 -9 5.8 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2349-99 ... 1 1 1 6
+MKN 2006 05 15 11 52 00 -999 -9 -9 -9 -9 -9 5.86 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2350-99 ... 1 1 1 6
+MKN 2006 07 22 10 45 00 -999 -9 -9 -9 -9 -9 5.88 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3559-99 ... 1 1 1 6
+MKN 2006 07 22 10 45 00 -999 -9 -9 -9 -9 -9 5.86 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3560-99 ... 1 1 1 6
+MKN 2006 07 25 08 25 00 -999 -9 -9 -9 -9 -9 5.88 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3749-99 ... 1 1 1 6
+MKN 2006 07 25 08 25 00 -999 -9 -9 -9 -9 -9 5.89 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3750-99 ... 1 1 1 6
+MKN 2006 08 02 10 05 00 -999 -9 -9 -9 -9 -9 5.88 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1431-99 ... 1 1 1 6
+MKN 2006 08 02 10 05 00 -999 -9 -9 -9 -9 -9 5.88 0.05 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1432-99 ... 1 1 1 6
+MKN 2008 09 11 11 07 00 -999 -9 -9 -9 -9 -9 6.43 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2957-99 ... 1 1 1 6
+MKN 2008 09 11 11 07 00 -999 -9 -9 -9 -9 -9 6.46 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2958-99 ... 1 1 1 6
+MKN 2008 10 04 12 00 00 -999 -9 -9 -9 -9 -9 6.44 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1007-99 ... 1 1 1 6
+MKN 2008 10 04 12 00 00 -999 -9 -9 -9 -9 -9 6.47 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1008-99 ... 1 1 1 6
+MKN 2008 10 15 09 59 00 -999 -9 -9 -9 -9 -9 6.5 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1898-99 ... 1 1 1 6
+MKN 2008 10 15 09 59 00 -999 -9 -9 -9 -9 -9 6.45 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 541-99 ... 1 1 1 6
+MKN 2008 10 30 10 00 00 -999 -9 -9 -9 -9 -9 6.76 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1897-99 ... 1 1 1 6
+MKN 2008 10 30 10 00 00 -999 -9 -9 -9 -9 -9 6.55 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 542-99 ... 1 1 1 6
+MKN 2008 11 03 08 20 00 -999 -9 -9 -9 -9 -9 6.44 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2692-99 ... 1 1 1 6
+MKN 2008 11 03 08 20 00 -999 -9 -9 -9 -9 -9 6.43 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3875-99 ... 1 1 1 6
+MKN 2008 11 13 10 30 00 -999 -9 -9 -9 -9 -9 6.59 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3289-99 ... 1 1 1 6
+MKN 2008 11 13 10 30 00 -999 -9 -9 -9 -9 -9 6.51 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3880-99 ... 1 1 1 6
+MKN 2008 11 18 08 30 00 -999 -9 -9 -9 -9 -9 6.56 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3290-99 ... 1 1 1 6
+MKN 2008 11 18 08 30 00 -999 -9 -9 -9 -9 -9 6.64 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3879-99 ... 1 1 1 6
+MKN 2008 12 17 13 03 00 -999 -9 -9 -9 -9 -9 6.61 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1302-99 ... 1 1 1 6
+MKN 2008 12 17 13 03 00 -999 -9 -9 -9 -9 -9 6.69 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1591-99 ... 1 1 1 6
+MKN 2009 01 07 09 39 00 -999 -9 -9 -9 -9 -9 6.72 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 171-99 ... 1 1 1 6
+MKN 2009 01 07 09 39 00 -999 -9 -9 -9 -9 -9 6.63 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4111-99 ... 1 1 1 6
+MKN 2009 01 09 14 00 00 -999 -9 -9 -9 -9 -9 6.67 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1711-99 ... 1 1 1 6
+MKN 2009 01 09 14 00 00 -999 -9 -9 -9 -9 -9 6.68 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2823-99 ... 1 1 1 6
+MKN 2009 01 28 08 05 00 -999 -9 -9 -9 -9 -9 6.73 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1176-99 ... 1 1 1 6
+MKN 2009 01 28 08 05 00 -999 -9 -9 -9 -9 -9 6.68 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1569-99 ... 1 1 1 6
+MKN 2009 02 13 10 50 00 -999 -9 -9 -9 -9 -9 6.67 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2709-99 ... 1 1 1 6
+MKN 2009 02 13 10 50 00 -999 -9 -9 -9 -9 -9 6.7 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3966-99 ... 1 1 1 6
+MKN 2009 02 27 09 40 00 -999 -9 -9 -9 -9 -9 6.66 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2710-99 ... 1 1 1 6
+MKN 2009 02 27 09 40 00 -999 -9 -9 -9 -9 -9 6.75 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3965-99 ... 1 1 1 6
+MKN 2009 03 07 09 40 00 -999 -9 -9 -9 -9 -9 6.37 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 619-99 .S. 2 1 1 6
+MKN 2009 03 07 09 40 00 -999 -9 -9 -9 -9 -9 6.42 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 620-99 .S. 2 1 1 6
+MKN 2009 05 14 10 25 00 -999 -9 -9 -9 -9 -9 6.6 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1006-99 ... 1 1 1 6
+MKN 2009 05 14 10 25 00 -999 -9 -9 -9 -9 -9 6.66 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1495-99 ... 1 1 1 6
+MKN 2009 05 20 07 10 00 -999 -9 -9 -9 -9 -9 6.62 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2487-99 ... 1 1 1 6
+MKN 2009 05 20 07 10 00 -999 -9 -9 -9 -9 -9 6.59 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4429-99 ... 1 1 1 6
+MKN 2009 06 04 06 30 00 -999 -9 -9 -9 -9 -9 6.73 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 352-99 ... 1 1 1 6
+MKN 2009 06 04 06 30 00 -999 -9 -9 -9 -9 -9 6.67 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4750-99 ... 1 1 1 6
+MKN 2009 06 19 06 00 00 -999 -9 -9 -9 -9 -9 6.62 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1086-99 ... 1 1 1 6
+MKN 2009 06 19 06 00 00 -999 -9 -9 -9 -9 -9 6.57 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3793-99 ... 1 1 1 6
+MKN 2009 06 25 06 30 00 -999 -9 -9 -9 -9 -9 6.75 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1712-99 ... 1 1 1 6
+MKN 2009 06 25 06 30 00 -999 -9 -9 -9 -9 -9 6.84 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4270-99 ... 1 1 1 6
+MKN 2009 07 07 08 30 00 -999 -9 -9 -9 -9 -9 6.59 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1069-99 ... 1 1 1 6
+MKN 2009 07 07 08 30 00 -999 -9 -9 -9 -9 -9 6.55 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 696-99 ... 1 1 1 6
+MKN 2009 07 14 07 30 00 -999 -9 -9 -9 -9 -9 6.72 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3310-99 ... 1 1 1 6
+MKN 2009 07 14 07 30 00 -999 -9 -9 -9 -9 -9 6.71 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4395-99 ... 1 1 1 6
+MKN 2009 07 28 06 00 00 -999 -9 -9 -9 -9 -9 6.7 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4141-99 ... 1 1 1 6
+MKN 2009 07 28 06 00 00 -999 -9 -9 -9 -9 -9 6.62 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4426-99 ... 1 1 1 6
+MKN 2009 08 05 09 00 00 -999 -9 -9 -9 -9 -9 6.72 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4179-99 ... 1 1 1 6
+MKN 2009 08 05 09 00 00 -999 -9 -9 -9 -9 -9 6.71 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4958-99 ... 1 1 1 6
+MKN 2009 08 15 07 14 00 -999 -9 -9 -9 -9 -9 6.74 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 5198-99 ... 1 1 1 6
+MKN 2009 08 15 07 14 00 -999 -9 -9 -9 -9 -9 6.75 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 695-99 ... 1 1 1 6
+MKN 2009 08 27 09 00 00 -999 -9 -9 -9 -9 -9 6.67 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1249-99 ... 1 1 1 6
+MKN 2009 08 27 09 00 00 -999 -9 -9 -9 -9 -9 6.69 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2778-99 ... 1 1 1 6
+MKN 2009 09 03 10 25 00 -999 -9 -9 -9 -9 -9 6.7 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4725-99 ... 1 1 1 6
+MKN 2009 09 03 10 25 00 -999 -9 -9 -9 -9 -9 6.71 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 925-99 ... 1 1 1 6
+MKN 2009 09 16 06 30 00 -999 -9 -9 -9 -9 -9 6.81 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1887-99 ... 1 1 1 6
+MKN 2009 09 16 06 30 00 -999 -9 -9 -9 -9 -9 6.78 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3610-99 ... 1 1 1 6
+MKN 2009 09 23 08 00 00 -999 -9 -9 -9 -9 -9 6.8 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1369-99 ... 1 1 1 6
+MKN 2009 09 23 08 00 00 -999 -9 -9 -9 -9 -9 6.78 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1487-99 ... 1 1 1 6
+MKN 2009 10 06 06 47 00 -999 -9 -9 -9 -9 -9 6.78 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1889-99 ... 1 1 1 6
+MKN 2009 10 06 06 47 00 -999 -9 -9 -9 -9 -9 6.76 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3386-99 ... 1 1 1 6
+MKN 2009 10 14 06 31 00 -999 -9 -9 -9 -9 -9 6.73 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4616-99 ... 1 1 1 6
+MKN 2009 10 14 06 31 00 -999 -9 -9 -9 -9 -9 6.78 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 923-99 ... 1 1 1 6
+MKN 2009 10 27 09 45 00 -999 -9 -9 -9 -9 -9 6.77 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 853-99 ... 1 1 1 6
+MKN 2009 10 27 09 45 00 -999 -9 -9 -9 -9 -9 6.76 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 854-99 ... 1 1 1 6
+MKN 2009 11 05 09 30 00 -999 -9 -9 -9 -9 -9 7.01 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3757-99 ... 1 1 1 6
+MKN 2009 11 05 09 30 00 -999 -9 -9 -9 -9 -9 6.9 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3758-99 ... 1 1 1 6
+MKN 2009 11 10 08 10 00 -999 -9 -9 -9 -9 -9 6.95 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4388-99 ... 1 1 1 6
+MKN 2009 11 10 08 10 00 -999 -9 -9 -9 -9 -9 6.91 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4700-99 ... 1 1 1 6
+MKN 2009 11 25 06 50 00 -999 -9 -9 -9 -9 -9 6.81 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3044-99 ... 1 1 1 6
+MKN 2009 11 25 06 50 00 -999 -9 -9 -9 -9 -9 6.87 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4911-99 ... 1 1 1 6
+MKN 2009 12 15 05 45 00 -999 -9 -9 -9 -9 -9 6.93 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3295-99 ... 1 1 1 6
+MKN 2009 12 15 05 45 00 -999 -9 -9 -9 -9 -9 6.96 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 542-99 ... 1 1 1 6
+MKN 2009 12 29 12 34 56 -999 -9 -9 -9 -9 -9 6.92 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1601-99 ... 1 1 1 6
+MKN 2009 12 29 12 34 56 -999 -9 -9 -9 -9 -9 6.95 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4708-99 ... 1 1 1 6
+MKN 2010 01 07 09 17 00 -999 -9 -9 -9 -9 -9 6.97 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2602-99 ... 1 1 1 6
+MKN 2010 01 07 09 17 00 -999 -9 -9 -9 -9 -9 6.95 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 273-99 ... 1 1 1 6
+MKN 2010 01 23 06 05 00 -999 -9 -9 -9 -9 -9 6.95 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1816-99 ... 1 1 1 6
+MKN 2010 01 23 06 05 00 -999 -9 -9 -9 -9 -9 6.94 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3877-99 ... 1 1 1 6
+MKN 2010 02 04 08 00 00 -999 -9 -9 -9 -9 -9 6.96 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4183-99 ... 1 1 1 6
+MKN 2010 02 04 08 00 00 -999 -9 -9 -9 -9 -9 6.9 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4984-99 ... 1 1 1 6
+MKN 2010 02 18 04 20 00 -999 -9 -9 -9 -9 -9 6.98 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1841-99 ... 1 1 1 6
+MKN 2010 02 18 04 20 00 -999 -9 -9 -9 -9 -9 7.01 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4308-99 ... 1 1 1 6
+MKN 2010 02 24 08 16 00 -999 -9 -9 -9 -9 -9 6.94 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3145-99 ... 1 1 1 6
+MKN 2010 02 24 08 16 00 -999 -9 -9 -9 -9 -9 6.87 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4672-99 ... 1 1 1 6
+MKN 2010 03 03 07 30 00 -999 -9 -9 -9 -9 -9 6.95 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4295-99 ... 1 1 1 6
+MKN 2010 03 03 07 30 00 -999 -9 -9 -9 -9 -9 31.59 -999.999 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4627-99 C.. 3 1 1 6
+MKN 2010 03 11 09 00 00 -999 -9 -9 -9 -9 -9 7.05 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1765-99 ... 1 1 1 6
+MKN 2010 03 11 09 00 00 -999 -9 -9 -9 -9 -9 6.94 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4094-99 ... 1 1 1 6
+MKN 2010 03 27 09 30 00 -999 -9 -9 -9 -9 -9 7.03 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3222-99 ... 1 1 1 6
+MKN 2010 03 27 09 30 00 -999 -9 -9 -9 -9 -9 7.03 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4776-99 ... 1 1 1 6
+MKN 2010 04 23 06 00 00 -999 -9 -9 -9 -9 -9 6.92 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1006-99 ... 1 1 1 6
+MKN 2010 04 23 06 00 00 -999 -9 -9 -9 -9 -9 6.92 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2653-99 ... 1 1 1 6
+MKN 2010 04 28 07 30 00 -999 -9 -9 -9 -9 -9 6.99 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1615-99 ... 1 1 1 6
+MKN 2010 05 04 07 10 00 -999 -9 -9 -9 -9 -9 7.01 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3545-99 ... 1 1 1 6
+MKN 2010 05 04 07 10 00 -999 -9 -9 -9 -9 -9 6.9 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4636-99 C.. 3 1 1 6
+MKN 2010 05 20 07 30 00 -999 -9 -9 -9 -9 -9 7.05 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4551-99 ... 1 1 1 6
+MKN 2010 05 20 07 30 00 -999 -9 -9 -9 -9 -9 7.1 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4817-99 ... 1 1 1 6
+MKN 2010 05 25 08 45 00 -999 -9 -9 -9 -9 -9 6.87 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3211-99 ... 1 1 1 6
+MKN 2010 05 25 08 45 00 -999 -9 -9 -9 -9 -9 6.87 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3212-99 ... 1 1 1 6
+MKN 2010 06 16 12 18 00 -999 -9 -9 -9 -9 -9 7.08 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3269-99 ... 1 1 1 6
+MKN 2010 06 16 12 18 00 -999 -9 -9 -9 -9 -9 7.06 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3270-99 ... 1 1 1 6
+MKN 2010 06 19 08 30 00 -999 -9 -9 -9 -9 -9 7.04 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4307-99 ... 1 1 1 6
+MKN 2010 06 19 08 30 00 -999 -9 -9 -9 -9 -9 7.07 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 527-99 ... 1 1 1 6
+MKN 2010 06 21 10 41 00 -999 -9 -9 -9 -9 -9 7.04 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 112-99 ... 1 1 1 6
+MKN 2010 06 21 10 41 00 -999 -9 -9 -9 -9 -9 6.98 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 937-99 ... 1 1 1 6
+MKN 2010 07 08 11 30 00 -999 -9 -9 -9 -9 -9 7.0 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2133-99 ... 1 1 1 6
+MKN 2010 07 08 11 30 00 -999 -9 -9 -9 -9 -9 7.08 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2134-99 ... 1 1 1 6
+MKN 2010 07 14 11 54 00 -999 -9 -9 -9 -9 -9 6.98 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 373-99 ... 1 1 1 6
+MKN 2010 07 14 11 54 00 -999 -9 -9 -9 -9 -9 6.98 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 374-99 ... 1 1 1 6
+MKN 2010 07 20 07 50 00 -999 -9 -9 -9 -9 -9 6.95 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4403-99 ... 1 1 1 6
+MKN 2010 07 20 07 50 00 -999 -9 -9 -9 -9 -9 6.9 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4635-99 ... 1 1 1 6
+MKN 2010 08 11 07 35 00 -999 -9 -9 -9 -9 -9 6.94 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1969-99 ... 1 1 1 6
+MKN 2010 08 11 07 35 00 -999 -9 -9 -9 -9 -9 7.0 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 236-99 ... 1 1 1 6
+MKN 2010 08 18 08 00 00 -999 -9 -9 -9 -9 -9 6.98 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1410-99 ... 1 1 1 6
+MKN 2010 08 18 08 00 00 -999 -9 -9 -9 -9 -9 6.93 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 26-99 ... 1 1 1 6
+MKN 2010 09 02 12 15 00 -999 -9 -9 -9 -9 -9 7.0 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 264-99 ... 1 1 1 6
+MKN 2010 09 02 12 15 00 -999 -9 -9 -9 -9 -9 7.01 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3893-99 ... 1 1 1 6
+MKN 2010 09 08 11 45 00 -999 -9 -9 -9 -9 -9 7.03 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1487-99 C.. 3 1 1 6
+MKN 2010 09 08 11 45 00 -999 -9 -9 -9 -9 -9 7.02 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 410-99 ... 1 1 1 6
+MKN 2010 09 22 11 05 00 -999 -9 -9 -9 -9 -9 7.05 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2064-99 ... 1 1 1 6
+MKN 2010 09 22 11 05 00 -999 -9 -9 -9 -9 -9 7.07 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 447-99 ... 1 1 1 6
+MKN 2010 09 28 08 50 00 -999 -9 -9 -9 -9 -9 7.05 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3172-99 ... 1 1 1 6
+MKN 2010 09 28 08 50 00 -999 -9 -9 -9 -9 -9 7.14 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 379-99 ... 1 1 1 6
+MKN 2010 10 07 07 55 00 -999 -9 -9 -9 -9 -9 7.08 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3171-99 ... 1 1 1 6
+MKN 2010 10 07 07 55 00 -999 -9 -9 -9 -9 -9 7.09 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 380-99 ... 1 1 1 6
+MKN 2010 10 13 08 20 00 -999 -9 -9 -9 -9 -9 7.11 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 18-99 ... 1 1 1 6
+MKN 2010 10 13 08 20 00 -999 -9 -9 -9 -9 -9 7.18 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4961-99 ... 1 1 1 6
+MKN 2010 10 29 09 00 00 -999 -9 -9 -9 -9 -9 7.03 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 17-99 ... 1 1 1 6
+MKN 2010 10 29 09 00 00 -999 -9 -9 -9 -9 -9 7.12 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4962-99 ... 1 1 1 6
+MKN 2010 11 05 01 20 00 -999 -9 -9 -9 -9 -9 7.09 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3425-99 ... 1 1 1 6
+MKN 2010 11 05 01 20 00 -999 -9 -9 -9 -9 -9 7.12 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3426-99 ... 1 1 1 6
+MKN 2010 11 09 10 09 00 -999 -9 -9 -9 -9 -9 7.13 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2527-99 ... 1 1 1 6
+MKN 2010 11 09 10 09 00 -999 -9 -9 -9 -9 -9 7.18 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2528-99 ... 1 1 1 6
+MKN 2010 11 18 09 20 00 -999 -9 -9 -9 -9 -9 7.17 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1267-99 ... 1 1 1 6
+MKN 2010 11 18 09 20 00 -999 -9 -9 -9 -9 -9 7.15 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4200-99 ... 1 1 1 6
+MKN 2010 12 03 09 20 00 -999 -9 -9 -9 -9 -9 7.18 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1268-99 ... 1 1 1 6
+MKN 2010 12 03 09 20 00 -999 -9 -9 -9 -9 -9 7.21 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4199-99 ... 1 1 1 6
+MKN 2010 12 22 09 20 00 -999 -9 -9 -9 -9 -9 7.26 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2559-99 ... 1 1 1 6
+MKN 2011 01 14 09 00 00 -999 -9 -9 -9 -9 -9 7.19 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1442-99 ... 1 1 1 6
+MKN 2011 01 14 09 00 00 -999 -9 -9 -9 -9 -9 7.19 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4150-99 ... 1 1 1 6
+MKN 2011 03 03 09 20 00 -999 -9 -9 -9 -9 -9 7.22 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 688-99 ... 1 1 1 6
+MKN 2011 03 03 09 20 00 -999 -9 -9 -9 -9 -9 7.18 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 887-99 ... 1 1 1 6
+MKN 2011 03 19 08 10 00 -999 -9 -9 -9 -9 -9 7.26 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1753-99 ... 1 1 1 6
+MKN 2011 03 19 08 10 00 -999 -9 -9 -9 -9 -9 7.27 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 507-99 ... 1 1 1 6
+MKN 2011 04 06 09 15 00 -999 -9 -9 -9 -9 -9 7.35 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 77-99 ... 1 1 1 6
+MKN 2011 04 06 09 15 00 -999 -9 -9 -9 -9 -9 7.31 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 930-99 ... 1 1 1 6
+MKN 2011 04 28 08 45 00 -999 -9 -9 -9 -9 -9 7.14 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 2504-99 ... 1 1 1 6
+MKN 2011 04 28 08 45 00 -999 -9 -9 -9 -9 -9 7.12 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3228-99 ... 1 1 1 6
+MKN 2011 05 06 09 41 00 -999 -9 -9 -9 -9 -9 7.25 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3108-99 ... 1 1 1 6
+MKN 2011 05 06 09 41 00 -999 -9 -9 -9 -9 -9 7.23 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 3777-99 ... 1 1 1 6
+MKN 2011 05 12 12 34 56 -999 -9 -9 -9 -9 -9 7.17 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1615-99 ... 1 1 1 6
+MKN 2011 05 12 12 34 56 -999 -9 -9 -9 -9 -9 7.18 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1799-99 ... 1 1 1 6
+MKN 2011 05 28 08 30 00 -999 -9 -9 -9 -9 -9 7.32 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1681-99 ... 1 1 1 6
+MKN 2011 05 28 08 30 00 -999 -9 -9 -9 -9 -9 7.3 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 6366-66 ... 1 1 1 6
+MKN 2011 06 09 08 00 00 -999 -9 -9 -9 -9 -9 7.37 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 4836-99 ... 1 1 1 6
+MKN 2011 06 09 08 00 00 -999 -9 -9 -9 -9 -9 7.4 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 508-99 ... 1 1 1 6
+MKN 2011 06 21 08 00 00 -999 -9 -9 -9 -9 -9 7.31 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 1697-99 ... 1 1 1 6
+MKN 2011 06 21 08 00 00 -999 -9 -9 -9 -9 -9 7.28 0.04 -9 -0.0622 37.2972 3649.0 3644.0 5.0 689-99 ... 1 1 1 6

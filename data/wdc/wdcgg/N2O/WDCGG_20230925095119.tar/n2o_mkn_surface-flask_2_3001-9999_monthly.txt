@@ -1,0 +1,276 @@
+# header_lines : 191
+# Data_Set_Name : n2o_mkn_surface-flask_2_3001-9999_monthly
+# Data_Set_Version : 0002-1005-1003-01-02-3001_2023-08-29-1126
+# Data_Set_Fair_Use : For Scientific purposes, access to these data is unlimited and provided without charge. By their use you accept that an offer of co-authorship will be made through personal contact with the contributors whenever substantial use is made of their data. In all cases, an acknowledgement must be made to the contributors and to the data centre when these data are used within a publication.
+# Data_Set_DOI : 10.15138/53g1-x417
+# Data_Set_Citation_Format : 
+#
+# GLOBAL ATTRIBUTES
+#
+# site_gaw_id : MKN
+# site_gaw_type : GAW Global
+# site_name : Mt. Kenya
+# site_country/territory : Kenya
+# site_wmo_region : REGION I (Africa)
+# site_address1 : 
+# site_address2 : 
+# site_address3 : 
+# site_latitude : -0.0621999986
+# site_longitude : 37.2971992493
+# site_elevation : 3678
+# site_elevation_unit : m
+# site_lst2utc : UTC+03:00
+# site_climate_zone : Cfb
+# site_climate_zone:comment : Warm temperate climate, fully humid, warm summer
+# dataset_creation_date : 2023-09-04
+# dataset_parameter : n2o
+# dataset_parameter_large_class : Greenhouse Gas
+# dataset_parameter_small_class : 
+# dataset_parameter_name_1 : N2O
+# dataset_parameter_name_2 : dinitrogen monoxide
+# dataset_parameter_name_3 : nitrous oxide
+# dataset_parameter_name_4 : 
+# dataset_parameter_name_5 : 
+# dataset_project : surface-flask
+# dataset_platform : fixed station
+# dataset_selection : All monthly data
+# dataset_selection_tag : monthly
+# dataset_time_zone : UTC
+# dataset_start_date : 2003-12-01T00:00:00Z
+# dataset_end_date : 2011-06-01T00:00:00Z
+# dataset_statistic_code : 1
+# dataset_statistic : contributor
+# dataset_description : Atmospheric N2O Dry Air Mole Fractions from the NOAA GML Carbon Cycle Cooperative Global Air Sampling Network, 1997-2022
+# dataset_description : 
+# dataset_description : These data are provided by NOAA. Principal investigators include Xin Lan (NOAA). Key partners include Josiah Kariuki (KMD) AND Kenya Meteological Service (KMS).
+# dataset_description : 
+# dataset_description : Please cite the product's citation when using data from this dataset : Lan, X., J.W. Mund, A.M. Crotwell, M.J. Crotwell, E. Moglia,  M. Madronich, D. Neff and K.W. Thoning (2023), Atmospheric Nitrous Oxide Dry Air Mole Fractions from the NOAA GML Carbon Cycle Cooperative Global Air Sampling Network, 1997-2022, Version: 2023-08-28, https://doi.org/10.15138/53g1-x417
+# dataset_aim_of_observation_code : 1
+# dataset_aim_of_observation : Background observation
+# dataset_buffer_code : 3001
+# dataset_buffer : ccgg
+# dataset_buffer:comment : NOAA Carbon Cycle Greenhouse Gases
+# dataset_footnote_code : 9999
+# dataset_footnote : default
+# dataset_footnote:comment : default
+# dataset_processing : Value_unc is estimated uncertainty of the reported measurement value.
+# dataset_processing : For measurements using gas chromatography, aliquots of gas from ambient air samples and a cylinder of reference gas are alternately injected into a gas chromatograph (GC) with a sampling valve.  Nitrous oxide (N2O) is separated from other sample components using packed columns and detected with an electron capture detector (ECD). The response of the ECD to N2O is calibrated off-line about monthly relative to the reference with a suite of gas standards. Each aliquot of sample is measured relative to the same reference, and N2O values are calculated from the response function. N2O measurements are reported in units of nanomol/mol (10^-9 mol N2O per mol of dry air (nmol/mol) or parts per billion (ppb)).
+# dataset_processing : In August, 2019, we replaced the GC/ECD method for N2O measurement with a Tunable Infrared Laser Direct Absorption Spectroscopy (TILDAS) method. The analyzer is calibrated off-line once per month With a suite of standards relative to a dry, natural air, reference in a high-pressure cylinder.  All air samples are measured relative the same reference, and CH4 and CO2 values in measured samples are calculated based on their ratio to the reference.  Repeatability of the analyzer, based on repeated analysis of air from a high-pressure cylinder, ranges from ~0.2 to 0.4 ppb for the GC to 0.01 to 0.02 ppb for the TILDAS analyzer (1 sigma). The scale propagation uncertainty is estimated to be 0.12 ppb, based on the reproducibility determined for scale propagation in our calibration laboratory. Long-term reproducibility is estimated to be +/- 0.1 ppb based on repeated measurements of air from a high-pressure cylinder, or the long-term variability in the differences between measurements of test flasks on the flask-air analysis system and separate measurements of the test gas used to fill the test flasks. These three components of uncertainty are added in quadrature to calculate the measurement uncertainty.
+# dataset_processing : The absolute accuracy of our standard scale is estimated as +/-0.4 nmol/mol in the ambient atmospheric range of N2O (95% confidence interval).
+# dataset_hr_mean_processing : 
+# dataset_da_mean_processing : 
+# dataset_mo_mean_processing : Monthly means are produced for each site by first averaging all valid measurement results in the event file with a unique sample date and time.  Values are then extracted at weekly intervals from a smooth curve (Thoning et al., 1989) fitted to the averaged data and these weekly values are averaged for each month to give the monthly means recorded in the files.  Flagged data are excluded from the curve fitting process.  Some sites are excluded from the monthly mean directory because sparse data or a short record does not allow a reasonable curve fit.  Also, if there are 3 or more consecutive months without data, monthly means are not calculated for these months.
+# dataset_transition_flag : 0
+# dataset_transition_comment : Dataset was made from entire historical data provided from contributor from 2018 new WDCGG website open onward
+# dataset_reference_total_listed : 1
+# dataset_reference_1_name : Lan, X., J.W. Mund, A.M. Crotwell, M.J. Crotwell, E. Moglia,  M. Madronich, D. Neff and K.W. Thoning (2023), Atmospheric Nitrous Oxide Dry Air Mole Fractions from the NOAA GML Carbon Cycle Cooperative Global Air Sampling Network, 1997-2022, Version: 2023-08-28, https://doi.org/10.15138/53g1-x417
+# contributor_organization_code : 2
+# contributor_acronym : NOAA
+# contributor_name : Global Monitoring Laboratory, NOAA
+# contributor_address1 : NOAA/ESRL
+# contributor_address2 : R/GML1
+# contributor_address3 : 325 Broadway Boulder, CO 80305-3328
+# contributor_country/territory : United States of America
+# contributor_url : https://gml.noaa.gov/
+# contact_total_listed : 1
+# contact_1_name : Xin Lan
+# contact_1_address1 : NOAA GML
+# contact_1_address2 : 325 Broadway R/GML-1
+# contact_1_address3 : Boulder, CO 80305-3328
+# contact_1_country/territory : United States of America
+# contact_1_organization : Global Monitoring Laboratory, NOAA
+# contact_1_organization_acronym : NOAA
+# contact_1_organization_url : https://gml.noaa.gov/
+# contact_1_email : xin.lan@noaa.gov
+# contact_1_tel : 
+# contact_1_fax : 
+# collaborator_total_listed : 1
+# collaborator_1_organization_code : 40
+# collaborator_1_acronym : KMD
+# collaborator_1_name : Kenya Meteorological Department
+# collaborator_1_address1 : Kenyan Meteorological Department Kenya Meteorological Department
+# collaborator_1_address2 : KMD
+# collaborator_1_address3 : Dagoretti Corner P.O. Box 30259 00100 Nairobi
+# collaborator_1_country/territory : Kenya
+# collaborator_1_url : 
+# collaborator_1_person_total_listed : 1
+# collaborator_1_person_1_name : Josiah Kariuki
+# collaborator_1_person_1_address1 : Kenya Meteorological Department Global Atmosphere Watch
+# collaborator_1_person_1_address2 : P.O. Box 30259
+# collaborator_1_person_1_address3 : 00100 Nairobi  Kenya
+# collaborator_1_person_1_country/territory : Kenya
+# collaborator_1_person_1_email : kmurageh@yahoo.co.uk
+# collaborator_1_person_1_tel : 254 20 576957
+# collaborator_1_person_1_fax : 
+# ORG_QCflag_description : This is the NOAA 3-character quality control flag.  Column 1 is the REJECTION flag. An alphanumeric other than a period (.) in the FIRST column indicates a sample with obvious problems during collection or analysis. This measurement should not be interpreted. Column 2 is the SELECTION flag. An alphanumeric other than a period (.) in the SECOND column indicates a sample that is likely valid but does not meet selection criteria determined by the goals of a particular investigation. For example, it might not have been obtained during 'background' conditions.  Column 3 is the INFORMATION flag. An alphanumeric other than a period (.) in the THIRD column provides additional information about the collection or analysis of the sample. A P in the 3rd column of the QC flag indicates the measurement result is preliminary and has not yet been carefully examined by the PI.  The P flag is removed once the quality of the measurement has been determined.
+# intake_height_total_listed : See data part
+# instrument_total_listed : 1
+# instrument_1 : Unknown
+# instrument_1_measurement_method_type_code : 1
+# instrument_1_measurement_method_name : Gas chromatography (ECD)
+# instrument_1_start_date : 2003-12-01T00:00:00Z
+# instrument_1_end_date : 2011-06-01T00:00:00Z
+# scale_total_listed : 1
+# scale_1_code : 5
+# scale_1_name : WMO N2O X2006A
+# scale_1_start_date : 2003-12-01T00:00:00Z
+# scale_1_end_date : 2011-06-01T00:00:00Z
+# observation_status_code : 1
+# observation_status : Operational/Reporting
+# measurement_calibration : 
+# sampling_frequency_code : 2
+# sampling_frequency : weekly
+#
+# VARIABLE ATTRIBUTES
+#
+# site_gaw_id:long_name : unique_station/mobile_identifiers.
+# site_gaw_id:comment : 3-letter site identification code as defined by GAWSIS for stationary platforms
+# time_components:_FillValue : -999 or -9
+# time_components:long_name : integer_components_of_UTC_date/time
+# time_components:order : year, month, day, hour, minute, second
+# time_components:comment : Air sample collection time (UTC) represented as a 6-element array [year, month, day, hour, minute, second]. Calendar time components as integers.
+# value:_FillValue : -999.999
+# value:units : ppb
+# value:long_name : measured_mole_fraction_of_trace_gas_in_dry_air
+# value:comment : Reported mole fraction, isotope ratio or radioactivity. Units depend on trace gas species.
+# value_unc:_FillValue : -999.999
+# value_unc:units : ppb
+# value_unc:long_name : estimated_uncertainty_in_reported_value
+# value_unc:comment : Standard deviation of the reported mean value when nvalue is greater than 1. Units depend on trace gas species.
+# nvalue:_FillValue : -9
+# nvalue:long_name : number_of_measurements_contributing_to_reported_value
+# nvalue:comment : Number of individual measurements used to compute reported values.
+# latitude:_FillValue : -999.999999999
+# latitude:standard_name : latitude
+# latitude:long_name : sample_latitude_in_decimal_degrees
+# latitude:units : degrees_north
+# latitude:comment : Latitude of sampling location in decimal degrees (north: +; south: -)
+# longitude:_FillValue : -999.999999999
+# longitude:standard_name : longitude
+# longitude:long_name : sample_longitude_in_decimal_degrees
+# longitude:units : degrees_east
+# longitude:comment : Longitude of sampling location in decimal degrees (east: +; west: -)
+# altitude:_FillValue : -999.999
+# altitude:standard_name : altitude
+# altitude:long_name : sample_altitude_in_meters_above_sea_level
+# altitude:units : m
+# altitude:comment : Altitude (elevation + intake height) of air sample collection. Units are meters above sea level (masl).
+# elevation:_FillValue : -999.999
+# elevation:standard_name : elevation
+# elevation:long_name : surface_elevation_in_meters_above_sea_level
+# elevation:units : m
+# elevation:comment : Station height (m) above sea level
+# intake_height:_FillValue : -999.999
+# intake_height:long_name : sample_intake_height_in_meters_above_ground_level
+# intake_height:units : m
+# intake_height:comment : Sampling height (depth) of air (seawater) above ground (below sea level) (height: +; depth: -) (m)
+# flask_no:_FillValue : -999.999
+# flask_no:long_name : sample_flask_no
+# flask_no:comment : Identification code (or number) of flask used for observation
+# ORG_QCflag:_FillValue : -999.999
+# ORG_QCflag:long_name : original_quality_control_flag
+# ORG_QCflag:comment : Details of original data quality control flags should be specified by contributors in metadata.
+# QCflag:_FillValue : -9
+# QCflag:long_name : quality_control_flag
+# QCflag:comment : 1 Valid (background) data considered "background"
+# QCflag:comment : 2 Valid data considered valid other than "background," or all valid data without categorization
+# QCflag:comment : 3 Invalid data considered unfit for use (questionable/erroneous/absent data)
+# QCflag:comment : Details of correspondence between original data quality control flags and WDCGG data flags should be specified by contributors in metadata.
+# instrument:_FillValue : -9
+# instrument:long_name : instrument_ID_to_detect_atmospheric_parameter
+# instrument:comment : A numeric field that identifies the instrument.
+# measurement_method:_FillValue : -9
+# measurement_method:long_name : measurement_method_history
+# measurement_method:comment : A numeric field that identifies the measurement method.
+# scale:_FillValue : -9
+# scale:long_name : calibration_scale_history
+# scale:comment : A numeric field that identifies the calibration scale. Measurements are relative to reported calibration scale.
+#
+# VARIABLE ORDER
+#
+# site_gaw_id year month day hour minute second year month day hour minute second value value_unc nvalue latitude longitude altitude elevation intake_height flask_no ORG_QCflag QCflag instrument measurement_method scale
+MKN 2003 12 01 00 00 00 -999 -9 -9 -9 -9 -9 319.19 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 01 01 00 00 00 -999 -9 -9 -9 -9 -9 319.26 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 02 01 00 00 00 -999 -9 -9 -9 -9 -9 319.20 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 03 01 00 00 00 -999 -9 -9 -9 -9 -9 319.04 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 04 01 00 00 00 -999 -9 -9 -9 -9 -9 318.84 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 05 01 00 00 00 -999 -9 -9 -9 -9 -9 318.61 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 06 01 00 00 00 -999 -9 -9 -9 -9 -9 318.40 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 07 01 00 00 00 -999 -9 -9 -9 -9 -9 318.45 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 08 01 00 00 00 -999 -9 -9 -9 -9 -9 318.68 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 09 01 00 00 00 -999 -9 -9 -9 -9 -9 318.84 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2004 10 01 00 00 00 -999 -9 -9 -9 -9 -9 319.01 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 02 01 00 00 00 -999 -9 -9 -9 -9 -9 319.37 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 03 01 00 00 00 -999 -9 -9 -9 -9 -9 319.51 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 04 01 00 00 00 -999 -9 -9 -9 -9 -9 319.51 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 05 01 00 00 00 -999 -9 -9 -9 -9 -9 319.44 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 06 01 00 00 00 -999 -9 -9 -9 -9 -9 319.55 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 07 01 00 00 00 -999 -9 -9 -9 -9 -9 319.61 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 08 01 00 00 00 -999 -9 -9 -9 -9 -9 319.43 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2005 12 01 00 00 00 -999 -9 -9 -9 -9 -9 320.44 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 01 01 00 00 00 -999 -9 -9 -9 -9 -9 320.55 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 02 01 00 00 00 -999 -9 -9 -9 -9 -9 320.69 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 03 01 00 00 00 -999 -9 -9 -9 -9 -9 320.65 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 04 01 00 00 00 -999 -9 -9 -9 -9 -9 320.43 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 05 01 00 00 00 -999 -9 -9 -9 -9 -9 320.29 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 06 01 00 00 00 -999 -9 -9 -9 -9 -9 320.30 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 07 01 00 00 00 -999 -9 -9 -9 -9 -9 320.27 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 08 01 00 00 00 -999 -9 -9 -9 -9 -9 320.25 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 09 01 00 00 00 -999 -9 -9 -9 -9 -9 320.37 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 10 01 00 00 00 -999 -9 -9 -9 -9 -9 320.64 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 11 01 00 00 00 -999 -9 -9 -9 -9 -9 320.99 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2006 12 01 00 00 00 -999 -9 -9 -9 -9 -9 321.28 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 01 01 00 00 00 -999 -9 -9 -9 -9 -9 321.43 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 02 01 00 00 00 -999 -9 -9 -9 -9 -9 321.39 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 03 01 00 00 00 -999 -9 -9 -9 -9 -9 321.25 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 04 01 00 00 00 -999 -9 -9 -9 -9 -9 321.11 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 05 01 00 00 00 -999 -9 -9 -9 -9 -9 321.02 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 06 01 00 00 00 -999 -9 -9 -9 -9 -9 320.97 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 07 01 00 00 00 -999 -9 -9 -9 -9 -9 320.95 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 08 01 00 00 00 -999 -9 -9 -9 -9 -9 320.96 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 09 01 00 00 00 -999 -9 -9 -9 -9 -9 321.06 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 10 01 00 00 00 -999 -9 -9 -9 -9 -9 321.32 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 11 01 00 00 00 -999 -9 -9 -9 -9 -9 321.68 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2007 12 01 00 00 00 -999 -9 -9 -9 -9 -9 321.97 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 01 01 00 00 00 -999 -9 -9 -9 -9 -9 322.13 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 02 01 00 00 00 -999 -9 -9 -9 -9 -9 322.10 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 03 01 00 00 00 -999 -9 -9 -9 -9 -9 321.96 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 04 01 00 00 00 -999 -9 -9 -9 -9 -9 321.82 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 05 01 00 00 00 -999 -9 -9 -9 -9 -9 321.72 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 06 01 00 00 00 -999 -9 -9 -9 -9 -9 321.68 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 07 01 00 00 00 -999 -9 -9 -9 -9 -9 321.67 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 08 01 00 00 00 -999 -9 -9 -9 -9 -9 321.67 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 09 01 00 00 00 -999 -9 -9 -9 -9 -9 321.66 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 10 01 00 00 00 -999 -9 -9 -9 -9 -9 321.80 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 11 01 00 00 00 -999 -9 -9 -9 -9 -9 322.17 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2008 12 01 00 00 00 -999 -9 -9 -9 -9 -9 322.75 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 01 01 00 00 00 -999 -9 -9 -9 -9 -9 323.15 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 02 01 00 00 00 -999 -9 -9 -9 -9 -9 323.17 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 03 01 00 00 00 -999 -9 -9 -9 -9 -9 323.05 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 04 01 00 00 00 -999 -9 -9 -9 -9 -9 322.91 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 05 01 00 00 00 -999 -9 -9 -9 -9 -9 322.66 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 06 01 00 00 00 -999 -9 -9 -9 -9 -9 322.35 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 07 01 00 00 00 -999 -9 -9 -9 -9 -9 322.30 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 08 01 00 00 00 -999 -9 -9 -9 -9 -9 322.46 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 09 01 00 00 00 -999 -9 -9 -9 -9 -9 322.74 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 10 01 00 00 00 -999 -9 -9 -9 -9 -9 323.07 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 11 01 00 00 00 -999 -9 -9 -9 -9 -9 323.36 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2009 12 01 00 00 00 -999 -9 -9 -9 -9 -9 323.54 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 01 01 00 00 00 -999 -9 -9 -9 -9 -9 323.51 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 02 01 00 00 00 -999 -9 -9 -9 -9 -9 323.48 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 03 01 00 00 00 -999 -9 -9 -9 -9 -9 323.54 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 04 01 00 00 00 -999 -9 -9 -9 -9 -9 323.35 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 05 01 00 00 00 -999 -9 -9 -9 -9 -9 323.05 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 06 01 00 00 00 -999 -9 -9 -9 -9 -9 323.16 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 07 01 00 00 00 -999 -9 -9 -9 -9 -9 323.48 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 08 01 00 00 00 -999 -9 -9 -9 -9 -9 323.40 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 09 01 00 00 00 -999 -9 -9 -9 -9 -9 323.27 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 10 01 00 00 00 -999 -9 -9 -9 -9 -9 323.54 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 11 01 00 00 00 -999 -9 -9 -9 -9 -9 324.06 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2010 12 01 00 00 00 -999 -9 -9 -9 -9 -9 324.48 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2011 01 01 00 00 00 -999 -9 -9 -9 -9 -9 324.63 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2011 02 01 00 00 00 -999 -9 -9 -9 -9 -9 324.58 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2011 03 01 00 00 00 -999 -9 -9 -9 -9 -9 324.46 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2011 04 01 00 00 00 -999 -9 -9 -9 -9 -9 324.40 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2011 05 01 00 00 00 -999 -9 -9 -9 -9 -9 324.37 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
+MKN 2011 06 01 00 00 00 -999 -9 -9 -9 -9 -9 324.32 -999.999 -9 -0.0621999986 37.2971992493 -999.999 3678 -999.999 -999.999 -999.999 1 -9 -9 5
