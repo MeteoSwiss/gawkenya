@@ -163,3 +163,7 @@ cython_debug/
 secrets*
 secrets-jretrieve
 secrets-kplc
+
+
+#private files
+LB_tests.ipynb

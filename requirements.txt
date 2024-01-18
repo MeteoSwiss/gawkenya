@@ -3,4 +3,5 @@ Pandas
 Polars
 PyYaml
 requests
-shutil
+#shutil #this is a standard python library
+ipykernel
