@@ -15,13 +15,12 @@ class Thermo:
 
     def __init__(self, log: str='thermo.log'):
         try:
-            if os.path.exists(os.path.dirname(log)):
-                filename = log
-            else:
-                filepath = os.makedirs(os.path.dirname(log), exist_ok=True)
-                filename = os.path.join(filepath, os.path.basename(log))
+            if log != "thermo.log":
+                os.makedirs(os.path.dirname(log), exist_ok=True)
             logger = logging.getLogger(__name__)
-            logging.basicConfig(filename=filename, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            logger = logging.getLogger(__name__)
+            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
             logger.info("Class 'Thermo' initialized successfully.")
 
             self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
