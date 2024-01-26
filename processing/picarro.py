@@ -11,6 +11,9 @@ import re
 import shutil
 import zipfile
 
+from housekeeping import organize_files
+
+
 # %%
 class G2401:
 
@@ -30,7 +33,7 @@ class G2401:
             logger.error("Error initializing class 'G2401'.", err)
 
 
-    def extract_g2401_to_dataframe(self, file: str, dtm="dtm", log=True) -> tuple([pl.DataFrame, str, str]):
+    def extract_g2401_to_dataframe(self, file: str, dtm="dtm", log=True) -> tuple([pl.DataFrame, str]):
         """
         Extract a Picarro G2401 DataLog_User_Sync file into a Polars dataframe.
 
@@ -44,11 +47,8 @@ class G2401:
         Returns:
             pl.DataFrame: DataFrame with DateTime and source columns added to data
             str: Errors encountered
-            str: File type
         """
-        file_type = "DataLog_User_Sync" if bool(re.search("DataLog_User_Sync", file)) else "unknown"
-
-        if bool(re.search(file_type, file)):
+        if bool(re.search("DataLog_User_Sync", file)):
             if log:
                 logger.info(f"Extracting file {file}.")
 
@@ -63,21 +63,23 @@ class G2401:
                 df = pl.read_csv(io.StringIO(source), has_header=True, separator=",", dtypes=self.dtypes["DataLog_User_Sync"])
                 df = df.with_columns(pl.lit(file).alias('source'),
                                      pl.format("{} {}", "DATE", "TIME").str.to_datetime(time_zone="UTC").alias(dtm))
-
-                return df, None, file_type
+                return df, None
 
             except Exception as err:
                 logger.error(err)
-                return pl.DataFrame(), str(err), None
+                return pl.DataFrame(), str(err)
+        else:
+            return pl.DataFrame(), f"{file}: File type unknown."
+        
 
-
-    def compile_g2401_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
+    def compile_g2401_to_parquet(self, source: str, target: str, year: str=None, by_month: bool=True, dtm="dtm", archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile G2401 DataLog_User_Sync files found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
-            source (str): Root path to directory to process. <base> will be appended to path. Sub-directories will also be considered.
-            target (str): Root path to directory where .parquet files will be stored.  <base> will be appended to path.
-            base (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
+            source (str): Root path to directory to process. <year> will be appended to path. Sub-directories will also be considered.
+            target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
+            year (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
+            by_month (bool, optional): Should .parquet files be generated per month? Defaults to True. NB: Yearly files risk to become too large for normal git!
             dtm (str): Name of dateTime column.
             archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
             issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
@@ -86,53 +88,66 @@ class G2401:
         Returns:
             Nothing
         """
-        source = os.path.join(source, base)
-        target = os.path.join(target, base)
-        os.makedirs(target, exist_ok=True)
-        if archive:
-            archive = os.path.join(archive, base)
+        def __process_tree(source, target, archive, issues, month):
+            result = pl.DataFrame()
+            errors = dict()
+            base = os.path.join(source, month)
+            if os.path.exists(base):
+                for root, dirs, files in os.walk(base):
+                    for file in files:
+                        if verbose:
+                            print(f"Processing {file} ...")
+                        src = os.path.join(root, file)
+                        df, err = self.extract_g2401_to_dataframe(src, log=log)
+                        if err:
+                            errors.update({file: err})
+                            if issues:
+                                dst = os.path.join(issues, month)
+                                os.makedirs(dst, exist_ok=True)
+                                shutil.move(src=src, dst=os.path.join(dst, file))
+                        else:
+                            try:
+                                result = pl.concat([result, df], how='diagonal')
+                                if archive:
+                                    dst = os.path.join(archive, month)
+                                    os.makedirs(dst, exist_ok=True)
+                                    shutil.move(src=src, dst=os.path.join(dst, file))
+                                    # print(f"archive: {src} > {dst}")
+                            except Exception as err:
+                                errors.update({file: err})
+                                pass
 
-        result = pl.DataFrame()
-        errors = dict()
+                # store result as parquet file
+                dst = os.path.join(target, month)
+                os.makedirs(dst, exist_ok=True)
+                if not result.is_empty():
+                    result = result.unique()
+                    result = result.sort(dtm)
+                    result.write_parquet(os.path.join(dst, "g2401.parquet"))
+
+                # write errors to json file
+                with open(os.path.join(dst, "g2401.errors.json"), "w") as fh:
+                    json.dump(errors, fh)
+
+            return None
+        
+        source = os.path.join(source, year)
+        target = os.path.join(target, year)
+        if issues:
+            issues = os.path.join(issues, year)
+        if archive:
+            archive = os.path.join(archive, year)
         
         try:
             # process files
             if verbose:
                 print(f"Processing source {source} ...")
-            for root, dirs, files in os.walk(source):
-                n = (len(source) - len(root) + 1)
-                relative_path = root[n:] if n < 0 else ""
-                for file in files:
-                    if verbose:
-                        print(f"Processing {file} ...")
-                    src = os.path.join(root, file)
-                    tmp, err, file_type = self.extract_g2401_to_dataframe(src, log=log)
-                    if err:
-                        errors.update({file: err})
-                        if issues:
-                            dst = os.path.join(issues, relative_path)
-                            os.makedirs(dst, exist_ok=True)
-                            shutil.move(src=src, dst=os.path.join(dst, file))
-                            print(f"issue: {src} > {dst}")
-                    elif archive:
-                        dst = os.path.join(archive, relative_path)
-                        os.makedirs(dst, exist_ok=True)
-                        shutil.move(src=src, dst=os.path.join(dst, file))
-                        # print(f"archive: {src} > {dst}")
-                    result = pl.concat([result, tmp], how='diagonal')
-
-            # remove duplicates, sort data
-            result = result.unique()
-            result = result.sort(dtm)
-
-            # store result as parquet file
-            result.write_parquet(os.path.join(target, f"{file_type}.parquet"))
-
-            # write errors to json file
-            with open(os.path.join(target, f"{file_type}.errors.json"), "w") as fh:
-                json.dump(errors, fh)
-
-            # return result, errors
+            if by_month:
+                months = ["{:02d}".format(mm) for mm in range(1, 13, 1)]
+                for month in months:
+                    __process_tree(source, target, archive, issues, month)                    
+            else:
+                __process_tree(source, target, archive, issues, month=None)
             return None
 
         except Exception as err:
@@ -197,6 +212,16 @@ class G2401:
             plt.show()
         except Exception as err:
             print(err)
+
+
+    def unarchive_files(self):
+        """Helper function to unarchive files"""
+        instr = "g2401"
+        source = f"/product_data/data/pay/Kenya/MKN/incoming/{instr}"
+        archive = f"/product_data/data/pay/Kenya/MKN/archive/{instr}"
+        for year in ["2020", "2021", "2022", "2023", "2024"]:
+            if os.path.exists(os.path.join(archive, year)):
+                n = organize_files.move_files(source=os.path.join(archive, year), target=source, pattern="CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip")
 
 
 if __name__ == "__main__":
