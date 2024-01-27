@@ -1,6 +1,6 @@
 matplotlib
+nappy
 Pandas
 Polars
 PyYaml
 requests
-shutil
