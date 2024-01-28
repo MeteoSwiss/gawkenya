@@ -1,6 +1,28 @@
 # gawkenya
 Support an end-to-end data chain from instrument to raw data to clean data to products for GAW Kenya.
 
+# setup
+## Install pyenv
+1. Follow directions under https://realpython.com/intro-to-pyenv/, basically
+   $ curl https://pyenv.run | bash
+   $ pyenv install -v 3.11
+2. Verify with 
+   $ pyenv versions, which should show something like
+    * system (set by /home/zue/users/jkl/.pyenv/version)
+      3.11.7
+3. Test installation (NB: this will take some time) with
+   $ pyenv global 3.11.7
+   $ python -m test
+4. Create virtual environment with
+   $ pyenv virtualenv 3.11.7 gawkenya
+5. Activate the environment
+   $ pyenv local gawkenya
+6. Install requirements (NB: path depends on your local git)
+   $ pyenv exec pip install -r "/home/zue/users/jkl/Public/git/gawkenya/requirements.txt"
+
+## Install nappy (needed for AMES files only)
+There is a bug in the original distribution that prevents a normal pip install. Workaround: Forked the original repo, commented out line 17 in /utils/common_utils.py. Then, the following worked without errors
+1. $ pip install git+https://github.com/joergklausen/nappy.git
 
 from Sarina:
 # About

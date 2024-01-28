@@ -1,5 +1,6 @@
 matplotlib
 nappy
+numpy
 Pandas
 Polars
 PyYaml
