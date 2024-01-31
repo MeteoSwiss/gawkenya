@@ -1,7 +1,9 @@
 matplotlib
+ipympl
 nappy
 numpy
 Pandas
 Polars
+pyod
 PyYaml
 requests
