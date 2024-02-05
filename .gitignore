@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.nappy-env
 
 # Spyder project settings
 .spyderproject
@@ -167,3 +168,6 @@ secrets-kplc
 
 #private files
 LB_tests.ipynb
+
+#output files
+analyses_level2/output
