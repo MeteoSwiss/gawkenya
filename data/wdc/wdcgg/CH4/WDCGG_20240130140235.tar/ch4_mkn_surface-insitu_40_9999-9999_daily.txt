@@ -1,0 +1,1334 @@
+# header_lines : 238
+# Data_Set_Name : ch4_mkn_surface-insitu_40_9999-9999_daily
+# Data_Set_Version : 0040-1005-1002-01-01-9999_2023-08-10-1309
+# Data_Set_Fair_Use : For Scientific purposes, access to these data is unlimited and provided without charge. By their use you accept that an offer of co-authorship will be made through personal contact with the contributors whenever substantial use is made of their data. In all cases, an acknowledgement must be made to the contributors and to the data centre when these data are used within a publication.
+# Data_Set_DOI : 10.50849/WDCGG_0040-1005-1002-01-01-9999
+# Data_Set_Citation_Format : Martin Steinbacher (Empa), Jörg Klausen (MeteoSwiss), Christoph Zellweger (Empa), David Murithi Njiru (KMD), Mathew Mutuku (KMD), Atmospheric CH4 at Mt. Kenya by Kenya Meteorological Department, dataset published as CH4_MKN_surface-insitu_KMD_data1 at WDCGG, ver.2023-08-10-1309, https://doi.org/10.50849/WDCGG_0040-1005-1002-01-01-9999 (Reference date*: YYYY/MM/DD)
+# Data_Set_Citation_Format : * As the reference date, please indicate the date you downloaded the files.
+#
+# GLOBAL ATTRIBUTES
+#
+# site_gaw_id : MKN
+# site_gaw_type : GAW Global
+# site_name : Mt. Kenya
+# site_country/territory : Kenya
+# site_wmo_region : REGION I (Africa)
+# site_address1 : 
+# site_address2 : 
+# site_address3 : 
+# site_latitude : -0.0621999986
+# site_longitude : 37.2971992493
+# site_elevation : 3678
+# site_elevation_unit : m
+# site_lst2utc : UTC+03:00
+# site_climate_zone : Cfb
+# site_climate_zone:comment : Warm temperate climate, fully humid, warm summer
+# dataset_creation_date : 2023-08-15
+# dataset_parameter : ch4
+# dataset_parameter_large_class : Greenhouse Gas
+# dataset_parameter_small_class : 
+# dataset_parameter_name_1 : CH4
+# dataset_parameter_name_2 : methane
+# dataset_parameter_name_3 : 
+# dataset_parameter_name_4 : 
+# dataset_parameter_name_5 : 
+# dataset_project : surface-insitu
+# dataset_platform : fixed station
+# dataset_selection : All daily data
+# dataset_selection_tag : daily
+# dataset_time_zone : UTC
+# dataset_start_date : 2020-01-01T00:00:00Z
+# dataset_end_date : 2022-12-31T00:00:00Z
+# dataset_statistic_code : 1
+# dataset_statistic : contributor
+# dataset_description : The MKN station is situated on the north-western slope of Mt. Kenya at an altitude of 3680 m a.s.l. and is surrounded by alpine grassland and brushes. As part of the Mt.Kenya National Park the whole mountain area is protected and there are no local anthropogenic emissions, making the site suitable for continuous observations of the background free tropospheric composition. The closest human settlement with rather low emission sources is situated 17 km in north-westerly direction.
+# dataset_description : Occasionally, bush fires in the vicinity lead to high particle and trace gas concentrations, in particular for carbon monoxide (like in early 2006 and early 2022). This data is still part of the data files.
+# dataset_description : Inlet at 10 m above ground; tubing material: Dekabon/Synflex 1/4" OD; total inlet length approx. 12m; flow rate into lab: 5 lpm; sample is dried with a Nafion dryer. 
+# dataset_aim_of_observation_code : 1
+# dataset_aim_of_observation : Background observation
+# dataset_buffer_code : 9999
+# dataset_buffer : data1
+# dataset_buffer:comment : default
+# dataset_footnote_code : 9999
+# dataset_footnote : default
+# dataset_footnote:comment : default
+# dataset_processing : Observations are performed with a commercially available instrument (Picarro Inc. G2401) based on the Wavelength-Scanned Cavity Ringdown Spectroscopy technique coupled to a custom-built calibration unit.
+# dataset_processing : Sample was dried prior to analysis by means of a Nafion dryer. For the determination of dry air mole fractions, interference of the remaining water was eliminated by applying an experimentally determined correction.
+# dataset_processing : value_unc gives the standard deviation of the hourly means (based on 1-min data), of the daily means (based on hourly data), and monthly means (based on daily data), in accordance with the WDCGG data submission manual.
+# dataset_processing : Quality assurance procedures involve time series plots, target tank (i.e. cylinders containing natural air with assigned trace gas mole fractions that are treated as (unknown) sample in a sequence of analyses) measurements, and consistency checks.
+# dataset_hr_mean_processing : high-resolution data are aggregated to 1min averages before hourly averages are calculated. Thus, nvalue (the number of observations) refers to the number of available 1min averages within the respective hour. A minimum of 20 1-min averages needs to be available to calculate hourly averages; otherwise, hourly data are reported as not available. 
+# dataset_da_mean_processing : hourly averages are aggregated to daily means. Thus, nvalue (the number of observations) refers to the number of available hourly averages within the respective day. A minimum of 8 hourly averages needs to be available to calculate daily averages; otherwise, daily data are reported as not available. 
+# dataset_mo_mean_processing : daily data are aggregated to monthly means. Thus, nvalue (the number of observations) refers to the number of available daily averages within the respective month. A minimum of 10 daily averages needs to be available to calculate monthly averages; otherwise, monthly data are reported as not available.
+# dataset_transition_flag : 0
+# dataset_transition_comment : Dataset was made from entire historical data provided from contributor from 2018 new WDCGG website open onward
+# dataset_reference_total_listed : 1
+# dataset_reference_1_name : Henne, S., Junkermann, W., Kariuki, J. M., Aseyo, J., & Klausen, J. (2008). Mount Kenya Global Atmosphere Watch Station (MKN): Installation and Meteorological Characterization, Journal of Applied Meteorology and Climatology, 47(11), 2946-2962. DOI: 10.1175/2008JAMC1834.1
+# contributor_organization_code : 40
+# contributor_acronym : KMD
+# contributor_name : Kenya Meteorological Department
+# contributor_address1 : Kenyan Meteorological Department Kenya Meteorological Department
+# contributor_address2 : KMD
+# contributor_address3 : Dagoretti Corner P.O. Box 30259 00100 Nairobi
+# contributor_country/territory : Kenya
+# contributor_url : 
+# contact_total_listed : 5
+# contact_1_name : Martin Steinbacher
+# contact_1_address1 : Ueberlandstrasse 129
+# contact_1_address2 : CH-8600 Duebendorf
+# contact_1_address3 :  Switzerland
+# contact_1_country/territory : Switzerland
+# contact_1_organization : Swiss Federal Laboratories for Materials Science and Technology
+# contact_1_organization_acronym : Empa
+# contact_1_organization_url : http://www.empa.ch/gaw
+# contact_1_email : martin.steinbacher@empa.ch
+# contact_1_tel : +41 58 765 4048
+# contact_1_fax : 
+# contact_2_name : Jörg Klausen
+# contact_2_address1 : 
+# contact_2_address2 : 
+# contact_2_address3 : 8058 ZH,Zürich-Flughafen Operation Center 1, Switzerland
+# contact_2_country/territory : Switzerland
+# contact_2_organization : Federal Office of Meteorology and Climatology MeteoSwiss
+# contact_2_organization_acronym : MeteoSwiss
+# contact_2_organization_url : https://www.meteoswiss.ch
+# contact_2_email : joerg.klausen@meteoswiss.ch
+# contact_2_tel : +41 58 460 92 23
+# contact_2_fax : 
+# contact_3_name : Christoph Zellweger
+# contact_3_address1 : Ueberlandstrasse 129
+# contact_3_address2 : CH-8600 Duebendorf
+# contact_3_address3 : 
+# contact_3_country/territory : Switzerland
+# contact_3_organization : Swiss Federal Laboratories for Materials Science and Technology
+# contact_3_organization_acronym : Empa
+# contact_3_organization_url : http://www.empa.ch/gaw
+# contact_3_email : christoph.zellweger@empa.ch
+# contact_3_tel : +41 58 765 4328
+# contact_3_fax : +41 58 765 1122
+# contact_4_name : David Murithi Njiru
+# contact_4_address1 : Kenya Meteorological Department MT KENYA GAW STATION 
+# contact_4_address2 : P.O. Box 192 10400 NANYUKI Kenya
+# contact_4_address3 : 
+# contact_4_country/territory : Kenya
+# contact_4_organization : Kenya Meteorological Department
+# contact_4_organization_acronym : KMD
+# contact_4_organization_url : 
+# contact_4_email : njimdv@gmail.com
+# contact_4_tel : +254 721 218 207
+# contact_4_fax : 
+# contact_5_name : Mathew Mutuku
+# contact_5_address1 : 
+# contact_5_address2 : 
+# contact_5_address3 : 
+# contact_5_country/territory : Kenya
+# contact_5_organization : Kenya Meteorological Department
+# contact_5_organization_acronym : KMD
+# contact_5_organization_url : 
+# contact_5_email : mathewmutuku38@gmail.com
+# contact_5_tel : 
+# contact_5_fax : 
+# collaborator_total_listed : 2
+# collaborator_1_organization_code : 23
+# collaborator_1_acronym : Empa
+# collaborator_1_name : Swiss Federal Laboratories for Materials Science and Technology
+# collaborator_1_address1 : Überlandstrasse 129
+# collaborator_1_address2 : 8600 Dübendorf
+# collaborator_1_address3 : Switzerland
+# collaborator_1_country/territory : Switzerland
+# collaborator_1_url : http://www.empa.ch/gaw
+# collaborator_2_organization_code : 127
+# collaborator_2_acronym : MeteoSwiss
+# collaborator_2_name : Federal Office of Meteorology and Climatology MeteoSwiss
+# collaborator_2_address1 : Operation Center 1 
+# collaborator_2_address2 : CH-8058 Zurich-Airport
+# collaborator_2_address3 : 
+# collaborator_2_country/territory : Switzerland
+# collaborator_2_url : https://www.meteoswiss.ch
+# ORG_QCflag_description : Only valid measurements are reported. No additional flag is provided. Regional pollution events are not filtered. Occasionally, bush fires in the vicinity lead to high particle and trace gas concentrations, in particular for carbon monoxide (like in early 2006 and early 2022). This data is still part of the data files.
+# intake_height_total_listed : 1
+# intake_height_1 : 10
+# intake_height_1_units : m
+# intake_height_1_start_date : 2019-12-14T23:59:59Z
+# intake_height_1_end_date : 2022-12-31T00:00:00Z
+# instrument_total_listed : 1
+# instrument_1 : Picarro, Inc., G2401 (SN: CFKADS2320)
+# instrument_1_measurement_method_type_code : 18
+# instrument_1_measurement_method_name : CRDS
+# instrument_1_start_date : 2019-12-14T23:59:59Z
+# instrument_1_end_date : 2022-12-31T00:00:00Z
+# scale_total_listed : 1
+# scale_1_code : 3
+# scale_1_name : WMO CH4 X2004A
+# scale_1_start_date : 2020-01-01T00:00:00Z
+# scale_1_end_date : 2022-12-31T00:00:00Z
+# observation_status_code : 1
+# observation_status : Operational/Reporting
+# measurement_calibration : For the CRDS instrument (2020 and onwards):
+# measurement_calibration : measurements are calibrated about once a week with three reference gases, purchased from the GAW Central Calibration Laboratory at NOAA. A forth reference tank is measured every second day to account for short-term sensitivity changes. A fifth reference tank is measured about three times per week for quality control, i.e. as target tank which is treated as unknown in the same way as the ambient air data. 
+# sampling_frequency_code : 14
+# sampling_frequency : 5 seconds
+#
+# VARIABLE ATTRIBUTES
+#
+# site_gaw_id:long_name : unique_station/mobile_identifiers.
+# site_gaw_id:comment : 3-letter site identification code as defined by GAWSIS for stationary platforms
+# time_components:_FillValue : -999 or -9
+# time_components:long_name : integer_components_of_UTC_date/time
+# time_components:order : year, month, day, hour, minute, second
+# time_components:comment : Air sample collection time (UTC) represented as a 6-element array [year, month, day, hour, minute, second]. Calendar time components as integers.
+# value:_FillValue : -999.999
+# value:units : ppb
+# value:long_name : measured_mole_fraction_of_trace_gas_in_dry_air
+# value:comment : Reported mole fraction, isotope ratio or radioactivity. Units depend on trace gas species.
+# value_unc:_FillValue : -999.999
+# value_unc:units : ppb
+# value_unc:long_name : estimated_uncertainty_in_reported_value
+# value_unc:comment : Standard deviation of the reported mean value when nvalue is greater than 1. Units depend on trace gas species.
+# nvalue:_FillValue : -9
+# nvalue:long_name : number_of_measurements_contributing_to_reported_value
+# nvalue:comment : Number of individual measurements used to compute reported values.
+# latitude:_FillValue : -999.999999999
+# latitude:standard_name : latitude
+# latitude:long_name : sample_latitude_in_decimal_degrees
+# latitude:units : degrees_north
+# latitude:comment : Latitude of sampling location in decimal degrees (north: +; south: -)
+# longitude:_FillValue : -999.999999999
+# longitude:standard_name : longitude
+# longitude:long_name : sample_longitude_in_decimal_degrees
+# longitude:units : degrees_east
+# longitude:comment : Longitude of sampling location in decimal degrees (east: +; west: -)
+# altitude:_FillValue : -999.999
+# altitude:standard_name : altitude
+# altitude:long_name : sample_altitude_in_meters_above_sea_level
+# altitude:units : m
+# altitude:comment : Altitude (elevation + intake height) of air sample collection. Units are meters above sea level (masl).
+# elevation:_FillValue : -999.999
+# elevation:standard_name : elevation
+# elevation:long_name : surface_elevation_in_meters_above_sea_level
+# elevation:units : m
+# elevation:comment : Station height (m) above sea level
+# intake_height:_FillValue : -999.999
+# intake_height:long_name : sample_intake_height_in_meters_above_ground_level
+# intake_height:units : m
+# intake_height:comment : Sampling height (depth) of air (seawater) above ground (below sea level) (height: +; depth: -) (m)
+# flask_no:_FillValue : -999.999
+# flask_no:long_name : sample_flask_no
+# flask_no:comment : Identification code (or number) of flask used for observation
+# ORG_QCflag:_FillValue : -999.999
+# ORG_QCflag:long_name : original_quality_control_flag
+# ORG_QCflag:comment : Details of original data quality control flags should be specified by contributors in metadata.
+# QCflag:_FillValue : -9
+# QCflag:long_name : quality_control_flag
+# QCflag:comment : 1 Valid (background) data considered "background"
+# QCflag:comment : 2 Valid data considered valid other than "background," or all valid data without categorization
+# QCflag:comment : 3 Invalid data considered unfit for use (questionable/erroneous/absent data)
+# QCflag:comment : Details of correspondence between original data quality control flags and WDCGG data flags should be specified by contributors in metadata.
+# instrument:_FillValue : -9
+# instrument:long_name : instrument_ID_to_detect_atmospheric_parameter
+# instrument:comment : A numeric field that identifies the instrument.
+# measurement_method:_FillValue : -9
+# measurement_method:long_name : measurement_method_history
+# measurement_method:comment : A numeric field that identifies the measurement method.
+# scale:_FillValue : -9
+# scale:long_name : calibration_scale_history
+# scale:comment : A numeric field that identifies the calibration scale. Measurements are relative to reported calibration scale.
+#
+# VARIABLE ORDER
+#
+# site_gaw_id year month day hour minute second year month day hour minute second value value_unc nvalue latitude longitude altitude elevation intake_height flask_no ORG_QCflag QCflag instrument measurement_method scale
+MKN 2020 01 01 00 00 00 -999 -9 -9 -9 -9 -9 1891.22 3.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 02 00 00 00 -999 -9 -9 -9 -9 -9 1894.84 4.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 03 00 00 00 -999 -9 -9 -9 -9 -9 1891.26 4.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 04 00 00 00 -999 -9 -9 -9 -9 -9 1898.28 4.58 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 05 00 00 00 -999 -9 -9 -9 -9 -9 1896.48 3.65 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 06 00 00 00 -999 -9 -9 -9 -9 -9 1899.25 4.65 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 07 00 00 00 -999 -9 -9 -9 -9 -9 1892.02 2.51 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 08 00 00 00 -999 -9 -9 -9 -9 -9 1899.51 6.77 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 09 00 00 00 -999 -9 -9 -9 -9 -9 1899.35 6.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 10 00 00 00 -999 -9 -9 -9 -9 -9 1892.01 6.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 11 00 00 00 -999 -9 -9 -9 -9 -9 1891.26 4.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 12 00 00 00 -999 -9 -9 -9 -9 -9 1896.85 3.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 13 00 00 00 -999 -9 -9 -9 -9 -9 1895.56 3.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 14 00 00 00 -999 -9 -9 -9 -9 -9 1898.9 9.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 15 00 00 00 -999 -9 -9 -9 -9 -9 1903.71 6.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 16 00 00 00 -999 -9 -9 -9 -9 -9 1907.98 5.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 17 00 00 00 -999 -9 -9 -9 -9 -9 1919.86 5.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 18 00 00 00 -999 -9 -9 -9 -9 -9 1915.21 11.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 19 00 00 00 -999 -9 -9 -9 -9 -9 1922.71 9.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 20 00 00 00 -999 -9 -9 -9 -9 -9 1925.82 5.46 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 21 00 00 00 -999 -9 -9 -9 -9 -9 1913.44 6.6 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 22 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 23 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 26 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 01 29 00 00 00 -999 -9 -9 -9 -9 -9 1898.8 5.93 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 30 00 00 00 -999 -9 -9 -9 -9 -9 1899.44 7.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 01 31 00 00 00 -999 -9 -9 -9 -9 -9 1897.11 4.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 01 00 00 00 -999 -9 -9 -9 -9 -9 1902.82 3.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 02 00 00 00 -999 -9 -9 -9 -9 -9 1897.13 9.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 03 00 00 00 -999 -9 -9 -9 -9 -9 1894.2 8.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 04 00 00 00 -999 -9 -9 -9 -9 -9 1900.57 6.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 05 00 00 00 -999 -9 -9 -9 -9 -9 1901.16 8.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 06 00 00 00 -999 -9 -9 -9 -9 -9 1897.37 5.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 07 00 00 00 -999 -9 -9 -9 -9 -9 1892.19 7.81 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 08 00 00 00 -999 -9 -9 -9 -9 -9 1887.7 10.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 09 00 00 00 -999 -9 -9 -9 -9 -9 1881.55 9.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 10 00 00 00 -999 -9 -9 -9 -9 -9 1879.16 6.26 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 02 12 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 02 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 02 14 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 02 15 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 02 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 02 17 00 00 00 -999 -9 -9 -9 -9 -9 1885.62 7.94 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 18 00 00 00 -999 -9 -9 -9 -9 -9 1888.7 6.47 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 19 00 00 00 -999 -9 -9 -9 -9 -9 1888.56 6.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 20 00 00 00 -999 -9 -9 -9 -9 -9 1889.6 5.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 21 00 00 00 -999 -9 -9 -9 -9 -9 1895.32 4.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 22 00 00 00 -999 -9 -9 -9 -9 -9 1894.83 2.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 23 00 00 00 -999 -9 -9 -9 -9 -9 1893.91 8.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 24 00 00 00 -999 -9 -9 -9 -9 -9 1883.6 5.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 25 00 00 00 -999 -9 -9 -9 -9 -9 1887.86 2.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 26 00 00 00 -999 -9 -9 -9 -9 -9 1888.55 3 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 27 00 00 00 -999 -9 -9 -9 -9 -9 1892.73 3.16 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 28 00 00 00 -999 -9 -9 -9 -9 -9 1886.8 5.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 02 29 00 00 00 -999 -9 -9 -9 -9 -9 1890.5 3.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 01 00 00 00 -999 -9 -9 -9 -9 -9 1895.49 2.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 02 00 00 00 -999 -9 -9 -9 -9 -9 1894.29 1.95 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 03 00 00 00 -999 -9 -9 -9 -9 -9 1891.08 3.35 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 04 00 00 00 -999 -9 -9 -9 -9 -9 1889.41 2.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 05 00 00 00 -999 -9 -9 -9 -9 -9 1884.06 3.81 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 06 00 00 00 -999 -9 -9 -9 -9 -9 1890.84 2.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 07 00 00 00 -999 -9 -9 -9 -9 -9 1893.06 3.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 08 00 00 00 -999 -9 -9 -9 -9 -9 1892.61 2.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 09 00 00 00 -999 -9 -9 -9 -9 -9 1889.67 2.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 10 00 00 00 -999 -9 -9 -9 -9 -9 1889.42 3.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 11 00 00 00 -999 -9 -9 -9 -9 -9 1892.28 3.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 12 00 00 00 -999 -9 -9 -9 -9 -9 1892.95 6.05 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 13 00 00 00 -999 -9 -9 -9 -9 -9 1886.61 5.65 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 14 00 00 00 -999 -9 -9 -9 -9 -9 1881.73 7.84 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 15 00 00 00 -999 -9 -9 -9 -9 -9 1890.57 4.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 16 00 00 00 -999 -9 -9 -9 -9 -9 1886.22 3.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 17 00 00 00 -999 -9 -9 -9 -9 -9 1883.38 3.77 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 18 00 00 00 -999 -9 -9 -9 -9 -9 1875.72 5.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 19 00 00 00 -999 -9 -9 -9 -9 -9 1875.35 4.77 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 20 00 00 00 -999 -9 -9 -9 -9 -9 1874.98 4.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 21 00 00 00 -999 -9 -9 -9 -9 -9 1872.64 4.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 22 00 00 00 -999 -9 -9 -9 -9 -9 1869.11 7.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 23 00 00 00 -999 -9 -9 -9 -9 -9 1864.48 5.12 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 24 00 00 00 -999 -9 -9 -9 -9 -9 1867.49 4.34 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 03 26 00 00 00 -999 -9 -9 -9 -9 -9 1870.11 2.3 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 27 00 00 00 -999 -9 -9 -9 -9 -9 1884.59 3.23 11 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 28 00 00 00 -999 -9 -9 -9 -9 -9 1885.99 4.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 29 00 00 00 -999 -9 -9 -9 -9 -9 1886.04 3.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 30 00 00 00 -999 -9 -9 -9 -9 -9 1882.19 3.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 03 31 00 00 00 -999 -9 -9 -9 -9 -9 1881.85 2.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 01 00 00 00 -999 -9 -9 -9 -9 -9 1880.6 3.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 02 00 00 00 -999 -9 -9 -9 -9 -9 1884.17 2.81 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 03 00 00 00 -999 -9 -9 -9 -9 -9 1884.98 4.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 04 00 00 00 -999 -9 -9 -9 -9 -9 1884.75 4.72 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 05 00 00 00 -999 -9 -9 -9 -9 -9 1881.79 2.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 06 00 00 00 -999 -9 -9 -9 -9 -9 1877.49 3.56 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 07 00 00 00 -999 -9 -9 -9 -9 -9 1876.16 5.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 08 00 00 00 -999 -9 -9 -9 -9 -9 1880.69 3.72 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 09 00 00 00 -999 -9 -9 -9 -9 -9 1875.1 6.14 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 10 00 00 00 -999 -9 -9 -9 -9 -9 1863.94 4.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 11 00 00 00 -999 -9 -9 -9 -9 -9 1857.86 5.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 12 00 00 00 -999 -9 -9 -9 -9 -9 1856.16 4.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 13 00 00 00 -999 -9 -9 -9 -9 -9 1857.41 3.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 14 00 00 00 -999 -9 -9 -9 -9 -9 1866.35 6.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 15 00 00 00 -999 -9 -9 -9 -9 -9 1870.22 1.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 16 00 00 00 -999 -9 -9 -9 -9 -9 1877.81 2.78 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 17 00 00 00 -999 -9 -9 -9 -9 -9 1872.88 4.94 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 18 00 00 00 -999 -9 -9 -9 -9 -9 1867.86 1.71 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 19 00 00 00 -999 -9 -9 -9 -9 -9 1874.13 3.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 20 00 00 00 -999 -9 -9 -9 -9 -9 1879.24 5.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 21 00 00 00 -999 -9 -9 -9 -9 -9 1888.07 4.84 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 22 00 00 00 -999 -9 -9 -9 -9 -9 1883.88 2.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 23 00 00 00 -999 -9 -9 -9 -9 -9 1884.96 9.45 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 24 00 00 00 -999 -9 -9 -9 -9 -9 1894.68 2.75 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 25 00 00 00 -999 -9 -9 -9 -9 -9 1894.39 3.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 26 00 00 00 -999 -9 -9 -9 -9 -9 1875.28 5.39 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 27 00 00 00 -999 -9 -9 -9 -9 -9 1862.54 5.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 28 00 00 00 -999 -9 -9 -9 -9 -9 1849.59 3.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 29 00 00 00 -999 -9 -9 -9 -9 -9 1846.55 3.28 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 04 30 00 00 00 -999 -9 -9 -9 -9 -9 1848.8 1.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 01 00 00 00 -999 -9 -9 -9 -9 -9 1850.54 3.55 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 02 00 00 00 -999 -9 -9 -9 -9 -9 1849.61 2.56 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 03 00 00 00 -999 -9 -9 -9 -9 -9 1850.15 3.29 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 04 00 00 00 -999 -9 -9 -9 -9 -9 1856.17 3.37 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 05 00 00 00 -999 -9 -9 -9 -9 -9 1855.85 3.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 06 00 00 00 -999 -9 -9 -9 -9 -9 1858.53 6.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 07 00 00 00 -999 -9 -9 -9 -9 -9 1852.36 4.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 08 00 00 00 -999 -9 -9 -9 -9 -9 1849.55 2.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 12 00 00 00 -999 -9 -9 -9 -9 -9 1865.23 3.32 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 14 00 00 00 -999 -9 -9 -9 -9 -9 1882.04 4.4 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 15 00 00 00 -999 -9 -9 -9 -9 -9 1875.64 6.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 16 00 00 00 -999 -9 -9 -9 -9 -9 1858.5 7.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 17 00 00 00 -999 -9 -9 -9 -9 -9 1843.71 3.79 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 18 00 00 00 -999 -9 -9 -9 -9 -9 1853.04 11.86 9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 19 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 20 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 21 00 00 00 -999 -9 -9 -9 -9 -9 1853.13 6.87 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 22 00 00 00 -999 -9 -9 -9 -9 -9 1855.35 5.35 9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 23 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 05 26 00 00 00 -999 -9 -9 -9 -9 -9 1885.48 3.5 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 27 00 00 00 -999 -9 -9 -9 -9 -9 1883.94 2.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 28 00 00 00 -999 -9 -9 -9 -9 -9 1883.15 2.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 29 00 00 00 -999 -9 -9 -9 -9 -9 1875.49 4.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 30 00 00 00 -999 -9 -9 -9 -9 -9 1874.55 5.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 05 31 00 00 00 -999 -9 -9 -9 -9 -9 1884.03 5.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1894.04 5.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 02 00 00 00 -999 -9 -9 -9 -9 -9 1890.32 2.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 03 00 00 00 -999 -9 -9 -9 -9 -9 1889.76 4.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 04 00 00 00 -999 -9 -9 -9 -9 -9 1890.19 6.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 05 00 00 00 -999 -9 -9 -9 -9 -9 1879.57 9.08 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 06 00 00 00 -999 -9 -9 -9 -9 -9 1870.83 2.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 07 00 00 00 -999 -9 -9 -9 -9 -9 1869.63 2.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 08 00 00 00 -999 -9 -9 -9 -9 -9 1871.07 3.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 09 00 00 00 -999 -9 -9 -9 -9 -9 1878.08 3.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 10 00 00 00 -999 -9 -9 -9 -9 -9 1885.2 9.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 11 00 00 00 -999 -9 -9 -9 -9 -9 1896.44 7.86 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 12 00 00 00 -999 -9 -9 -9 -9 -9 1894.07 5.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 13 00 00 00 -999 -9 -9 -9 -9 -9 1896.03 4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 14 00 00 00 -999 -9 -9 -9 -9 -9 1899.88 6.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 15 00 00 00 -999 -9 -9 -9 -9 -9 1896.17 4.11 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 06 17 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 06 18 00 00 00 -999 -9 -9 -9 -9 -9 1904.4 4.25 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 19 00 00 00 -999 -9 -9 -9 -9 -9 1895.22 2.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 20 00 00 00 -999 -9 -9 -9 -9 -9 1892.99 3.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 21 00 00 00 -999 -9 -9 -9 -9 -9 1892.17 4.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 22 00 00 00 -999 -9 -9 -9 -9 -9 1895.8 4.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 23 00 00 00 -999 -9 -9 -9 -9 -9 1899.23 3.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 24 00 00 00 -999 -9 -9 -9 -9 -9 1891.11 8.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 25 00 00 00 -999 -9 -9 -9 -9 -9 1885.77 5.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 26 00 00 00 -999 -9 -9 -9 -9 -9 1879.76 1.35 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 06 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 06 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 06 29 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 06 30 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1891.44 1.93 9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 02 00 00 00 -999 -9 -9 -9 -9 -9 1891.65 2.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 03 00 00 00 -999 -9 -9 -9 -9 -9 1894.67 6.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 04 00 00 00 -999 -9 -9 -9 -9 -9 1892.08 8.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 05 00 00 00 -999 -9 -9 -9 -9 -9 1882.9 7.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 06 00 00 00 -999 -9 -9 -9 -9 -9 1883.95 4.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 07 00 00 00 -999 -9 -9 -9 -9 -9 1882.38 3.32 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 08 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 10 00 00 00 -999 -9 -9 -9 -9 -9 1860.8 4.69 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 11 00 00 00 -999 -9 -9 -9 -9 -9 1863.71 9.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 12 00 00 00 -999 -9 -9 -9 -9 -9 1878.08 6.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 13 00 00 00 -999 -9 -9 -9 -9 -9 1882.82 2.98 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 14 00 00 00 -999 -9 -9 -9 -9 -9 1888.88 5.16 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 15 00 00 00 -999 -9 -9 -9 -9 -9 1891.58 6.33 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 16 00 00 00 -999 -9 -9 -9 -9 -9 1885.05 6.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 17 00 00 00 -999 -9 -9 -9 -9 -9 1889.21 3.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 18 00 00 00 -999 -9 -9 -9 -9 -9 1888.29 2.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 19 00 00 00 -999 -9 -9 -9 -9 -9 1893.12 2.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 20 00 00 00 -999 -9 -9 -9 -9 -9 1893.13 3.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 21 00 00 00 -999 -9 -9 -9 -9 -9 1889.89 2.02 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 22 00 00 00 -999 -9 -9 -9 -9 -9 1907.11 6.94 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 23 00 00 00 -999 -9 -9 -9 -9 -9 1897.57 4.9 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 26 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 29 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 07 30 00 00 00 -999 -9 -9 -9 -9 -9 1877.56 3.63 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 07 31 00 00 00 -999 -9 -9 -9 -9 -9 1871.02 6.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 01 00 00 00 -999 -9 -9 -9 -9 -9 1867.93 6.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 02 00 00 00 -999 -9 -9 -9 -9 -9 1870.83 3.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 03 00 00 00 -999 -9 -9 -9 -9 -9 1872.7 3.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 04 00 00 00 -999 -9 -9 -9 -9 -9 1878.58 3.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 05 00 00 00 -999 -9 -9 -9 -9 -9 1888.6 4.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 06 00 00 00 -999 -9 -9 -9 -9 -9 1881.87 3.32 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 07 00 00 00 -999 -9 -9 -9 -9 -9 1881.84 2.27 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 08 00 00 00 -999 -9 -9 -9 -9 -9 1882.51 6.35 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 09 00 00 00 -999 -9 -9 -9 -9 -9 1887.2 3.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 10 00 00 00 -999 -9 -9 -9 -9 -9 1892.24 5.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 11 00 00 00 -999 -9 -9 -9 -9 -9 1891.08 10.51 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 12 00 00 00 -999 -9 -9 -9 -9 -9 1894.81 4.34 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 13 00 00 00 -999 -9 -9 -9 -9 -9 1906.24 6.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 14 00 00 00 -999 -9 -9 -9 -9 -9 1894.74 6.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 15 00 00 00 -999 -9 -9 -9 -9 -9 1894.21 4.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 16 00 00 00 -999 -9 -9 -9 -9 -9 1892.48 11.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 17 00 00 00 -999 -9 -9 -9 -9 -9 1882.19 7.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 18 00 00 00 -999 -9 -9 -9 -9 -9 1886.05 4.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 19 00 00 00 -999 -9 -9 -9 -9 -9 1900.17 12.32 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 20 00 00 00 -999 -9 -9 -9 -9 -9 1896.56 6.95 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 21 00 00 00 -999 -9 -9 -9 -9 -9 1891.47 5.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 22 00 00 00 -999 -9 -9 -9 -9 -9 1894.75 9.99 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 23 00 00 00 -999 -9 -9 -9 -9 -9 1900.31 7.39 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 24 00 00 00 -999 -9 -9 -9 -9 -9 1884.13 8.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 25 00 00 00 -999 -9 -9 -9 -9 -9 1875.63 8.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 26 00 00 00 -999 -9 -9 -9 -9 -9 1866.61 8.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 27 00 00 00 -999 -9 -9 -9 -9 -9 1866.35 12.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 28 00 00 00 -999 -9 -9 -9 -9 -9 1874.2 4.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 29 00 00 00 -999 -9 -9 -9 -9 -9 1870.23 3.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 30 00 00 00 -999 -9 -9 -9 -9 -9 1869.98 3.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 08 31 00 00 00 -999 -9 -9 -9 -9 -9 1869.48 2.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 01 00 00 00 -999 -9 -9 -9 -9 -9 1867.85 2.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 02 00 00 00 -999 -9 -9 -9 -9 -9 1871.59 3.12 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 03 00 00 00 -999 -9 -9 -9 -9 -9 1872.81 3.56 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 04 00 00 00 -999 -9 -9 -9 -9 -9 1875.72 5.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 05 00 00 00 -999 -9 -9 -9 -9 -9 1890.34 9.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 06 00 00 00 -999 -9 -9 -9 -9 -9 1901.28 6.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 07 00 00 00 -999 -9 -9 -9 -9 -9 1901.04 4.85 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 08 00 00 00 -999 -9 -9 -9 -9 -9 1903.37 8.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 09 00 00 00 -999 -9 -9 -9 -9 -9 1898 4.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 10 00 00 00 -999 -9 -9 -9 -9 -9 1894.67 3.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 11 00 00 00 -999 -9 -9 -9 -9 -9 1887.83 6.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 12 00 00 00 -999 -9 -9 -9 -9 -9 1880.43 2.34 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 13 00 00 00 -999 -9 -9 -9 -9 -9 1880.08 4.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 14 00 00 00 -999 -9 -9 -9 -9 -9 1875.11 3.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 15 00 00 00 -999 -9 -9 -9 -9 -9 1869.21 5.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 16 00 00 00 -999 -9 -9 -9 -9 -9 1867.23 4.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 17 00 00 00 -999 -9 -9 -9 -9 -9 1867.32 3.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 18 00 00 00 -999 -9 -9 -9 -9 -9 1873.12 2.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 19 00 00 00 -999 -9 -9 -9 -9 -9 1878.78 2.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 20 00 00 00 -999 -9 -9 -9 -9 -9 1881.82 5.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 21 00 00 00 -999 -9 -9 -9 -9 -9 1877.16 5.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 22 00 00 00 -999 -9 -9 -9 -9 -9 1871.29 11.22 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 23 00 00 00 -999 -9 -9 -9 -9 -9 1860.57 6 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 24 00 00 00 -999 -9 -9 -9 -9 -9 1859.35 3.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 25 00 00 00 -999 -9 -9 -9 -9 -9 1874.85 11.41 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 26 00 00 00 -999 -9 -9 -9 -9 -9 1906.42 7.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 27 00 00 00 -999 -9 -9 -9 -9 -9 1889.12 9.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 28 00 00 00 -999 -9 -9 -9 -9 -9 1897.46 9.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 29 00 00 00 -999 -9 -9 -9 -9 -9 1881.12 11.51 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 09 30 00 00 00 -999 -9 -9 -9 -9 -9 1865.26 7.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 01 00 00 00 -999 -9 -9 -9 -9 -9 1862.42 4.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 02 00 00 00 -999 -9 -9 -9 -9 -9 1860.03 6.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 03 00 00 00 -999 -9 -9 -9 -9 -9 1852.62 3.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 04 00 00 00 -999 -9 -9 -9 -9 -9 1852.66 3.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 05 00 00 00 -999 -9 -9 -9 -9 -9 1855.13 3.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 06 00 00 00 -999 -9 -9 -9 -9 -9 1859.33 2.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 07 00 00 00 -999 -9 -9 -9 -9 -9 1867.53 8.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 08 00 00 00 -999 -9 -9 -9 -9 -9 1870.04 6.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 09 00 00 00 -999 -9 -9 -9 -9 -9 1867.46 11.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 10 00 00 00 -999 -9 -9 -9 -9 -9 1866.45 1.89 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 11 00 00 00 -999 -9 -9 -9 -9 -9 1861.08 2.79 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 12 00 00 00 -999 -9 -9 -9 -9 -9 1860.36 3.41 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 13 00 00 00 -999 -9 -9 -9 -9 -9 1857.25 5.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 14 00 00 00 -999 -9 -9 -9 -9 -9 1857.36 3.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 15 00 00 00 -999 -9 -9 -9 -9 -9 1863.19 2.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 16 00 00 00 -999 -9 -9 -9 -9 -9 1866.82 2.84 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 17 00 00 00 -999 -9 -9 -9 -9 -9 1867.31 2.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 18 00 00 00 -999 -9 -9 -9 -9 -9 1870.05 3.95 11 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 19 00 00 00 -999 -9 -9 -9 -9 -9 1873.31 2.95 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 20 00 00 00 -999 -9 -9 -9 -9 -9 1887.62 6.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 21 00 00 00 -999 -9 -9 -9 -9 -9 1883.11 7.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 22 00 00 00 -999 -9 -9 -9 -9 -9 1874.54 6.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 23 00 00 00 -999 -9 -9 -9 -9 -9 1863.38 4.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 24 00 00 00 -999 -9 -9 -9 -9 -9 1867.08 5.99 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 25 00 00 00 -999 -9 -9 -9 -9 -9 1889.84 10.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 26 00 00 00 -999 -9 -9 -9 -9 -9 1902.77 10.28 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 27 00 00 00 -999 -9 -9 -9 -9 -9 1884.8 7.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 28 00 00 00 -999 -9 -9 -9 -9 -9 1877.59 7.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 29 00 00 00 -999 -9 -9 -9 -9 -9 1866.43 6.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 30 00 00 00 -999 -9 -9 -9 -9 -9 1864.94 9.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 10 31 00 00 00 -999 -9 -9 -9 -9 -9 1861.14 2.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 01 00 00 00 -999 -9 -9 -9 -9 -9 1859.22 3.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 02 00 00 00 -999 -9 -9 -9 -9 -9 1859.3 6.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 03 00 00 00 -999 -9 -9 -9 -9 -9 1868.43 7.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 04 00 00 00 -999 -9 -9 -9 -9 -9 1879.89 6.53 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 05 00 00 00 -999 -9 -9 -9 -9 -9 1886.04 9.61 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 06 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 07 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 08 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 12 00 00 00 -999 -9 -9 -9 -9 -9 1950.81 3.79 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 13 00 00 00 -999 -9 -9 -9 -9 -9 1944.63 3.2 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 14 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 15 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 17 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 18 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 11 19 00 00 00 -999 -9 -9 -9 -9 -9 1949.62 3.59 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 20 00 00 00 -999 -9 -9 -9 -9 -9 1946.22 4.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 21 00 00 00 -999 -9 -9 -9 -9 -9 1944.85 5.77 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 22 00 00 00 -999 -9 -9 -9 -9 -9 1940.22 7.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 23 00 00 00 -999 -9 -9 -9 -9 -9 1923.1 20.62 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 24 00 00 00 -999 -9 -9 -9 -9 -9 1900.87 7.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 25 00 00 00 -999 -9 -9 -9 -9 -9 1890.72 10.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 26 00 00 00 -999 -9 -9 -9 -9 -9 1885.22 2.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 27 00 00 00 -999 -9 -9 -9 -9 -9 1891.07 6.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 28 00 00 00 -999 -9 -9 -9 -9 -9 1918.1 4.85 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 29 00 00 00 -999 -9 -9 -9 -9 -9 1924.77 1.87 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 11 30 00 00 00 -999 -9 -9 -9 -9 -9 1922.73 3.99 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 01 00 00 00 -999 -9 -9 -9 -9 -9 1923.84 2.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 02 00 00 00 -999 -9 -9 -9 -9 -9 1915.5 7.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 03 00 00 00 -999 -9 -9 -9 -9 -9 1920.78 10.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 04 00 00 00 -999 -9 -9 -9 -9 -9 1925.29 8.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 05 00 00 00 -999 -9 -9 -9 -9 -9 1924.02 9.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 06 00 00 00 -999 -9 -9 -9 -9 -9 1921.27 7.28 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 07 00 00 00 -999 -9 -9 -9 -9 -9 1907.36 12.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 08 00 00 00 -999 -9 -9 -9 -9 -9 1914.12 5.85 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 09 00 00 00 -999 -9 -9 -9 -9 -9 1916.62 2.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 10 00 00 00 -999 -9 -9 -9 -9 -9 1916.52 6.45 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 11 00 00 00 -999 -9 -9 -9 -9 -9 1910.86 11.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 12 00 00 00 -999 -9 -9 -9 -9 -9 1902.56 13.63 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 13 00 00 00 -999 -9 -9 -9 -9 -9 1913.66 11.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 14 00 00 00 -999 -9 -9 -9 -9 -9 1921.38 6.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 15 00 00 00 -999 -9 -9 -9 -9 -9 1924.8 7.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 16 00 00 00 -999 -9 -9 -9 -9 -9 1929.44 3.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 17 00 00 00 -999 -9 -9 -9 -9 -9 1925.89 6.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 18 00 00 00 -999 -9 -9 -9 -9 -9 1918.89 9.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 19 00 00 00 -999 -9 -9 -9 -9 -9 1921.18 8.81 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 20 00 00 00 -999 -9 -9 -9 -9 -9 1913.63 4.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 21 00 00 00 -999 -9 -9 -9 -9 -9 1907.57 4.7 11 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 22 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 12 23 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 12 24 00 00 00 -999 -9 -9 -9 -9 -9 1930.53 2.43 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 25 00 00 00 -999 -9 -9 -9 -9 -9 1925.7 1.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 26 00 00 00 -999 -9 -9 -9 -9 -9 1912.81 4.92 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2020 12 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 12 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 12 29 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 12 30 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2020 12 31 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 01 01 00 00 00 -999 -9 -9 -9 -9 -9 1925.33 4.85 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 02 00 00 00 -999 -9 -9 -9 -9 -9 1918.12 3.53 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 03 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 01 04 00 00 00 -999 -9 -9 -9 -9 -9 1908.02 5.65 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 05 00 00 00 -999 -9 -9 -9 -9 -9 1920.88 4.41 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 06 00 00 00 -999 -9 -9 -9 -9 -9 1918.73 6.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 07 00 00 00 -999 -9 -9 -9 -9 -9 1920.95 12.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 08 00 00 00 -999 -9 -9 -9 -9 -9 1928.42 2.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 09 00 00 00 -999 -9 -9 -9 -9 -9 1928.02 1.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 10 00 00 00 -999 -9 -9 -9 -9 -9 1936.65 11.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 11 00 00 00 -999 -9 -9 -9 -9 -9 1942.95 6.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 12 00 00 00 -999 -9 -9 -9 -9 -9 1929.76 4.69 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 01 14 00 00 00 -999 -9 -9 -9 -9 -9 1933.02 11.37 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 15 00 00 00 -999 -9 -9 -9 -9 -9 1932.61 5.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 16 00 00 00 -999 -9 -9 -9 -9 -9 1934.35 4.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 17 00 00 00 -999 -9 -9 -9 -9 -9 1925.5 6.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 18 00 00 00 -999 -9 -9 -9 -9 -9 1930.23 5.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 19 00 00 00 -999 -9 -9 -9 -9 -9 1929.38 6.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 20 00 00 00 -999 -9 -9 -9 -9 -9 1919.59 5.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 21 00 00 00 -999 -9 -9 -9 -9 -9 1922.33 2.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 22 00 00 00 -999 -9 -9 -9 -9 -9 1921.58 2.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 23 00 00 00 -999 -9 -9 -9 -9 -9 1912.57 12.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 24 00 00 00 -999 -9 -9 -9 -9 -9 1911.26 7.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 25 00 00 00 -999 -9 -9 -9 -9 -9 1914.12 5.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 26 00 00 00 -999 -9 -9 -9 -9 -9 1904.57 6.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 27 00 00 00 -999 -9 -9 -9 -9 -9 1910.55 7.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 28 00 00 00 -999 -9 -9 -9 -9 -9 1917.41 8.14 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 29 00 00 00 -999 -9 -9 -9 -9 -9 1918.22 3.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 30 00 00 00 -999 -9 -9 -9 -9 -9 1914.21 8.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 01 31 00 00 00 -999 -9 -9 -9 -9 -9 1905.71 6.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 01 00 00 00 -999 -9 -9 -9 -9 -9 1904.46 10.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 02 00 00 00 -999 -9 -9 -9 -9 -9 1902.91 12.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 03 00 00 00 -999 -9 -9 -9 -9 -9 1906.87 7.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 04 00 00 00 -999 -9 -9 -9 -9 -9 1918.6 6.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 05 00 00 00 -999 -9 -9 -9 -9 -9 1922.37 6.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 06 00 00 00 -999 -9 -9 -9 -9 -9 1930.67 2.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 07 00 00 00 -999 -9 -9 -9 -9 -9 1940.29 6.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 08 00 00 00 -999 -9 -9 -9 -9 -9 1936.9 2.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 09 00 00 00 -999 -9 -9 -9 -9 -9 1928.47 4.1 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 10 00 00 00 -999 -9 -9 -9 -9 -9 1930.66 4.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 11 00 00 00 -999 -9 -9 -9 -9 -9 1933.27 5.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 12 00 00 00 -999 -9 -9 -9 -9 -9 1935.98 4.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 13 00 00 00 -999 -9 -9 -9 -9 -9 1938.93 7.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 14 00 00 00 -999 -9 -9 -9 -9 -9 1942.1 7.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 15 00 00 00 -999 -9 -9 -9 -9 -9 1931.75 4.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 16 00 00 00 -999 -9 -9 -9 -9 -9 1916.42 6.41 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 17 00 00 00 -999 -9 -9 -9 -9 -9 1919.67 5.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 18 00 00 00 -999 -9 -9 -9 -9 -9 1912.66 13.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 19 00 00 00 -999 -9 -9 -9 -9 -9 1905.74 7.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 20 00 00 00 -999 -9 -9 -9 -9 -9 1900.92 11.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 21 00 00 00 -999 -9 -9 -9 -9 -9 1901.84 10.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 22 00 00 00 -999 -9 -9 -9 -9 -9 1912.89 3.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 23 00 00 00 -999 -9 -9 -9 -9 -9 1906.32 3.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 24 00 00 00 -999 -9 -9 -9 -9 -9 1907.29 1.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 25 00 00 00 -999 -9 -9 -9 -9 -9 1905.84 2.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 26 00 00 00 -999 -9 -9 -9 -9 -9 1900.45 4.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 27 00 00 00 -999 -9 -9 -9 -9 -9 1903.77 7.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 02 28 00 00 00 -999 -9 -9 -9 -9 -9 1908.6 3.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 01 00 00 00 -999 -9 -9 -9 -9 -9 1913.6 5.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 02 00 00 00 -999 -9 -9 -9 -9 -9 1914.61 4.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 03 00 00 00 -999 -9 -9 -9 -9 -9 1909.8 7.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 04 00 00 00 -999 -9 -9 -9 -9 -9 1917.57 1.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 05 00 00 00 -999 -9 -9 -9 -9 -9 1915.18 4.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 06 00 00 00 -999 -9 -9 -9 -9 -9 1914.75 3.51 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 07 00 00 00 -999 -9 -9 -9 -9 -9 1917.21 4.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 08 00 00 00 -999 -9 -9 -9 -9 -9 1916.83 3.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 09 00 00 00 -999 -9 -9 -9 -9 -9 1907.85 4.97 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 10 00 00 00 -999 -9 -9 -9 -9 -9 1898.27 3.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 11 00 00 00 -999 -9 -9 -9 -9 -9 1898.42 5.46 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 12 00 00 00 -999 -9 -9 -9 -9 -9 1888.74 5.48 11 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 03 14 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 03 15 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 03 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 03 17 00 00 00 -999 -9 -9 -9 -9 -9 1886.61 4 10 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 18 00 00 00 -999 -9 -9 -9 -9 -9 1886.82 5.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 19 00 00 00 -999 -9 -9 -9 -9 -9 1888.72 3.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 20 00 00 00 -999 -9 -9 -9 -9 -9 1890.58 1.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 21 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 03 22 00 00 00 -999 -9 -9 -9 -9 -9 1892.87 0.96 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 23 00 00 00 -999 -9 -9 -9 -9 -9 1896.74 2.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 24 00 00 00 -999 -9 -9 -9 -9 -9 1900.65 5.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 25 00 00 00 -999 -9 -9 -9 -9 -9 1905.38 4.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 26 00 00 00 -999 -9 -9 -9 -9 -9 1900.71 1.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 27 00 00 00 -999 -9 -9 -9 -9 -9 1909.36 5.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 28 00 00 00 -999 -9 -9 -9 -9 -9 1908.19 3.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 29 00 00 00 -999 -9 -9 -9 -9 -9 1905.1 2.77 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 30 00 00 00 -999 -9 -9 -9 -9 -9 1896.82 4.18 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 03 31 00 00 00 -999 -9 -9 -9 -9 -9 1898.99 6.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 01 00 00 00 -999 -9 -9 -9 -9 -9 1901.1 9.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 02 00 00 00 -999 -9 -9 -9 -9 -9 1882.71 7.8 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 03 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 04 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 05 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 06 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 07 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 08 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 12 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 14 00 00 00 -999 -9 -9 -9 -9 -9 1882.42 1.59 9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 15 00 00 00 -999 -9 -9 -9 -9 -9 1888.41 4.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 16 00 00 00 -999 -9 -9 -9 -9 -9 1881.75 4.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 17 00 00 00 -999 -9 -9 -9 -9 -9 1874.19 5.33 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 18 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 19 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 20 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 21 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 22 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 23 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 26 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 04 27 00 00 00 -999 -9 -9 -9 -9 -9 1865.9 6.28 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 28 00 00 00 -999 -9 -9 -9 -9 -9 1859.94 4.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 29 00 00 00 -999 -9 -9 -9 -9 -9 1862.22 5.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 04 30 00 00 00 -999 -9 -9 -9 -9 -9 1862.36 5.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 01 00 00 00 -999 -9 -9 -9 -9 -9 1868.77 4.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 02 00 00 00 -999 -9 -9 -9 -9 -9 1867.75 1.77 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 03 00 00 00 -999 -9 -9 -9 -9 -9 1864.35 3.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 04 00 00 00 -999 -9 -9 -9 -9 -9 1867.65 4.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 05 00 00 00 -999 -9 -9 -9 -9 -9 1863.92 2.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 06 00 00 00 -999 -9 -9 -9 -9 -9 1864.43 4.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 07 00 00 00 -999 -9 -9 -9 -9 -9 1878.3 5.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 08 00 00 00 -999 -9 -9 -9 -9 -9 1877.56 4.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 09 00 00 00 -999 -9 -9 -9 -9 -9 1878.68 3.46 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 10 00 00 00 -999 -9 -9 -9 -9 -9 1887.19 2.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 11 00 00 00 -999 -9 -9 -9 -9 -9 1885.81 2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 12 00 00 00 -999 -9 -9 -9 -9 -9 1895.11 2.17 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 13 00 00 00 -999 -9 -9 -9 -9 -9 1902.39 6.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 14 00 00 00 -999 -9 -9 -9 -9 -9 1907.21 4.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 15 00 00 00 -999 -9 -9 -9 -9 -9 1895.91 5.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 16 00 00 00 -999 -9 -9 -9 -9 -9 1889.03 4.39 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 17 00 00 00 -999 -9 -9 -9 -9 -9 1901.95 5.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 18 00 00 00 -999 -9 -9 -9 -9 -9 1907.28 4.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 19 00 00 00 -999 -9 -9 -9 -9 -9 1910.93 3.5 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 20 00 00 00 -999 -9 -9 -9 -9 -9 1913.67 1.04 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 21 00 00 00 -999 -9 -9 -9 -9 -9 1913.12 1.15 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 22 00 00 00 -999 -9 -9 -9 -9 -9 1917.21 0.64 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 23 00 00 00 -999 -9 -9 -9 -9 -9 1917.3 3.61 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 24 00 00 00 -999 -9 -9 -9 -9 -9 1915.51 3.24 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 25 00 00 00 -999 -9 -9 -9 -9 -9 1913.29 4.02 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 26 00 00 00 -999 -9 -9 -9 -9 -9 1914.76 3.07 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 27 00 00 00 -999 -9 -9 -9 -9 -9 1905.06 6.44 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 28 00 00 00 -999 -9 -9 -9 -9 -9 1899.79 3.64 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 29 00 00 00 -999 -9 -9 -9 -9 -9 1898.42 3.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 30 00 00 00 -999 -9 -9 -9 -9 -9 1893.69 4.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 05 31 00 00 00 -999 -9 -9 -9 -9 -9 1909.38 8.08 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1905.86 4.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 02 00 00 00 -999 -9 -9 -9 -9 -9 1902.84 5.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 03 00 00 00 -999 -9 -9 -9 -9 -9 1902.96 3.37 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 04 00 00 00 -999 -9 -9 -9 -9 -9 1900.09 3.99 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 05 00 00 00 -999 -9 -9 -9 -9 -9 1895.5 3.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 06 00 00 00 -999 -9 -9 -9 -9 -9 1889.73 3.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 07 00 00 00 -999 -9 -9 -9 -9 -9 1887.85 8.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 08 00 00 00 -999 -9 -9 -9 -9 -9 1908.95 4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 09 00 00 00 -999 -9 -9 -9 -9 -9 1878.29 8.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 10 00 00 00 -999 -9 -9 -9 -9 -9 1886.96 11.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 11 00 00 00 -999 -9 -9 -9 -9 -9 1903.72 5.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 12 00 00 00 -999 -9 -9 -9 -9 -9 1907.12 1.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 13 00 00 00 -999 -9 -9 -9 -9 -9 1905.75 3.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 14 00 00 00 -999 -9 -9 -9 -9 -9 1909.53 2.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 15 00 00 00 -999 -9 -9 -9 -9 -9 1906.48 3.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 16 00 00 00 -999 -9 -9 -9 -9 -9 1903.23 3.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 17 00 00 00 -999 -9 -9 -9 -9 -9 1901.39 3.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 18 00 00 00 -999 -9 -9 -9 -9 -9 1909.36 3.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 19 00 00 00 -999 -9 -9 -9 -9 -9 1908.34 3.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 20 00 00 00 -999 -9 -9 -9 -9 -9 1909.36 4.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 21 00 00 00 -999 -9 -9 -9 -9 -9 1910.93 4.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 22 00 00 00 -999 -9 -9 -9 -9 -9 1910.06 8.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 23 00 00 00 -999 -9 -9 -9 -9 -9 1886.34 10.69 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 24 00 00 00 -999 -9 -9 -9 -9 -9 1895.24 6.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 25 00 00 00 -999 -9 -9 -9 -9 -9 1894.02 10.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 26 00 00 00 -999 -9 -9 -9 -9 -9 1909.37 9.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 27 00 00 00 -999 -9 -9 -9 -9 -9 1918.7 3.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 28 00 00 00 -999 -9 -9 -9 -9 -9 1915.31 5.12 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 29 00 00 00 -999 -9 -9 -9 -9 -9 1907.69 5.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 06 30 00 00 00 -999 -9 -9 -9 -9 -9 1894.47 5.77 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1894.23 6.08 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 02 00 00 00 -999 -9 -9 -9 -9 -9 1901.26 3.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 03 00 00 00 -999 -9 -9 -9 -9 -9 1906.21 2.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 04 00 00 00 -999 -9 -9 -9 -9 -9 1904.71 3.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 05 00 00 00 -999 -9 -9 -9 -9 -9 1910.21 5.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 06 00 00 00 -999 -9 -9 -9 -9 -9 1915.68 4.1 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 07 00 00 00 -999 -9 -9 -9 -9 -9 1910.18 4.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 08 00 00 00 -999 -9 -9 -9 -9 -9 1905.58 2.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 09 00 00 00 -999 -9 -9 -9 -9 -9 1905.74 4.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 10 00 00 00 -999 -9 -9 -9 -9 -9 1906.06 3.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 11 00 00 00 -999 -9 -9 -9 -9 -9 1902.81 3.08 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 12 00 00 00 -999 -9 -9 -9 -9 -9 1900.21 2.98 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 13 00 00 00 -999 -9 -9 -9 -9 -9 1901.22 3.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 14 00 00 00 -999 -9 -9 -9 -9 -9 1903.78 3.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 15 00 00 00 -999 -9 -9 -9 -9 -9 1899.38 3.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 16 00 00 00 -999 -9 -9 -9 -9 -9 1902.01 1.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 17 00 00 00 -999 -9 -9 -9 -9 -9 1907.86 4.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 18 00 00 00 -999 -9 -9 -9 -9 -9 1914.29 2.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 19 00 00 00 -999 -9 -9 -9 -9 -9 1917.75 5.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 20 00 00 00 -999 -9 -9 -9 -9 -9 1919.02 2.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 21 00 00 00 -999 -9 -9 -9 -9 -9 1912.73 5.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 22 00 00 00 -999 -9 -9 -9 -9 -9 1906.2 5.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 23 00 00 00 -999 -9 -9 -9 -9 -9 1906.77 4.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 24 00 00 00 -999 -9 -9 -9 -9 -9 1910.14 5.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 25 00 00 00 -999 -9 -9 -9 -9 -9 1908.01 4.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 26 00 00 00 -999 -9 -9 -9 -9 -9 1907.31 5.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 27 00 00 00 -999 -9 -9 -9 -9 -9 1904.86 6.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 28 00 00 00 -999 -9 -9 -9 -9 -9 1918.07 4.56 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 29 00 00 00 -999 -9 -9 -9 -9 -9 1917.67 4.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 30 00 00 00 -999 -9 -9 -9 -9 -9 1916.45 2.77 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 07 31 00 00 00 -999 -9 -9 -9 -9 -9 1912.12 6.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 01 00 00 00 -999 -9 -9 -9 -9 -9 1895.58 11.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 02 00 00 00 -999 -9 -9 -9 -9 -9 1894.71 6.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 03 00 00 00 -999 -9 -9 -9 -9 -9 1911.65 10.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 04 00 00 00 -999 -9 -9 -9 -9 -9 1910.37 13.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 05 00 00 00 -999 -9 -9 -9 -9 -9 1902.49 11.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 06 00 00 00 -999 -9 -9 -9 -9 -9 1905.6 5.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 07 00 00 00 -999 -9 -9 -9 -9 -9 1905.6 2.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 08 00 00 00 -999 -9 -9 -9 -9 -9 1898.16 6.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 09 00 00 00 -999 -9 -9 -9 -9 -9 1897.1 9.65 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 10 00 00 00 -999 -9 -9 -9 -9 -9 1931.41 6.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 11 00 00 00 -999 -9 -9 -9 -9 -9 1927.87 6.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 12 00 00 00 -999 -9 -9 -9 -9 -9 1921.89 9.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 13 00 00 00 -999 -9 -9 -9 -9 -9 1927.69 5.7 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 14 00 00 00 -999 -9 -9 -9 -9 -9 1911.26 3.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 15 00 00 00 -999 -9 -9 -9 -9 -9 1900.48 5.28 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 16 00 00 00 -999 -9 -9 -9 -9 -9 1905.47 8.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 17 00 00 00 -999 -9 -9 -9 -9 -9 1897.46 17.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 18 00 00 00 -999 -9 -9 -9 -9 -9 1883.62 9.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 19 00 00 00 -999 -9 -9 -9 -9 -9 1891.08 2.91 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 20 00 00 00 -999 -9 -9 -9 -9 -9 1894.58 3.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 21 00 00 00 -999 -9 -9 -9 -9 -9 1891.04 3.77 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 22 00 00 00 -999 -9 -9 -9 -9 -9 1879.28 5.98 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 23 00 00 00 -999 -9 -9 -9 -9 -9 1869.87 3.08 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 24 00 00 00 -999 -9 -9 -9 -9 -9 1875.33 4.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 25 00 00 00 -999 -9 -9 -9 -9 -9 1883.02 5.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 26 00 00 00 -999 -9 -9 -9 -9 -9 1890.93 5.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 27 00 00 00 -999 -9 -9 -9 -9 -9 1895.08 6.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 28 00 00 00 -999 -9 -9 -9 -9 -9 1892.26 10.28 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 29 00 00 00 -999 -9 -9 -9 -9 -9 1905.34 5.28 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 30 00 00 00 -999 -9 -9 -9 -9 -9 1908.8 8.17 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 08 31 00 00 00 -999 -9 -9 -9 -9 -9 1929.26 6.85 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 01 00 00 00 -999 -9 -9 -9 -9 -9 1929.14 12.35 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 02 00 00 00 -999 -9 -9 -9 -9 -9 1917.98 11.8 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 03 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 09 04 00 00 00 -999 -9 -9 -9 -9 -9 1895.32 3.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 05 00 00 00 -999 -9 -9 -9 -9 -9 1902.17 5.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 06 00 00 00 -999 -9 -9 -9 -9 -9 1904.73 11.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 07 00 00 00 -999 -9 -9 -9 -9 -9 1909.27 7.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 08 00 00 00 -999 -9 -9 -9 -9 -9 1911.7 6.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 09 00 00 00 -999 -9 -9 -9 -9 -9 1904.61 8.54 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 09 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 09 12 00 00 00 -999 -9 -9 -9 -9 -9 1898.13 2.65 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 13 00 00 00 -999 -9 -9 -9 -9 -9 1893.22 8.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 14 00 00 00 -999 -9 -9 -9 -9 -9 1895.68 12.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 15 00 00 00 -999 -9 -9 -9 -9 -9 1913.75 7.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 16 00 00 00 -999 -9 -9 -9 -9 -9 1921.45 12.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 17 00 00 00 -999 -9 -9 -9 -9 -9 1913.54 2.84 9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 18 00 00 00 -999 -9 -9 -9 -9 -9 1883.96 1.23 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 19 00 00 00 -999 -9 -9 -9 -9 -9 1888.27 4.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 20 00 00 00 -999 -9 -9 -9 -9 -9 1913.03 15.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 21 00 00 00 -999 -9 -9 -9 -9 -9 1939.11 10.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 22 00 00 00 -999 -9 -9 -9 -9 -9 1931.83 13.62 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 23 00 00 00 -999 -9 -9 -9 -9 -9 1927.03 13.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 24 00 00 00 -999 -9 -9 -9 -9 -9 1908.42 4.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 25 00 00 00 -999 -9 -9 -9 -9 -9 1898.42 2.48 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 26 00 00 00 -999 -9 -9 -9 -9 -9 1894.44 4.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 27 00 00 00 -999 -9 -9 -9 -9 -9 1906.41 6.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 28 00 00 00 -999 -9 -9 -9 -9 -9 1906.83 8.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 29 00 00 00 -999 -9 -9 -9 -9 -9 1895.47 4.44 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 09 30 00 00 00 -999 -9 -9 -9 -9 -9 1894.68 5.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 01 00 00 00 -999 -9 -9 -9 -9 -9 1893.74 2.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 02 00 00 00 -999 -9 -9 -9 -9 -9 1901.43 12.99 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 03 00 00 00 -999 -9 -9 -9 -9 -9 1911.52 11.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 04 00 00 00 -999 -9 -9 -9 -9 -9 1902.43 8.72 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 05 00 00 00 -999 -9 -9 -9 -9 -9 1893.25 3.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 06 00 00 00 -999 -9 -9 -9 -9 -9 1891.74 2.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 07 00 00 00 -999 -9 -9 -9 -9 -9 1892.98 2.52 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 08 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 12 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 14 00 00 00 -999 -9 -9 -9 -9 -9 1897.8 8.08 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 15 00 00 00 -999 -9 -9 -9 -9 -9 1899.53 6.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 16 00 00 00 -999 -9 -9 -9 -9 -9 1892.46 2.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 17 00 00 00 -999 -9 -9 -9 -9 -9 1889.2 2.14 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 18 00 00 00 -999 -9 -9 -9 -9 -9 1890.91 5.72 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 19 00 00 00 -999 -9 -9 -9 -9 -9 1892.72 6.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 20 00 00 00 -999 -9 -9 -9 -9 -9 1902.37 10.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 21 00 00 00 -999 -9 -9 -9 -9 -9 1895.69 5.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 22 00 00 00 -999 -9 -9 -9 -9 -9 1903.23 9.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 23 00 00 00 -999 -9 -9 -9 -9 -9 1901.93 6.69 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 10 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 26 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 29 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 30 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 10 31 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 01 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 02 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 03 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 04 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 05 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 06 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 07 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 08 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 12 00 00 00 -999 -9 -9 -9 -9 -9 1895 3.09 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 13 00 00 00 -999 -9 -9 -9 -9 -9 1905.27 8.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 14 00 00 00 -999 -9 -9 -9 -9 -9 1938.71 7.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 15 00 00 00 -999 -9 -9 -9 -9 -9 1945.58 9.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 16 00 00 00 -999 -9 -9 -9 -9 -9 1919.88 6.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 17 00 00 00 -999 -9 -9 -9 -9 -9 1922.65 10.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 18 00 00 00 -999 -9 -9 -9 -9 -9 1921.43 7.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 19 00 00 00 -999 -9 -9 -9 -9 -9 1921.25 9.62 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 20 00 00 00 -999 -9 -9 -9 -9 -9 1915.24 12.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 21 00 00 00 -999 -9 -9 -9 -9 -9 1911.9 17.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 22 00 00 00 -999 -9 -9 -9 -9 -9 1913.61 9.7 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 23 00 00 00 -999 -9 -9 -9 -9 -9 1928.33 6.56 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 11 25 00 00 00 -999 -9 -9 -9 -9 -9 1921.94 4.93 16 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 26 00 00 00 -999 -9 -9 -9 -9 -9 1939.63 9.02 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 27 00 00 00 -999 -9 -9 -9 -9 -9 1939.12 9.72 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 28 00 00 00 -999 -9 -9 -9 -9 -9 1943.07 9.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 29 00 00 00 -999 -9 -9 -9 -9 -9 1935.7 10.81 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 11 30 00 00 00 -999 -9 -9 -9 -9 -9 1936.38 11.01 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 01 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2021 12 02 00 00 00 -999 -9 -9 -9 -9 -9 1928.09 6.27 15 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 03 00 00 00 -999 -9 -9 -9 -9 -9 1916.28 10.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 04 00 00 00 -999 -9 -9 -9 -9 -9 1906.05 16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 05 00 00 00 -999 -9 -9 -9 -9 -9 1922.55 11.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 06 00 00 00 -999 -9 -9 -9 -9 -9 1933.61 8.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 07 00 00 00 -999 -9 -9 -9 -9 -9 1934.54 10.46 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 08 00 00 00 -999 -9 -9 -9 -9 -9 1934.42 6.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 09 00 00 00 -999 -9 -9 -9 -9 -9 1935.87 9.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 10 00 00 00 -999 -9 -9 -9 -9 -9 1936.97 10.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 11 00 00 00 -999 -9 -9 -9 -9 -9 1930.79 12.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 12 00 00 00 -999 -9 -9 -9 -9 -9 1932.12 15.99 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 13 00 00 00 -999 -9 -9 -9 -9 -9 1939.86 10.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 14 00 00 00 -999 -9 -9 -9 -9 -9 1955.22 6.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 15 00 00 00 -999 -9 -9 -9 -9 -9 1950.35 4.87 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 16 00 00 00 -999 -9 -9 -9 -9 -9 1948.85 9.93 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 17 00 00 00 -999 -9 -9 -9 -9 -9 1950.88 13.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 18 00 00 00 -999 -9 -9 -9 -9 -9 1961.96 7.09 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 19 00 00 00 -999 -9 -9 -9 -9 -9 1952.24 2.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 20 00 00 00 -999 -9 -9 -9 -9 -9 1953.27 2.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 21 00 00 00 -999 -9 -9 -9 -9 -9 1954.48 6.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 22 00 00 00 -999 -9 -9 -9 -9 -9 1950.88 8.1 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 23 00 00 00 -999 -9 -9 -9 -9 -9 1941.46 7.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 24 00 00 00 -999 -9 -9 -9 -9 -9 1938.47 7.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 25 00 00 00 -999 -9 -9 -9 -9 -9 1931.37 9.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 26 00 00 00 -999 -9 -9 -9 -9 -9 1929 4.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 27 00 00 00 -999 -9 -9 -9 -9 -9 1941.55 3.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 28 00 00 00 -999 -9 -9 -9 -9 -9 1942.31 2.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 29 00 00 00 -999 -9 -9 -9 -9 -9 1937.05 5.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 30 00 00 00 -999 -9 -9 -9 -9 -9 1927.65 8.73 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2021 12 31 00 00 00 -999 -9 -9 -9 -9 -9 1913.02 15.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 01 00 00 00 -999 -9 -9 -9 -9 -9 1919.21 4.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 02 00 00 00 -999 -9 -9 -9 -9 -9 1925.53 3.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 03 00 00 00 -999 -9 -9 -9 -9 -9 1925.97 6.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 04 00 00 00 -999 -9 -9 -9 -9 -9 1929.27 3.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 05 00 00 00 -999 -9 -9 -9 -9 -9 1932.34 4.81 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 06 00 00 00 -999 -9 -9 -9 -9 -9 1931.55 5.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 07 00 00 00 -999 -9 -9 -9 -9 -9 1931.61 5.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 08 00 00 00 -999 -9 -9 -9 -9 -9 1929.64 5.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 09 00 00 00 -999 -9 -9 -9 -9 -9 1933.12 5.12 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 10 00 00 00 -999 -9 -9 -9 -9 -9 1927.85 10.1 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 11 00 00 00 -999 -9 -9 -9 -9 -9 1920.59 17.14 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 01 12 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 14 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 15 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 17 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 18 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 19 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 20 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 21 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 22 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 23 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 26 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 29 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 30 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 01 31 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 02 01 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 02 02 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 02 03 00 00 00 -999 -9 -9 -9 -9 -9 1932.5 7.82 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 04 00 00 00 -999 -9 -9 -9 -9 -9 1932.72 6.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 05 00 00 00 -999 -9 -9 -9 -9 -9 1932.54 5.7 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 06 00 00 00 -999 -9 -9 -9 -9 -9 1929.05 4.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 07 00 00 00 -999 -9 -9 -9 -9 -9 1927.16 2.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 08 00 00 00 -999 -9 -9 -9 -9 -9 1925.69 5.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 09 00 00 00 -999 -9 -9 -9 -9 -9 1922.51 5.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 10 00 00 00 -999 -9 -9 -9 -9 -9 1928.48 4.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 11 00 00 00 -999 -9 -9 -9 -9 -9 1936.61 2.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 12 00 00 00 -999 -9 -9 -9 -9 -9 1942.02 6.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 13 00 00 00 -999 -9 -9 -9 -9 -9 1946.28 3.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 14 00 00 00 -999 -9 -9 -9 -9 -9 1940.83 5.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 15 00 00 00 -999 -9 -9 -9 -9 -9 1932.51 4.14 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 16 00 00 00 -999 -9 -9 -9 -9 -9 1930.81 6.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 17 00 00 00 -999 -9 -9 -9 -9 -9 1934.81 4.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 18 00 00 00 -999 -9 -9 -9 -9 -9 1933.86 4.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 19 00 00 00 -999 -9 -9 -9 -9 -9 1932.52 2.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 20 00 00 00 -999 -9 -9 -9 -9 -9 1933.13 5.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 21 00 00 00 -999 -9 -9 -9 -9 -9 1939.19 6.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 22 00 00 00 -999 -9 -9 -9 -9 -9 1937.84 2.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 23 00 00 00 -999 -9 -9 -9 -9 -9 1937.3 2.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 24 00 00 00 -999 -9 -9 -9 -9 -9 1938.21 3.09 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 25 00 00 00 -999 -9 -9 -9 -9 -9 1928.87 4.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 26 00 00 00 -999 -9 -9 -9 -9 -9 1920.18 9.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 27 00 00 00 -999 -9 -9 -9 -9 -9 1916.2 6.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 02 28 00 00 00 -999 -9 -9 -9 -9 -9 1925.35 2.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 01 00 00 00 -999 -9 -9 -9 -9 -9 1929.24 2.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 02 00 00 00 -999 -9 -9 -9 -9 -9 1930.25 1.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 03 00 00 00 -999 -9 -9 -9 -9 -9 1928.06 4.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 04 00 00 00 -999 -9 -9 -9 -9 -9 1922.87 5.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 05 00 00 00 -999 -9 -9 -9 -9 -9 1925.68 5.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 06 00 00 00 -999 -9 -9 -9 -9 -9 1930.75 4.7 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 07 00 00 00 -999 -9 -9 -9 -9 -9 1935.71 4.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 08 00 00 00 -999 -9 -9 -9 -9 -9 1933.64 5.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 09 00 00 00 -999 -9 -9 -9 -9 -9 1925.77 12.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 10 00 00 00 -999 -9 -9 -9 -9 -9 1910.57 8.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 11 00 00 00 -999 -9 -9 -9 -9 -9 1909.44 10.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 12 00 00 00 -999 -9 -9 -9 -9 -9 1915.21 12.1 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 13 00 00 00 -999 -9 -9 -9 -9 -9 1927.3 3.12 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 14 00 00 00 -999 -9 -9 -9 -9 -9 1930.27 2.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 15 00 00 00 -999 -9 -9 -9 -9 -9 1930.62 5.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 16 00 00 00 -999 -9 -9 -9 -9 -9 1933.05 5.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 17 00 00 00 -999 -9 -9 -9 -9 -9 1927.8 5.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 18 00 00 00 -999 -9 -9 -9 -9 -9 1926.17 13.7 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 19 00 00 00 -999 -9 -9 -9 -9 -9 1931.95 12.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 20 00 00 00 -999 -9 -9 -9 -9 -9 1932.2 14.93 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 21 00 00 00 -999 -9 -9 -9 -9 -9 1946.2 12.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 22 00 00 00 -999 -9 -9 -9 -9 -9 1939.01 9.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 23 00 00 00 -999 -9 -9 -9 -9 -9 1931.63 9.98 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 24 00 00 00 -999 -9 -9 -9 -9 -9 1934.31 10.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 25 00 00 00 -999 -9 -9 -9 -9 -9 1926.86 13.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 26 00 00 00 -999 -9 -9 -9 -9 -9 1917.65 6.61 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 03 28 00 00 00 -999 -9 -9 -9 -9 -9 1902.2 5.68 10 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 29 00 00 00 -999 -9 -9 -9 -9 -9 1898.58 11.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 30 00 00 00 -999 -9 -9 -9 -9 -9 1915.3 13.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 03 31 00 00 00 -999 -9 -9 -9 -9 -9 1929.98 6.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 01 00 00 00 -999 -9 -9 -9 -9 -9 1910.75 3.24 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 02 00 00 00 -999 -9 -9 -9 -9 -9 1895.75 4.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 03 00 00 00 -999 -9 -9 -9 -9 -9 1897.19 9.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 04 00 00 00 -999 -9 -9 -9 -9 -9 1905.43 8.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 05 00 00 00 -999 -9 -9 -9 -9 -9 1898.8 7.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 06 00 00 00 -999 -9 -9 -9 -9 -9 1908.18 12.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 07 00 00 00 -999 -9 -9 -9 -9 -9 1910.28 5.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 08 00 00 00 -999 -9 -9 -9 -9 -9 1896.51 4.42 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 09 00 00 00 -999 -9 -9 -9 -9 -9 1895.01 4.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 10 00 00 00 -999 -9 -9 -9 -9 -9 1894.04 3.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 11 00 00 00 -999 -9 -9 -9 -9 -9 1889.74 7.54 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 12 00 00 00 -999 -9 -9 -9 -9 -9 1896.69 6.34 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 13 00 00 00 -999 -9 -9 -9 -9 -9 1889.52 5.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 14 00 00 00 -999 -9 -9 -9 -9 -9 1885.44 3.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 15 00 00 00 -999 -9 -9 -9 -9 -9 1882.63 2.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 16 00 00 00 -999 -9 -9 -9 -9 -9 1885.84 2.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 17 00 00 00 -999 -9 -9 -9 -9 -9 1888.97 4.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 18 00 00 00 -999 -9 -9 -9 -9 -9 1889.53 2.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 19 00 00 00 -999 -9 -9 -9 -9 -9 1895.71 6.83 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 20 00 00 00 -999 -9 -9 -9 -9 -9 1904.06 6.55 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 21 00 00 00 -999 -9 -9 -9 -9 -9 1899.89 3.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 22 00 00 00 -999 -9 -9 -9 -9 -9 1894.46 6.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 23 00 00 00 -999 -9 -9 -9 -9 -9 1899.93 3.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 24 00 00 00 -999 -9 -9 -9 -9 -9 1900.52 3.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 25 00 00 00 -999 -9 -9 -9 -9 -9 1899.1 5.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 26 00 00 00 -999 -9 -9 -9 -9 -9 1893.39 5.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 27 00 00 00 -999 -9 -9 -9 -9 -9 1883.61 3.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 28 00 00 00 -999 -9 -9 -9 -9 -9 1883.34 2.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 29 00 00 00 -999 -9 -9 -9 -9 -9 1880.66 3.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 04 30 00 00 00 -999 -9 -9 -9 -9 -9 1886.17 5.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 01 00 00 00 -999 -9 -9 -9 -9 -9 1892.84 3.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 02 00 00 00 -999 -9 -9 -9 -9 -9 1886.03 1.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 03 00 00 00 -999 -9 -9 -9 -9 -9 1883.46 2.72 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 04 00 00 00 -999 -9 -9 -9 -9 -9 1884.45 3.39 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 05 00 00 00 -999 -9 -9 -9 -9 -9 1888.77 5.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 06 00 00 00 -999 -9 -9 -9 -9 -9 1894.89 13.79 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 07 00 00 00 -999 -9 -9 -9 -9 -9 1907.34 5.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 08 00 00 00 -999 -9 -9 -9 -9 -9 1915.34 3.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 09 00 00 00 -999 -9 -9 -9 -9 -9 1910.22 4.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 10 00 00 00 -999 -9 -9 -9 -9 -9 1906.09 4.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 11 00 00 00 -999 -9 -9 -9 -9 -9 1908.07 2.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 12 00 00 00 -999 -9 -9 -9 -9 -9 1909.05 7.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 13 00 00 00 -999 -9 -9 -9 -9 -9 1901.64 7.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 14 00 00 00 -999 -9 -9 -9 -9 -9 1925.73 5.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 15 00 00 00 -999 -9 -9 -9 -9 -9 1925.22 4.87 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 16 00 00 00 -999 -9 -9 -9 -9 -9 1911.63 5.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 17 00 00 00 -999 -9 -9 -9 -9 -9 1903.37 3.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 18 00 00 00 -999 -9 -9 -9 -9 -9 1905.08 2.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 19 00 00 00 -999 -9 -9 -9 -9 -9 1912.8 10.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 20 00 00 00 -999 -9 -9 -9 -9 -9 1929.18 4.94 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 21 00 00 00 -999 -9 -9 -9 -9 -9 1925.02 5.36 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 22 00 00 00 -999 -9 -9 -9 -9 -9 1917.79 5.16 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 23 00 00 00 -999 -9 -9 -9 -9 -9 1922.69 5.85 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 24 00 00 00 -999 -9 -9 -9 -9 -9 1922.84 3.62 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 25 00 00 00 -999 -9 -9 -9 -9 -9 1913.6 6.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 26 00 00 00 -999 -9 -9 -9 -9 -9 1913.14 5.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 27 00 00 00 -999 -9 -9 -9 -9 -9 1911.26 4.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 28 00 00 00 -999 -9 -9 -9 -9 -9 1915.33 4.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 29 00 00 00 -999 -9 -9 -9 -9 -9 1918.48 4.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 30 00 00 00 -999 -9 -9 -9 -9 -9 1915.3 6.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 05 31 00 00 00 -999 -9 -9 -9 -9 -9 1915.21 7.1 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 01 00 00 00 -999 -9 -9 -9 -9 -9 1922.62 4.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 02 00 00 00 -999 -9 -9 -9 -9 -9 1917.54 3.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 03 00 00 00 -999 -9 -9 -9 -9 -9 1907.38 4.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 04 00 00 00 -999 -9 -9 -9 -9 -9 1911.02 5.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 05 00 00 00 -999 -9 -9 -9 -9 -9 1901.01 3.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 06 00 00 00 -999 -9 -9 -9 -9 -9 1904.39 3.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 07 00 00 00 -999 -9 -9 -9 -9 -9 1902.23 3.91 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 08 00 00 00 -999 -9 -9 -9 -9 -9 1912.22 7.51 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 09 00 00 00 -999 -9 -9 -9 -9 -9 1915.05 9.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 10 00 00 00 -999 -9 -9 -9 -9 -9 1917.49 6.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 11 00 00 00 -999 -9 -9 -9 -9 -9 1910.07 4.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 12 00 00 00 -999 -9 -9 -9 -9 -9 1903.36 4.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 13 00 00 00 -999 -9 -9 -9 -9 -9 1900.79 2.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 14 00 00 00 -999 -9 -9 -9 -9 -9 1928.31 6.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 15 00 00 00 -999 -9 -9 -9 -9 -9 1931.67 3.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 16 00 00 00 -999 -9 -9 -9 -9 -9 1925.92 5.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 17 00 00 00 -999 -9 -9 -9 -9 -9 1922.86 5.41 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 18 00 00 00 -999 -9 -9 -9 -9 -9 1917.4 5.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 19 00 00 00 -999 -9 -9 -9 -9 -9 1912.04 3.25 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 20 00 00 00 -999 -9 -9 -9 -9 -9 1910.37 4.35 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 21 00 00 00 -999 -9 -9 -9 -9 -9 1905.14 3.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 22 00 00 00 -999 -9 -9 -9 -9 -9 1916.55 5.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 23 00 00 00 -999 -9 -9 -9 -9 -9 1918.05 6.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 24 00 00 00 -999 -9 -9 -9 -9 -9 1925.23 5.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 25 00 00 00 -999 -9 -9 -9 -9 -9 1912.24 3.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 26 00 00 00 -999 -9 -9 -9 -9 -9 1906.28 4.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 27 00 00 00 -999 -9 -9 -9 -9 -9 1907.92 1.08 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 28 00 00 00 -999 -9 -9 -9 -9 -9 1906.84 5.85 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 29 00 00 00 -999 -9 -9 -9 -9 -9 1911.66 6.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 06 30 00 00 00 -999 -9 -9 -9 -9 -9 1915.3 3.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 01 00 00 00 -999 -9 -9 -9 -9 -9 1914.08 6.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 02 00 00 00 -999 -9 -9 -9 -9 -9 1910.18 2.31 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 03 00 00 00 -999 -9 -9 -9 -9 -9 1909.8 1.56 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 04 00 00 00 -999 -9 -9 -9 -9 -9 1907.79 2.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 05 00 00 00 -999 -9 -9 -9 -9 -9 1903.67 3.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 06 00 00 00 -999 -9 -9 -9 -9 -9 1904.37 5.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 07 00 00 00 -999 -9 -9 -9 -9 -9 1922.72 3.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 08 00 00 00 -999 -9 -9 -9 -9 -9 1925.72 5.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 09 00 00 00 -999 -9 -9 -9 -9 -9 1926.45 3.87 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 10 00 00 00 -999 -9 -9 -9 -9 -9 1924.18 5.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 11 00 00 00 -999 -9 -9 -9 -9 -9 1922.05 6.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 12 00 00 00 -999 -9 -9 -9 -9 -9 1913.01 6.76 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 13 00 00 00 -999 -9 -9 -9 -9 -9 1914.21 2.94 18 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 14 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 15 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 17 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 18 00 00 00 -999 -9 -9 -9 -9 -9 1912.6 3.28 11 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 19 00 00 00 -999 -9 -9 -9 -9 -9 1914.72 1.52 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 07 20 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 21 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 22 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 23 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 24 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 25 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 26 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 27 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 28 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 29 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 30 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 07 31 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 08 01 00 00 00 -999 -9 -9 -9 -9 -9 1919.27 2.5 12 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 02 00 00 00 -999 -9 -9 -9 -9 -9 1919.62 3.87 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 03 00 00 00 -999 -9 -9 -9 -9 -9 1929.09 4.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 04 00 00 00 -999 -9 -9 -9 -9 -9 1931.4 6.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 05 00 00 00 -999 -9 -9 -9 -9 -9 1925 4.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 06 00 00 00 -999 -9 -9 -9 -9 -9 1923.29 4.56 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 07 00 00 00 -999 -9 -9 -9 -9 -9 1921.1 2.27 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 08 00 00 00 -999 -9 -9 -9 -9 -9 1919.19 2.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 09 00 00 00 -999 -9 -9 -9 -9 -9 1916.95 4.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 10 00 00 00 -999 -9 -9 -9 -9 -9 1918.45 7.21 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 11 00 00 00 -999 -9 -9 -9 -9 -9 1917.43 6.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 12 00 00 00 -999 -9 -9 -9 -9 -9 1918.64 5.85 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 13 00 00 00 -999 -9 -9 -9 -9 -9 1923.28 5.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 14 00 00 00 -999 -9 -9 -9 -9 -9 1930.53 2.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 15 00 00 00 -999 -9 -9 -9 -9 -9 1926.62 2.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 16 00 00 00 -999 -9 -9 -9 -9 -9 1922.6 6.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 17 00 00 00 -999 -9 -9 -9 -9 -9 1913.35 5.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 18 00 00 00 -999 -9 -9 -9 -9 -9 1912.09 5.34 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 19 00 00 00 -999 -9 -9 -9 -9 -9 1909.06 5.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 20 00 00 00 -999 -9 -9 -9 -9 -9 1903.25 3.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 21 00 00 00 -999 -9 -9 -9 -9 -9 1905.33 3.89 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 22 00 00 00 -999 -9 -9 -9 -9 -9 1901.52 4.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 23 00 00 00 -999 -9 -9 -9 -9 -9 1901.24 4.47 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 24 00 00 00 -999 -9 -9 -9 -9 -9 1906.84 6.43 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 25 00 00 00 -999 -9 -9 -9 -9 -9 1918.39 6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 26 00 00 00 -999 -9 -9 -9 -9 -9 1919.33 4.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 27 00 00 00 -999 -9 -9 -9 -9 -9 1919.49 6.58 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 28 00 00 00 -999 -9 -9 -9 -9 -9 1923.58 7.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 29 00 00 00 -999 -9 -9 -9 -9 -9 1934.95 5.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 30 00 00 00 -999 -9 -9 -9 -9 -9 1937.08 8.41 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 08 31 00 00 00 -999 -9 -9 -9 -9 -9 1927.26 6.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 01 00 00 00 -999 -9 -9 -9 -9 -9 1918.55 5.46 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 02 00 00 00 -999 -9 -9 -9 -9 -9 1926.44 10.38 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 03 00 00 00 -999 -9 -9 -9 -9 -9 1920.02 4.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 04 00 00 00 -999 -9 -9 -9 -9 -9 1914.64 3.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 05 00 00 00 -999 -9 -9 -9 -9 -9 1916.83 4.78 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 06 00 00 00 -999 -9 -9 -9 -9 -9 1918.02 5.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 07 00 00 00 -999 -9 -9 -9 -9 -9 1926.51 2.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 08 00 00 00 -999 -9 -9 -9 -9 -9 1932.87 2.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 09 00 00 00 -999 -9 -9 -9 -9 -9 1922.81 5.67 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 10 00 00 00 -999 -9 -9 -9 -9 -9 1926.36 6.26 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 11 00 00 00 -999 -9 -9 -9 -9 -9 1917.72 5.71 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 12 00 00 00 -999 -9 -9 -9 -9 -9 1914.17 2.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 13 00 00 00 -999 -9 -9 -9 -9 -9 1913.58 5.61 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 14 00 00 00 -999 -9 -9 -9 -9 -9 1918.41 10.82 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 15 00 00 00 -999 -9 -9 -9 -9 -9 1922.69 6.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 16 00 00 00 -999 -9 -9 -9 -9 -9 1919.51 5.37 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 17 00 00 00 -999 -9 -9 -9 -9 -9 1915.78 5.6 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 18 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 09 19 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 09 20 00 00 00 -999 -9 -9 -9 -9 -9 1896.34 7.16 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 21 00 00 00 -999 -9 -9 -9 -9 -9 1906.7 11.05 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 22 00 00 00 -999 -9 -9 -9 -9 -9 1909.58 8.97 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 23 00 00 00 -999 -9 -9 -9 -9 -9 1891.27 6.7 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 24 00 00 00 -999 -9 -9 -9 -9 -9 1891.87 7.23 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 25 00 00 00 -999 -9 -9 -9 -9 -9 1899.74 8.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 26 00 00 00 -999 -9 -9 -9 -9 -9 1900.74 6.01 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 27 00 00 00 -999 -9 -9 -9 -9 -9 1897.37 8.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 28 00 00 00 -999 -9 -9 -9 -9 -9 1894.36 5.63 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 29 00 00 00 -999 -9 -9 -9 -9 -9 1908.03 2.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 09 30 00 00 00 -999 -9 -9 -9 -9 -9 1912.12 4.62 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 01 00 00 00 -999 -9 -9 -9 -9 -9 1923.76 6.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 02 00 00 00 -999 -9 -9 -9 -9 -9 1917.61 7.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 03 00 00 00 -999 -9 -9 -9 -9 -9 1914.17 3.11 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 04 00 00 00 -999 -9 -9 -9 -9 -9 1907.7 3.04 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 05 00 00 00 -999 -9 -9 -9 -9 -9 1909.25 6.06 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 06 00 00 00 -999 -9 -9 -9 -9 -9 1918.49 3.86 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 07 00 00 00 -999 -9 -9 -9 -9 -9 1913.72 2.38 14 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 08 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 12 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 13 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 14 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 15 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 10 17 00 00 00 -999 -9 -9 -9 -9 -9 1907.9 4.82 13 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 18 00 00 00 -999 -9 -9 -9 -9 -9 1907.9 2.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 19 00 00 00 -999 -9 -9 -9 -9 -9 1904.86 2.63 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 20 00 00 00 -999 -9 -9 -9 -9 -9 1903.28 3.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 21 00 00 00 -999 -9 -9 -9 -9 -9 1902.54 5.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 22 00 00 00 -999 -9 -9 -9 -9 -9 1900.54 6.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 23 00 00 00 -999 -9 -9 -9 -9 -9 1893.52 3.93 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 24 00 00 00 -999 -9 -9 -9 -9 -9 1890.71 11.29 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 25 00 00 00 -999 -9 -9 -9 -9 -9 1894.32 3.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 26 00 00 00 -999 -9 -9 -9 -9 -9 1897.93 6.96 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 27 00 00 00 -999 -9 -9 -9 -9 -9 1895.1 6.75 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 28 00 00 00 -999 -9 -9 -9 -9 -9 1886.79 4.95 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 29 00 00 00 -999 -9 -9 -9 -9 -9 1889.03 2.45 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 30 00 00 00 -999 -9 -9 -9 -9 -9 1891.6 2.22 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 10 31 00 00 00 -999 -9 -9 -9 -9 -9 1895.52 5.42 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 01 00 00 00 -999 -9 -9 -9 -9 -9 1919.01 7.03 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 02 00 00 00 -999 -9 -9 -9 -9 -9 1928.81 4.82 22 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 03 00 00 00 -999 -9 -9 -9 -9 -9 1928.61 6.13 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 04 00 00 00 -999 -9 -9 -9 -9 -9 1917.99 8.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 05 00 00 00 -999 -9 -9 -9 -9 -9 1914.8 10.5 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 06 00 00 00 -999 -9 -9 -9 -9 -9 1921.2 5.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 07 00 00 00 -999 -9 -9 -9 -9 -9 1919.96 3.88 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 08 00 00 00 -999 -9 -9 -9 -9 -9 1913.97 3.63 11 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 09 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 11 10 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 11 11 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 11 12 00 00 00 -999 -9 -9 -9 -9 -9 1930.35 2.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 13 00 00 00 -999 -9 -9 -9 -9 -9 1935.23 3.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 14 00 00 00 -999 -9 -9 -9 -9 -9 1945.75 5.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 15 00 00 00 -999 -9 -9 -9 -9 -9 1948.81 2.68 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 16 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 11 17 00 00 00 -999 -9 -9 -9 -9 -9 -999.999 -999.999 -9 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 3 1 18 3
+MKN 2022 11 18 00 00 00 -999 -9 -9 -9 -9 -9 1950.72 12.18 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 19 00 00 00 -999 -9 -9 -9 -9 -9 1964.76 4.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 20 00 00 00 -999 -9 -9 -9 -9 -9 1953.04 6.65 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 21 00 00 00 -999 -9 -9 -9 -9 -9 1935.49 9.69 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 22 00 00 00 -999 -9 -9 -9 -9 -9 1951.33 6.07 14 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 23 00 00 00 -999 -9 -9 -9 -9 -9 1947 6.43 17 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 24 00 00 00 -999 -9 -9 -9 -9 -9 1927.07 9.91 8 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 25 00 00 00 -999 -9 -9 -9 -9 -9 1920.17 11.07 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 26 00 00 00 -999 -9 -9 -9 -9 -9 1909.41 5.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 27 00 00 00 -999 -9 -9 -9 -9 -9 1908.43 13.32 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 28 00 00 00 -999 -9 -9 -9 -9 -9 1905.53 7.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 29 00 00 00 -999 -9 -9 -9 -9 -9 1915.48 10.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 11 30 00 00 00 -999 -9 -9 -9 -9 -9 1935.68 9.64 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 01 00 00 00 -999 -9 -9 -9 -9 -9 1942.52 8.02 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 02 00 00 00 -999 -9 -9 -9 -9 -9 1949.66 6.51 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 03 00 00 00 -999 -9 -9 -9 -9 -9 1954.44 7.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 04 00 00 00 -999 -9 -9 -9 -9 -9 1944.14 5.89 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 05 00 00 00 -999 -9 -9 -9 -9 -9 1942.89 7.53 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 06 00 00 00 -999 -9 -9 -9 -9 -9 1948.22 5.52 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 07 00 00 00 -999 -9 -9 -9 -9 -9 1956.04 5.2 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 08 00 00 00 -999 -9 -9 -9 -9 -9 1953.56 5.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 09 00 00 00 -999 -9 -9 -9 -9 -9 1954.82 3.33 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 10 00 00 00 -999 -9 -9 -9 -9 -9 1954.28 3.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 11 00 00 00 -999 -9 -9 -9 -9 -9 1950.62 4.22 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 12 00 00 00 -999 -9 -9 -9 -9 -9 1938.82 7.57 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 13 00 00 00 -999 -9 -9 -9 -9 -9 1944.61 6.59 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 14 00 00 00 -999 -9 -9 -9 -9 -9 1950.36 8.9 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 15 00 00 00 -999 -9 -9 -9 -9 -9 1940.81 13.49 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 16 00 00 00 -999 -9 -9 -9 -9 -9 1947.73 10.92 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 17 00 00 00 -999 -9 -9 -9 -9 -9 1952.46 5.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 18 00 00 00 -999 -9 -9 -9 -9 -9 1941.92 21.8 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 19 00 00 00 -999 -9 -9 -9 -9 -9 1945.34 21.18 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 20 00 00 00 -999 -9 -9 -9 -9 -9 1948.15 9.17 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 21 00 00 00 -999 -9 -9 -9 -9 -9 1950.74 15.66 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 22 00 00 00 -999 -9 -9 -9 -9 -9 1953.65 6.44 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 23 00 00 00 -999 -9 -9 -9 -9 -9 1948.62 10.31 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 24 00 00 00 -999 -9 -9 -9 -9 -9 1951.2 7.92 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 25 00 00 00 -999 -9 -9 -9 -9 -9 1950.07 5.11 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 26 00 00 00 -999 -9 -9 -9 -9 -9 1948.83 4.15 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 27 00 00 00 -999 -9 -9 -9 -9 -9 1939.91 6.79 20 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 28 00 00 00 -999 -9 -9 -9 -9 -9 1932.47 15.4 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 29 00 00 00 -999 -9 -9 -9 -9 -9 1943.82 4.3 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 30 00 00 00 -999 -9 -9 -9 -9 -9 1941.48 4.14 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3
+MKN 2022 12 31 00 00 00 -999 -9 -9 -9 -9 -9 1942.64 9.19 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 1 18 3

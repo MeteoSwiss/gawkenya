@@ -1,6 +1,13 @@
 mkn:
-  root: /product_data/data/pay/Kenya/MKN/incoming
-  file_name: file_coverage.json
+  # file organization depends on <buckets>.
+  # if buckets==daily: <root>/<middle>/<folders>/<yyyy>/<mm>/<dd>
+  # if buckets==monthly: <root>/<middle>/<folders>/<yyyy>/<mm>
+  file_coverage: file_coverage.json
+  root: /product_data/data/pay/Kenya/MKN/   
+  branches:
+    incoming: incoming
+    archive: archive
+    issues: incoming_with_issues
   folders:
     - aerosol
     - ae33/data

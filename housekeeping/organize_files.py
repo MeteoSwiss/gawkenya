@@ -7,27 +7,29 @@ import time
 
 
 # %%
-def organize_files(cfg: dict) -> int:
-    """Move files found in <root>/<folders to subfolders organized by year, month(, day)
+def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
+    """Move files found in <root>/<branch>/<folders to subfolders organized by year, month(, day)
 
     Args:
         cfg (dict): must contain elements 
             "root" (str): path to parent of folders; 
+            "branches" (str): folders between root and folders
             "folders" (list): list of folders where files are expected; 
             for each element in "folders", an entry 
                 "name of folder" (dict): 
                     "pattern" (str): a regular expression matching the files to be moved:
                     "buckets" ("daily"|"monthly"): determines if subfolders are generated for days or only for months.
-
+        branch (str, optional): specifies the branch below root to be processed. Defaults to "incoming".  
     Raises:
         ValueError: raised if value for buckets is not recognized.
 
     Returns:
-        int: number of files moved.
+        int: total number of files moved.
     """
-    n = 0
+    total = 0
     for folder in cfg["folders"]:
-        src = os.path.join(cfg["root"], folder)
+        n = 0
+        src = os.path.join(cfg["root"], branch, folder)
         files = os.listdir(src)
         for file in files:
             name = re.search(cfg[folder]["pattern"], file)
@@ -42,11 +44,15 @@ def organize_files(cfg: dict) -> int:
                 else:
                     raise ValueError("'buckets' unknown.")
                 os.makedirs(dst, exist_ok=True)
-                print(f"{os.path.join(src, file)} > {os.path.join(dst, file)}")
+                if verbosity > 1:
+                    print(f"{os.path.join(src, file)} > {os.path.join(dst, file)}")
                 shutil.move(src=os.path.join(src, file),
                             dst=os.path.join(dst, file))
                 n += 1
-    return n
+        if verbosity > 0:
+            print(f"Finished organizing files under '{cfg['root']}{branch}/{folder}'. {n} files moved.")
+        total += n
+    return total
 
 
 def move_files(source: str, target: str, pattern: str=None, verbose: bool=True) -> int:

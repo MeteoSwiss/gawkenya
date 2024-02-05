@@ -1,0 +1,16 @@
+Filename Contact Email
+ch4_mkn_surface-insitu_40_9999-9999_hourly.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+ch4_mkn_surface-insitu_40_9999-9999_hourly.txt David Murithi Njiru njimdv@gmail.com
+ch4_mkn_surface-insitu_40_9999-9999_hourly.txt Martin Steinbacher martin.steinbacher@empa.ch
+ch4_mkn_surface-insitu_40_9999-9999_hourly.txt Mathew Mutuku mathewmutuku38@gmail.com
+ch4_mkn_surface-insitu_40_9999-9999_hourly.txt Christoph Zellweger christoph.zellweger@empa.ch
+ch4_mkn_surface-insitu_40_9999-9999_daily.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+ch4_mkn_surface-insitu_40_9999-9999_daily.txt David Murithi Njiru njimdv@gmail.com
+ch4_mkn_surface-insitu_40_9999-9999_daily.txt Martin Steinbacher martin.steinbacher@empa.ch
+ch4_mkn_surface-insitu_40_9999-9999_daily.txt Mathew Mutuku mathewmutuku38@gmail.com
+ch4_mkn_surface-insitu_40_9999-9999_daily.txt Christoph Zellweger christoph.zellweger@empa.ch
+ch4_mkn_surface-insitu_40_9999-9999_monthly.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+ch4_mkn_surface-insitu_40_9999-9999_monthly.txt David Murithi Njiru njimdv@gmail.com
+ch4_mkn_surface-insitu_40_9999-9999_monthly.txt Martin Steinbacher martin.steinbacher@empa.ch
+ch4_mkn_surface-insitu_40_9999-9999_monthly.txt Mathew Mutuku mathewmutuku38@gmail.com
+ch4_mkn_surface-insitu_40_9999-9999_monthly.txt Christoph Zellweger christoph.zellweger@empa.ch
