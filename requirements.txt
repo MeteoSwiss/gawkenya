@@ -13,3 +13,4 @@ xarray
 ipympl
 netcdf4
 scipy
+dask

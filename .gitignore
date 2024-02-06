@@ -171,3 +171,7 @@ LB_tests.ipynb
 
 #output files
 analyses_level2/output
+
+# large data
+#cams data too large
+data/cams
