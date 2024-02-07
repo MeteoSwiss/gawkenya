@@ -2,7 +2,6 @@ mkn:
   # file organization depends on <buckets>.
   # if buckets==daily: <root>/<middle>/<folders>/<yyyy>/<mm>/<dd>
   # if buckets==monthly: <root>/<middle>/<folders>/<yyyy>/<mm>
-  file_coverage: file_coverage.json
   root: /product_data/data/pay/Kenya/MKN/   
   branches:
     incoming: incoming
@@ -46,8 +45,9 @@ mkn:
     expected: 24
 
 nrb-brewer:
-  root: /product_data/data/pay/ozone/arosa/incoming
-  file_name: file_coverage_B071.json
+  root: /product_data/data/pay/ozone/arosa
+  branches:
+    incoming: incoming
   folders:
     - "071"
   "071": 
@@ -55,7 +55,9 @@ nrb-brewer:
     buckets: None
     expected: 1
 nrb-dobson:
-  root: /product_data/data/pay/Kenya/uploads
+  root: /product_data/data/pay/Kenya
+  branches:
+    uploads: uploads
   file_name: file_coverage_D018.json
   folders:
     - "prod"

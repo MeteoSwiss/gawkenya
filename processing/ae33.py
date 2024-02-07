@@ -20,11 +20,12 @@ class AE33:
         print("AE33 initialized.")
 
 
-    def extract_zipfile_to_dataframe(self, path: str, sep="|") -> tuple([pl.DataFrame, str]):
+    def extract_zipfile_to_dataframe(self, path: str, dtm="dtm", sep="|") -> tuple([pl.DataFrame, str]):
         """Read AE33 data file into a polars dataframe
 
         Args:
             path (str): full path to file
+            dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
             sep (str, optional): field separator used in file. Defaults to "|".
 
         Returns:
@@ -32,13 +33,13 @@ class AE33:
             str: Errors encountered
 
         Usage:
-        >>> path = "~/Public/git/gawkenya/data/ae33/ae33-202310190000.zip"
+        >>> path = "tests/data/ae33/ae33-202310190000.zip"
         >>> ae33 = AE33()
         >>> df = ae33.extract_zipfile_to_dataframe(path=path)
         >>> len(df)
         """
         df = pl.DataFrame()
-        cols = ("Inst_SN", "row_id", "DateTime_1", "DateTime", "unclear", "DateTime_2", 
+        cols = ("Inst_SN", "row_id", "DateTime_1", f"{dtm}", "unclear", "DateTime_2", 
                 "RefCh1", "Sen1Ch1", "Sen2Ch1", "RefCh2", "Sen1Ch2", "Sen2Ch2", "RefCh3", "Sen1Ch3", "Sen2Ch3", "RefCh4", "Sen1Ch4", "Sen2Ch4", "RefCh5", "Sen1Ch5", "Sen2Ch5", "RefCh6", "Sen1Ch6", "Sen2Ch6", "RefCh7", "Sen1Ch7", "Sen2Ch7", 
                 "BC11", "BC12", "BC1", "BC21", "BC22", "BC2", "BC31", "BC32", "BC3", "BC41", "BC42", "BC4", "BC51", "BC52", "BC5", "BC61", "BC62", "BC6", "BC71", "BC72", "BC7", 
                 "K1", "K2", "K3", "K4", "K5", "K6", "K7", "unclear_2", "Pres", "Temp", "Flow1", "Flow2", "FlowC", "Temp_1", "Temp_2","Temp_3",
@@ -48,22 +49,33 @@ class AE33:
                 "TapeAdvCount", "unclear_3", "unclear_4", "unclear_5", "unclear_6"
                 # "ID_com1", "ID_com2", "ID_com3", "fields_i"
         )
+        dtypes = [pl.Utf8] + [pl.Int64] + [pl.Utf8]*4 + [pl.Int64]*42 + [pl.Float64]*10 + [pl.Int64]*3 + [pl.Float64]*3 + [pl.Int64]*10
 
         try:
-            df = pl.read_csv(source=zipfile.ZipFile(path).read(os.path.basename(path).replace('.zip', '.dat')), 
+            source = zipfile.ZipFile(path).read(os.path.basename(path).replace('.zip', '.dat'))
+            # df = pl.read_csv(source=source, 
+            #                 has_header=False, 
+            #                 separator=chr(0),
+            #                 comment_char="#",
+            #                 ).select(tmp=pl.col('column_1')
+            #                 .str.split(sep)
+            #                 # .list.to_struct(
+            #                 #     n_field_strategy='max_width',
+            #                 #     fields=lambda x:f"column_{x+1}")
+            #                 ).unnest('tmp').with_columns(
+            #                     pl.col('column_4')
+            #                     .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_zone='UTC'))
+            df = pl.read_csv(source=source, 
                             has_header=False, 
-                            separator=chr(0),
+                            separator=sep,
                             comment_char="#",
-                            ).select(tmp=pl.col('column_1')
-                            .str.split(sep)
-                            .list.to_struct(
-                                n_field_strategy='max_width',
-                                fields=lambda x:f"column_{x+1}")
-                            ).unnest('tmp').with_columns(
+                            dtypes=dtypes
+                            ).with_columns(
                                 pl.col('column_4')
-                                .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_zone='UTC'))
+                                .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p')
+                                )
             df.columns = cols
-            df = df.with_columns(pl.col(pl.Utf8).exclude("^(I|D).*$").cast(pl.Float32))
+            # df = df.with_columns(pl.col(pl.Utf8).exclude(f"^(I|D|{dtm}).*$").cast(pl.Float32))
 
             return df, None
         except Exception as err:
@@ -71,12 +83,13 @@ class AE33:
             return df, str(err)
 
 
-    def zipfiles_to_parquet(self, source: str, target: str, plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
+    def zipfiles_to_parquet(self, source: str, target: str, dtm: str="dtm", plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
         """Extract and compile AE33 zipfiles found in source and its sub-folders to polars DataFrame, save as parquet files in target. Optionally plot the data.
 
         Args:
             source (str): Path to directory to process. Sub-directories will also be considered.
             target (str): Path to directory where .parquet files will be stored.
+            dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
             plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
         Returns:
@@ -97,23 +110,29 @@ class AE33:
                         errors.update({file: err})
                     result = pl.concat([result, tmp], how='diagonal')
 
-            # create target directoriy if it doesn't yet exist
-            os.makedirs(target, exist_ok=True)
+            if not result.is_empty():
+                # create target directoriy if it doesn't yet exist
+                os.makedirs(target, exist_ok=True)
 
-            # remove duplicates, sort data
-            result = result.unique()
-            result = result.sort("DateTime")
+                file = os.path.join(target, "ae33.parquet")
+                if os.path.exists(file):
+                    df = pl.read_parquet(source=file)
+                    # df = df.with_columns(pl.col(pl.Utf8).exclude(f"^(I|D|{dtm}).*$").cast(pl.Float32))
+                    result = pl.concat([df, result])
+                result = result.unique()
+                result = result.sort(dtm)
+                result.write_parquet(file)
 
-            # store result as parquet file
-            result.write_parquet(os.path.join(target, 'ae33.parquet'))
+                # plot data
+                if plot:
+                    self.plot_aethalometer_data(df=result)
 
-            # plot data
-            if plot:
-                self.plot_aethalometer_data(result)
-
-            # write errors to json file
-            with open(os.path.join(target, 'ae33.errors.json'), "w") as fh:
-                json.dump(errors, fh)
+            if errors:
+                # create target directoriy if it doesn't yet exist
+                os.makedirs(target, exist_ok=True)
+                # write errors to json file (append if it exists already)
+                with open(os.path.join(target, "ae33.errors.json"), "a") as fh:
+                    json.dump(errors, fh)
 
             return result, errors
 
@@ -121,47 +140,48 @@ class AE33:
             print(err)
 
 
-    def plot_aethalometer_data(self, df: pl.DataFrame, variable: str="eBC", start:str=None, end:str=None, title:str="Magee Scientific AE33", ylim=None) -> None:
+    def plot_aethalometer_data(self, df: pl.DataFrame, variable: str="eBC", dtm: str="dtm", start:str=None, end:str=None, title:str="Magee Scientific AE33", ylim=None) -> None:
         """Plot a polars DataFrame containing nephelometer data.
 
         Args:
             df (pl.DataFrame): Polars DataFrame, with columns depending on <type>
             variable (str): ...
+            dtm (str, optional): ...
             start (str): ...
             end (str): ...
             title (str): Title of plot. Defaults to "Magee Scientific AE33"
         """
         try:
-            df = df.sort("DateTime")
+            df = df.sort(dtm)
 
             if start:
-                df = df.filter(pl.col("DateTime") >= pl.lit(start).str.strptime(pl.Date))
+                df = df.filter(pl.col(dtm) >= pl.lit(start).str.strptime(pl.Date))
             if end:
-                df = df.filter(pl.col("DateTime") <= pl.lit(end).str.strptime(pl.Date))
+                df = df.filter(pl.col(dtm) <= pl.lit(end).str.strptime(pl.Date))
 
             if variable=="eBC":
                 variable = "BC"
                 subtitle = "Equivalent Black Carbon Concentration"
                 ylabel = "(ng/m3)"
                 legend = ('370 nm', '470 nm', '521 nm', '590 nm', '660 nm', '880 nm', '950 nm')
-                __df = df
+                # __df = df
             else:
                 raise ValueError(f"Type not recognized (source: plot_aethalometer_data)")
             
             c = ('purple', 'darkblue', 'blue', 'green', 'gold', 'orange', 'red')
             plt.figure(figsize=(12, 6))
             for i in range(1, 8):
-                plt.scatter(__df["DateTime"], __df[f"{variable}{i}"], c=c[i-1], marker="o", s=2)
+                plt.scatter(df[dtm], df[f"{variable}{i}"], c=c[i-1], marker="o", s=2)
 
-            for i in range(1, 8):
-                plt.scatter(__df.filter(pl.col(f"flags_BC{i}")>0)["DateTime"], __df.filter(pl.col(f"flags_BC{i}")>0)[f"flags_BC{i}"], c="black", marker="o", s=2)
+            # for i in range(1, 8):
+            #     plt.scatter(df.filter(pl.col(f"flags_BC{i}")>0)[dtm], df.filter(pl.col(f"flags_BC{i}")>0)[f"flags_BC{i}"], c="black", marker="o", s=2)
 
             if ylim:
                 plt.ylim(ylim)
             plt.legend(legend)
             plt.suptitle(title)
             plt.title(subtitle)
-            plt.xlabel("DateTime")
+            plt.xlabel(dtm)
             plt.ylabel(ylabel)
             plt.show()
         except Exception as err:

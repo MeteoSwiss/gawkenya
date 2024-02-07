@@ -12,7 +12,7 @@ class CPD2:
         print("CPD2 initialized.")
 
 
-    def extract_tarball_to_dataframe(self, path: str) -> dict:
+    def extract_tarball_to_dataframe(self, path: str, dtm: str="dtm") -> dict:
         """Extract CPD2 tarballs from 'source' and process files.
 
         Aurora 3000 nephelometer
@@ -59,13 +59,13 @@ class CPD2:
                 }
 
         # configuration of headers
-        hdrs_S11 = {'S11a':('S11a','STN','EPOCH','DateTime','F1_S11','F2_S11','BsB_S11','BsG_S11','BsR_S11','BbsB_S11','BbsG_S11','BbsR_S11','T1_S11','T2_S11','U_S11','P_S11'),
-                'S11c':('S11c','STN','EPOCH','DateTime','BswB_S11','BswG_S11','BswR_S11','BbswB_S11','BbswG_S11','BbswR_S11'),
-                'S11k':('S11k','STN','EPOCH','DateTime','P1_S11','P2_S11','T3_S11','T4_S11','U1_S11','U2_S11','DEN1_S11','DEN2_S11','Csr1B_S11','Csr1G_S11','Csr1R_S11','Cbsr1B_S11','Cbsr1G_S11','Cbsr1R_S11','Csd1B_S11','Csd1G_S11','Csd1R_S11','Cbsd1B_S11','Cbsd1G_S11','Cbsd1R_S11','Csp1B_S11','Csp1G_S11','Csp1R_S11','Cbsp1B_S11','Cbsp1G_S11','Cbsp1R_S11','Csr2B_S11','Csr2G_S11','Csr2R_S11','Cbsr2B_S11','Cbsr2G_S11','Cbsr2R_S11','Csd2B_S11','Csd2G_S11','Csd2R_S11','Cbsd2B_S11','Cbsd2G_S11','Cbsd2R_S11','Csp2B_S11','Csp2G_S11','Csp2R_S11','Cbsp2B_S11','Cbsp2G_S11','Cbsp2R_S11','CsnB_S11','CsnG_S11','CsnR_S11','CbsnB_S11','CbsnG_S11','CbsnR_S11','Bs1B_S11','Bs1G_S11','Bs1R_S11','Bbs1B_S11','Bbs1G_S11','Bbs1R_S11','Bs2B_S11','Bs2G_S11','Bs2R_S11','Bbs2B_S11','Bbs2G_S11','Bbs2R_S11','Bs2gB_S11','Bs2gG_S11','Bs2gR_S11','Bbs2gB_S11','Bbs2gG_S11','Bbs2gR_S11','PCTsB_S11','PCTsG_S11','PCTsR_S11','PCTbsB_S11','PCTbsG_S11','PCTbsR_S11'),
-                'S11m':('S11m','STN','EPOCH','DateTime','CrG_S11','BswB_S11','BswG_S11','BswR_S11','BbswB_S11','BbswG_S11','BbswR_S11','Calparams60_1_S11','Calparams60_2_S11','Calparams60_3_S11','Calparams60_4_S11','Calparams60_5_S11','Calparams60_6_S11','Calparams60_7_S11','Calparams60_8_S11','Calparams60_9_S11','Calparams60_10_S11','Calparams60_11_S11','Calparams60_12_S11','Calparams60_13_S11','Calparams61_1_S11','Calparams61_2_S11','Calparams61_3_S11','Calparams61_4_S11','Calparams61_5_S11','Calparams61_6_S11','Calparams61_7_S11','Calparams61_8_S11','Calparams61_9_S11','Calparams61_10_S11','Calparams61_11_S11','Calparams61_12_S11','Calparams61_13_S11','Calparams62_1_S11','Calparams62_2_S11','Calparams62_3_S11','Calparams62_4_S11','Calparams62_5_S11','Calparams62_6_S11','Calparams62_7_S11','Calparams62_8_S11','Calparams62_9_S11','Calparams62_10_S11','Calparams62_11_S11','Calparams62_12_S11','Calparams62_13_S11','Calparams63_1_S11','Calparams63_2_S11','Calparams63_3_S11','Calparams63_4_S11','Calparams63_5_S11','Calparams63_6_S11','Calparams63_7_S11','Calparams63_8_S11','Calparams63_9_S11','Calparams63_10_S11','Calparams63_11_S11','Calparams63_12_S11','Calparams63_13_S11','Calparams64_1_S11','Calparams64_2_S11','Calparams64_3_S11','Calparams64_4_S11','Calparams64_5_S11','Calparams64_6_S11','Calparams64_7_S11','Calparams64_8_S11','Calparams64_9_S11','Calparams64_10_S11','Calparams64_11_S11','Calparams64_12_S11','Calparams64_13_S11','Calparams65_1_S11','Calparams65_2_S11','Calparams65_3_S11','Calparams65_4_S11','Calparams65_5_S11','Calparams65_6_S11','Calparams65_7_S11','Calparams65_8_S11','Calparams65_9_S11','Calparams65_10_S11','Calparams65_11_S11','Calparams65_12_S11','Calparams65_13_S11'),
-                'S11s':('S11s','STN','EPOCH','DateTime','F2_S11'),
+        hdrs_S11 = {'S11a':('S11a','STN','EPOCH',f"{dtm}",'F1_S11','F2_S11','BsB_S11','BsG_S11','BsR_S11','BbsB_S11','BbsG_S11','BbsR_S11','T1_S11','T2_S11','U_S11','P_S11'),
+                'S11c':('S11c','STN','EPOCH',f"{dtm}",'BswB_S11','BswG_S11','BswR_S11','BbswB_S11','BbswG_S11','BbswR_S11'),
+                'S11k':('S11k','STN','EPOCH',f"{dtm}",'P1_S11','P2_S11','T3_S11','T4_S11','U1_S11','U2_S11','DEN1_S11','DEN2_S11','Csr1B_S11','Csr1G_S11','Csr1R_S11','Cbsr1B_S11','Cbsr1G_S11','Cbsr1R_S11','Csd1B_S11','Csd1G_S11','Csd1R_S11','Cbsd1B_S11','Cbsd1G_S11','Cbsd1R_S11','Csp1B_S11','Csp1G_S11','Csp1R_S11','Cbsp1B_S11','Cbsp1G_S11','Cbsp1R_S11','Csr2B_S11','Csr2G_S11','Csr2R_S11','Cbsr2B_S11','Cbsr2G_S11','Cbsr2R_S11','Csd2B_S11','Csd2G_S11','Csd2R_S11','Cbsd2B_S11','Cbsd2G_S11','Cbsd2R_S11','Csp2B_S11','Csp2G_S11','Csp2R_S11','Cbsp2B_S11','Cbsp2G_S11','Cbsp2R_S11','CsnB_S11','CsnG_S11','CsnR_S11','CbsnB_S11','CbsnG_S11','CbsnR_S11','Bs1B_S11','Bs1G_S11','Bs1R_S11','Bbs1B_S11','Bbs1G_S11','Bbs1R_S11','Bs2B_S11','Bs2G_S11','Bs2R_S11','Bbs2B_S11','Bbs2G_S11','Bbs2R_S11','Bs2gB_S11','Bs2gG_S11','Bs2gR_S11','Bbs2gB_S11','Bbs2gG_S11','Bbs2gR_S11','PCTsB_S11','PCTsG_S11','PCTsR_S11','PCTbsB_S11','PCTbsG_S11','PCTbsR_S11'),
+                'S11m':('S11m','STN','EPOCH',f"{dtm}",'CrG_S11','BswB_S11','BswG_S11','BswR_S11','BbswB_S11','BbswG_S11','BbswR_S11','Calparams60_1_S11','Calparams60_2_S11','Calparams60_3_S11','Calparams60_4_S11','Calparams60_5_S11','Calparams60_6_S11','Calparams60_7_S11','Calparams60_8_S11','Calparams60_9_S11','Calparams60_10_S11','Calparams60_11_S11','Calparams60_12_S11','Calparams60_13_S11','Calparams61_1_S11','Calparams61_2_S11','Calparams61_3_S11','Calparams61_4_S11','Calparams61_5_S11','Calparams61_6_S11','Calparams61_7_S11','Calparams61_8_S11','Calparams61_9_S11','Calparams61_10_S11','Calparams61_11_S11','Calparams61_12_S11','Calparams61_13_S11','Calparams62_1_S11','Calparams62_2_S11','Calparams62_3_S11','Calparams62_4_S11','Calparams62_5_S11','Calparams62_6_S11','Calparams62_7_S11','Calparams62_8_S11','Calparams62_9_S11','Calparams62_10_S11','Calparams62_11_S11','Calparams62_12_S11','Calparams62_13_S11','Calparams63_1_S11','Calparams63_2_S11','Calparams63_3_S11','Calparams63_4_S11','Calparams63_5_S11','Calparams63_6_S11','Calparams63_7_S11','Calparams63_8_S11','Calparams63_9_S11','Calparams63_10_S11','Calparams63_11_S11','Calparams63_12_S11','Calparams63_13_S11','Calparams64_1_S11','Calparams64_2_S11','Calparams64_3_S11','Calparams64_4_S11','Calparams64_5_S11','Calparams64_6_S11','Calparams64_7_S11','Calparams64_8_S11','Calparams64_9_S11','Calparams64_10_S11','Calparams64_11_S11','Calparams64_12_S11','Calparams64_13_S11','Calparams65_1_S11','Calparams65_2_S11','Calparams65_3_S11','Calparams65_4_S11','Calparams65_5_S11','Calparams65_6_S11','Calparams65_7_S11','Calparams65_8_S11','Calparams65_9_S11','Calparams65_10_S11','Calparams65_11_S11','Calparams65_12_S11','Calparams65_13_S11'),
+                'S11s':('S11s','STN','EPOCH',f"{dtm}",'F2_S11'),
                 }
-        hdrs_A11 = {'A11a':('A11a','STN','EPOCH','DateTime','Q_A11','PCT_A11','X1c_A11','X2c_A11','X3c_A11','X4c_A11','X5c_A11','X6c_A11','X7c_A11','ZIr1_A11','ZIr2_A11','ZIr3_A11','ZIr4_A11','ZIr5_A11','ZIr6_A11','ZIr7_A11','Ipz1_A11','Ipz2_A11','Ipz3_A11','Ipz4_A11','Ipz5_A11','Ipz6_A11','Ipz7_A11','Ip1_A11','Ip2_A11','Ip3_A11','Ip4_A11','Ip5_A11','Ip6_A11','Ip7_A11','Ifz1_A11','Ifz2_A11','Ifz3_A11','Ifz4_A11','Ifz5_A11','Ifz6_A11','Ifz7_A11','If1_A11','If2_A11','If3_A11','If4_A11','If5_A11','If6_A11','If7_A11'),
+        hdrs_A11 = {'A11a':('A11a','STN','EPOCH',f"{dtm}",'Q_A11','PCT_A11','X1c_A11','X2c_A11','X3c_A11','X4c_A11','X5c_A11','X6c_A11','X7c_A11','ZIr1_A11','ZIr2_A11','ZIr3_A11','ZIr4_A11','ZIr5_A11','ZIr6_A11','ZIr7_A11','Ipz1_A11','Ipz2_A11','Ipz3_A11','Ipz4_A11','Ipz5_A11','Ipz6_A11','Ipz7_A11','Ip1_A11','Ip2_A11','Ip3_A11','Ip4_A11','Ip5_A11','Ip6_A11','Ip7_A11','Ifz1_A11','Ifz2_A11','Ifz3_A11','Ifz4_A11','Ifz5_A11','Ifz6_A11','Ifz7_A11','If1_A11','If2_A11','If3_A11','If4_A11','If5_A11','If6_A11','If7_A11'),
                 }
 
         try:
@@ -96,7 +96,6 @@ class CPD2:
                                             pl.col('column_4')
                                             .str.to_datetime(format='%Y-%m-%dT%H:%M:%SZ', time_zone='UTC'))
 
-
                             if 'S11' in member.name:
                                 hdrs = hdrs_S11
                                 exclude = "^(F|S).*$"
@@ -120,7 +119,7 @@ class CPD2:
                                     pass
 
                                 # sort data by DateTime and store
-                                cpd2[k] = cpd2[k].sort("DateTime")
+                                cpd2[k] = cpd2[k].sort(f"{dtm}")
 
                         except Exception as err:
                             cpd2['errors'][member.name] = str(err)
@@ -133,12 +132,13 @@ class CPD2:
             print(err)         
 
 
-    def tarballs_to_parquet(self, source: str, target: str, plot: bool=True, verbose: bool=True) -> dict:
+    def tarballs_to_parquet(self, source: str, target: str, dtm="dtm", plot: bool=True, verbose: bool=True) -> dict:
         """Process CPD2 tarballs found in source and its sub-folders, compile data found in tarball members in polars DataFrames, save as parquet files in target. Optionally plot the data.
 
         Args:
             source (str): Path to directory to process. Sub-directories will also be considered.
             target (str): Path to directory where .parquet files will be stored.
+            dtm (str, optional): Name of dateTime column. Defaults to 'dtm'.
             plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
         Returns:
@@ -170,15 +170,22 @@ class CPD2:
 
             # split result according to data type and store as separate parquet files
             for k, v in result.items():
-                result[k] = result[k].sort("DateTime")
-                result[k].write_parquet(os.path.join(target, f"{k}.parquet"))
+                if not result[k].is_empty():
+                    result[k] = result[k].sort(dtm)
+                    file = os.path.join(target, f"{k}.parquet")
+                    if os.path.exists(file):
+                        df = pl.read_parquet(source=file)
+                        result[k] = pl.concat([df, result[k]])
+                    result[k] = result[k].unique()
+                    result[k] = result[k].sort(dtm)
+                    result[k].write_parquet(file)
 
-                # plot data
-                if plot:
-                    self.plot_dataframe(result, type=k)
+                    # plot data
+                    if plot:
+                        self.plot_dataframe(result, dtm=dtm, type=k)
 
             # write errors to json file
-            with open(os.path.join(target, f"{k}.errors.json"), "w") as fh:
+            with open(os.path.join(target, f"{k}.errors.json"), "a") as fh:
                 json.dump(errors, fh)
 
             return errors
@@ -187,19 +194,19 @@ class CPD2:
             print(err)         
             
 
-    def plot_dataframe(self, cpd2: dict, type: str=["A11a", "S11a", "S11c", "S11m"], start:str=None, end:str=None, title:str="MKN", use_flags=True) -> None:
+    def plot_dataframe(self, cpd2: dict, type: str=["A11a", "S11a", "S11c", "S11m"], dtm="dtm", start:str=None, end:str=None, title:str="MKN", use_flags=True) -> None:
         try:
             if type=="A11a":
-                self.plot_aethalometer_data(cpd2[type], variable="eBC", start=start, end=end, title=title)
+                self.plot_aethalometer_data(cpd2[type], variable="eBC", dtm=dtm, start=start, end=end, title=title)
             elif type in ["S11a", "S11c", "S11k", "S11m"]:
-                self.plot_nephelometer_data(cpd2[type], type=type, start=start, end=end, title=title, use_flags=use_flags)
+                self.plot_nephelometer_data(cpd2[type], type=type, dtm=dtm, start=start, end=end, title=title, use_flags=use_flags)
             else:
                 raise ValueError(f"Type not recognized (source: plot_dataframe)")
         except Exception as err:
             print(err)
 
 
-    def plot_nephelometer_data(self, df: pl.DataFrame, type: str=["S11a", "S11c", "S11m"], start:str=None, end:str=None, title:str="MKN Aurora 3000", use_flags: bool=True, upper_limit: int=2000) -> None:
+    def plot_nephelometer_data(self, df: pl.DataFrame, type: str=["S11a", "S11c", "S11m"], dtm="dtm", start:str=None, end:str=None, title:str="MKN Aurora 3000", use_flags: bool=True, upper_limit: int=2000) -> None:
         """Plot a polars DataFrame containing nephelometer data.
 
         Args:
@@ -212,12 +219,12 @@ class CPD2:
             upper_limit (int): Maximum value to be retained. Defaults to 2000.
         """
         try:
-            df = df.sort("DateTime")
+            df = df.sort(dtm)
 
             if start:
-                df = df.filter(pl.col("DateTime") >= pl.lit(start).str.strptime(pl.Date))
+                df = df.filter(pl.col(dtm) >= pl.lit(start).str.strptime(pl.Date))
             if end:
-                df = df.filter(pl.col("DateTime") <= pl.lit(end).str.strptime(pl.Date))
+                df = df.filter(pl.col(dtm) <= pl.lit(end).str.strptime(pl.Date))
 
             if type=="S11a":
                 sfx = ""
@@ -237,9 +244,9 @@ class CPD2:
                 
             plt.figure(figsize=(12, 6))
             ax1 = plt.subplot(211)
-            plt.scatter(__df["DateTime"], __df[f"Bs{sfx}B_S11"], c="b", marker="o", s=2)
-            plt.scatter(__df["DateTime"], __df[f"Bs{sfx}G_S11"], c="g", marker="o", s=2)
-            plt.scatter(__df["DateTime"], __df[f"Bs{sfx}R_S11"], c="r", marker="o", s=2)
+            plt.scatter(__df[dtm], __df[f"Bs{sfx}B_S11"], c="b", marker="o", s=2)
+            plt.scatter(__df[dtm], __df[f"Bs{sfx}G_S11"], c="g", marker="o", s=2)
+            plt.scatter(__df[dtm], __df[f"Bs{sfx}R_S11"], c="r", marker="o", s=2)
             plt.legend([f"Bs{sfx}B", f"Bs{sfx}G", f"Bs{sfx}R"])
             plt.tick_params('x', labelbottom=False)
             plt.suptitle(f"{title} ({type} data)")
@@ -247,20 +254,20 @@ class CPD2:
             plt.ylabel('(1/Mm)')
 
             ax2 = plt.subplot(212, sharex=ax1)
-            plt.scatter(__df["DateTime"], __df[f"Bbs{sfx}B_S11"], c="b", marker="o", s=2)
-            plt.scatter(__df["DateTime"], __df[f"Bbs{sfx}G_S11"], c="g", marker="o", s=2)
-            plt.scatter(__df["DateTime"], __df[f"Bbs{sfx}R_S11"], c="r", marker="o", s=2)        
+            plt.scatter(__df[dtm], __df[f"Bbs{sfx}B_S11"], c="b", marker="o", s=2)
+            plt.scatter(__df[dtm], __df[f"Bbs{sfx}G_S11"], c="g", marker="o", s=2)
+            plt.scatter(__df[dtm], __df[f"Bbs{sfx}R_S11"], c="r", marker="o", s=2)        
             plt.legend([f"Bbs{sfx}B", f"Bbs{sfx}G", f"Bbs{sfx}R"])
             plt.title(title2)
             plt.ylabel('(1/Mm)')
 
-            plt.xlabel("DateTime")
+            plt.xlabel(dtm)
             plt.show()
         except Exception as err:
             print(err)
 
 
-    def plot_aethalometer_data(self, df: pl.DataFrame, variable:str=["eBC"], start:str=None, end:str=None, title:str="MKN Magee AE31") -> None:
+    def plot_aethalometer_data(self, df: pl.DataFrame, variable:str=["eBC"], dtm="dtm", start:str=None, end:str=None, title:str="MKN Magee AE31") -> None:
         """Plot a polars DataFrame containing nephelometer data.
 
         Args:
@@ -268,12 +275,12 @@ class CPD2:
             title (str): Title of plot. Defaults to "MKN Magee AE31"
         """
         try:
-            df = df.sort("DateTime")
+            df = df.sort(dtm)
 
             if start:
-                df = df.filter(pl.col("DateTime") >= pl.lit(start).str.strptime(pl.Date))
+                df = df.filter(pl.col(dtm) >= pl.lit(start).str.strptime(pl.Date))
             if end:
-                df = df.filter(pl.col("DateTime") <= pl.lit(end).str.strptime(pl.Date))
+                df = df.filter(pl.col(dtm) <= pl.lit(end).str.strptime(pl.Date))
 
             if variable=="eBC":
                 variable = "X"
@@ -288,11 +295,11 @@ class CPD2:
             c = ('purple', 'darkblue', 'blue', 'green', 'gold', 'orange', 'red')
             plt.figure(figsize=(12, 6))
             for i in range(1, 8):
-                plt.scatter(__df["DateTime"], __df[f"{variable}{i}{sfx}_A11"], c=c[i-1], marker="o", s=2)
+                plt.scatter(__df[dtm], __df[f"{variable}{i}{sfx}_A11"], c=c[i-1], marker="o", s=2)
             plt.legend(legend)
             plt.suptitle(title)
             plt.title(subtitle)
-            plt.xlabel("DateTime")
+            plt.xlabel(dtm)
             plt.ylabel(ylabel)
             plt.show()
         except Exception as err:
