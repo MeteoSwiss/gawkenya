@@ -3,15 +3,15 @@ mkn:
   # if buckets==daily: <root>/<middle>/<folders>/<yyyy>/<mm>/<dd>
   # if buckets==monthly: <root>/<middle>/<folders>/<yyyy>/<mm>
   file_coverage: file_coverage.json
-  root: /product_data/data/pay/Kenya/MKN/   
-  branches:
+  root: /project/gaw134/nas/raw/MKN/   
+  branches: #at empa we dont have these subfolders
     incoming: incoming
     archive: archive
     issues: incoming_with_issues
   folders:
-    - aerosol
-    - ae33/data
-    - meteo
+    #- aerosol
+    #- ae33/data
+    #- meteo
     - tei49c
     - tei49i
     # - tei49i_2
