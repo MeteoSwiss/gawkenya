@@ -1,0 +1,237 @@
+""" 
+Provide classes and methods to read in the the data (measurements level2)
+
+Author: Leonie Bernet
+Version: 1.0
+Created on: 2024-02
+Modifications: date -> modified
+"""
+from abc import ABC, abstractmethod
+import xarray as xr
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+import sys
+from dataclasses import dataclass
+
+# add the parent directory to syspath to allow importing modules from the parent directory
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if not parent_dir in sys.path:
+    sys.path.append(parent_dir)
+
+
+from processing import ebas
+from processing import wdc
+
+
+# Define an abstract base class to read our data
+class BaseDataReader(ABC):
+    '''
+    Basic class
+    data_path   should be the folder that contains all data-subfolders (e.g. ./data)
+    '''
+    def __init__(self, data_path, dataset, species):
+        self.data_path = data_path
+        self.dataset = dataset
+        self.species = species
+
+    @abstractmethod
+    def read_data(self) -> pd.DataFrame:
+        pass
+    
+
+    @abstractmethod
+    def process_data(self, data):
+        pass
+
+@dataclass
+class WhichData:
+    dataset: str
+    species: str
+    database: str
+
+
+class wdcGHGReader(BaseDataReader):
+    """
+    This is a class to read GHG data from wdc. 
+    It is a subclass of BaseInstrumentReader
+    """
+    # initialize class-specific attributes
+    def __init__(self, data_path, dataset, species):
+        super().__init__(data_path, dataset, species) #include the initialization of the base class (attributes)
+        self.data_path = os.path.join(data_path, f'wdc/wdcgg/{species}')
+
+
+    def read_data(self):
+        df = wdc.compile_wdcgg_into_dataframe(self.data_path,sampling='hourly')
+        # Perform additional processing if needed
+        return df
+    
+    def process_data(self,df):
+        return df
+
+
+class wdcFlaskReader(BaseDataReader):
+    """
+    This is a class to read GHG flask (event) data from wdc. 
+    It is a subclass of BaseInstrumentReader
+    """
+    # initialize class-specific attributes
+    def __init__(self, data_path, dataset, species):
+        super().__init__(data_path, dataset, species) #include the initialization of the base class (attributes)
+        self.data_path = os.path.join(data_path, f'wdc/wdcgg/{species}')
+
+
+    def read_data(self):
+        df = wdc.compile_wdcgg_into_dataframe(self.data_path,sampling='event')
+
+        return df
+    
+    def process_data(self,df):
+        ## Check for duplicate dates:
+        ## events have always twice the same time -> take mean of values with same time
+        duplicates = df.index.duplicated(keep='first')
+        if duplicates.any():
+            numeric_columns = df.select_dtypes(include=['number']).columns # cannot take the mean of non-numeric columns
+            df_numeric_mean = df.groupby(df.index)[numeric_columns].mean() # groupby time (same timestep) and the mean for each
+            df_non_numeric = df.drop(columns=numeric_columns)
+            df = pd.concat([df_numeric_mean, df_non_numeric.groupby(df.index).first()], axis=1)
+
+        ## Exclude flagged data
+
+        return df
+
+class ebasReader(BaseDataReader):
+    """
+    This is a class to read data from ebas. 
+    It is a subclass of BaseInstrumentReader
+    """
+    # initialize class-specific attributes
+    def __init__(self, data_path, dataset, species):
+        super().__init__(data_path, dataset, species) #include the initialization of the base class (attributes)
+        self.data_path = os.path.join(data_path, f'wdc/ebas/')
+
+        if self.species in ['O3','CO','other_gases']:
+            self.data_path = os.path.join(data_path, f'wdc/ebas/air/')
+        elif self.species == 'aerosols':
+            self.data_path = os.path.join(data_path, f'wdc/ebas/aerosols/')
+        elif self.species == 'meteo':
+            self.data_path = os.path.join(data_path, f'wdc/ebas/met/')
+        else:
+            raise NotImplementedError(
+            f"Please implement code to add the folder where the data of ebas {self.species} is stored.")
+
+    def read_data(self):
+        # Example implementation for Provider 2's file format (assuming Excel format)
+        if self.species == 'O3':
+            df = ebas.compile_ebas_ozone_data_into_dataframe(self.data_path)
+
+        elif self.species == 'aerosols':
+            # get aerosol file (for ozone that was done in ebas.py, but I do it now here)
+            df = pd.DataFrame()
+            for file in os.listdir(self.data_path):
+                if "aerosol" in str(file):
+                    file_path = self.data_path+file
+                    data_file = ebas.ebas_aerosol_file_to_dataframe(file_path)
+                df = pd.concat([df, data_file])
+
+        else:
+            df = None
+        
+        # rename time index
+        df = df.rename_axis('time')
+        
+        return df
+    
+        
+    def process_data(self, df):
+        return df
+    
+
+## Define which species needs which data-reader
+# Dictionary with all the possible data
+    
+AvailableData = {
+    "CO2": WhichData(
+        dataset = 'CO2',
+        species ='CO2',
+        database ='wdcgg'
+    ),
+    "CO2_flask": WhichData(
+        dataset = 'CO2_flask',
+        species ='CO2',
+        database ='wdcgg_flask'
+    ),
+    "CO": WhichData(
+        dataset = 'CO',
+        species='CO',
+        database='wdcgg'
+    ),
+    "CO_flask": WhichData(
+        dataset = 'CO_flask',
+        species ='CO',
+        database ='wdcgg_flask'
+    ),
+    "CO_2002-2006": WhichData(
+        dataset = 'CO_2002-2006',
+        species='CO',
+        database='ebas'
+    ),
+    "CH4": WhichData(
+        dataset = 'CH4',
+        species='CH4',
+        database='wdcgg'
+    ),
+    "CH4_flask": WhichData(
+        dataset = 'CH4_flask',
+        species='CH4',
+        database='wdcgg_flask'
+    ),
+    "O3": WhichData(
+        dataset = 'O3',
+        species ='O3',
+        database ='ebas'
+    ),
+    "aerosols_2015": WhichData(
+        dataset = 'aerosols_2015',
+        species ='aerosols',
+        database ='ebas'
+    ),
+    "aerosols": WhichData(
+        dataset = 'aerosols',
+        species = 'aerosols',
+        database = 'psi' #??
+    ),
+    "other_gases_ebas": WhichData(
+        dataset = 'other_gases_ebas', 
+        species = 'glass_flask',  #not done yet
+        database = 'ebas'
+    ),
+    "other_gases_wdc": WhichData( 
+        dataset = 'other_gases_wdc',
+        species = 'glass_flask',
+        database = 'wdc' #not done yet
+    ),
+    "meteo": WhichData( 
+        dataset = 'meteo',
+        species = 'meteo',
+        database = 'ebas' #not done yet
+    ),
+
+
+}
+    
+def create_data_reader(data_path: str, dataset: str) -> BaseDataReader:
+    database = AvailableData[dataset].database
+    species = AvailableData[dataset].species
+    dataset = AvailableData[dataset].dataset
+    
+    if database == 'wdcgg':
+        return wdcGHGReader(data_path=data_path, dataset=dataset, species=species) #return an instance of the wdcGHGReader class
+    elif database == 'wdcgg_flask':
+        return wdcFlaskReader(data_path=data_path, dataset=dataset, species=species)
+    elif database == 'ebas':
+        return  ebasReader(data_path=data_path, dataset=dataset, species=species)
+    else:
+        raise ValueError(f"Unsupported database: {database}")
+    
