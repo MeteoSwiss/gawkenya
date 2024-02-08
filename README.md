@@ -21,8 +21,17 @@ Support an end-to-end data chain from instrument to raw data to clean data to pr
    $ pyenv exec pip install -r "/home/zue/users/jkl/Public/git/gawkenya/requirements.txt"
 
 ## Install nappy (needed for AMES files only)
-There is a bug in the original distribution that prevents a normal pip install. Workaround: Forked the original repo, commented out line 17 in /utils/common_utils.py. Then, the following worked without errors
-1. $ pip install git+https://github.com/joergklausen/nappy.git
+<!-- There is a bug in the original distribution that prevents a normal pip install. Workaround: Forked the original repo, commented out line 17 in /utils/common_utils.py. Then, the following worked without errors
+1. $ pip install git+https://github.com/joergklausen/nappy.git -->
+1. pip install nappy
+
+## Repo structure
+- data
+  - level1
+    - monthly folders for monthly .parquet files (g2401)
+    - yearly .parquet data (ae33, aerosol: A11a, S11a, S11c, S11k, S11m, S11s)
+
+
 
 from Sarina:
 # About
