@@ -74,7 +74,7 @@ def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor:
                 mappings = pd.concat([short_names, long_names], axis=1)
                 epoch = datetime.strptime("%s-%s-%s" % tuple(fh.DATE), "%Y-%m-%d")
                 df_O3['dtm'] = epoch + pd.to_timedelta(round(df_O3['starttime']), unit='D')
-                df_O3.set_index('dtm')
+                df_O3.set_index('dtm',inplace=True)
 
                 data_O3_all = pd.concat([data_O3_all, df_O3])
 
