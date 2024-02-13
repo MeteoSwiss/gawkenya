@@ -167,7 +167,7 @@ secrets-kplc
 
 
 #private files
-LB_tests.ipynb
+LB_tests/
 
 #output files
 analyses_level2/output

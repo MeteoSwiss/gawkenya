@@ -122,7 +122,6 @@ class ebasReader(BaseDataReader):
             f"Please implement code to add the folder where the data of ebas {self.species} is stored.")
 
     def read_data(self):
-        # Example implementation for Provider 2's file format (assuming Excel format)
         if self.species == 'O3':
             df = ebas.compile_ebas_ozone_data_into_dataframe(self.data_path)
 
