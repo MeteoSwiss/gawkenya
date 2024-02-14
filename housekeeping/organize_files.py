@@ -28,19 +28,25 @@ def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
     """
     total = 0
     for folder in cfg["folders"]:
+        pattern = cfg[folder]["pattern"]
         n = 0
         src = os.path.join(cfg["root"], branch, folder)
         files = os.listdir(src)
         for file in files:
-            name = re.search(cfg[folder]["pattern"], file)
+            name = re.search(pattern, file)
             if name: 
-                dtm = time.strptime(re.search(r"\d{8}", name.group()).group(), "%Y%m%d")
+                if re.search(r"d\{7\}\.", pattern):
+                    dtm = time.strptime(re.search(r"\d{7}", name.group()).group(), "%j%Y")
+                else:
+                    dtm = time.strptime(re.search(r"\d{8}", name.group()).group(), "%Y%m%d")
                 if cfg[folder]["buckets"] in "daily":
                     dst = os.path.join(src, 
                                        str(dtm.tm_year), "{:02d}".format(dtm.tm_mon), "{:02d}".format(dtm.tm_mday))
                 elif cfg[folder]["buckets"] in "monthly":
                     dst = os.path.join(src, 
                                        str(dtm.tm_year), "{:02d}".format(dtm.tm_mon))
+                elif cfg[folder]["buckets"] in "yearly":
+                    dst = os.path.join(src, str(dtm.tm_year))
                 else:
                     raise ValueError("'buckets' unknown.")
                 os.makedirs(dst, exist_ok=True)
