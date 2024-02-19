@@ -63,5 +63,5 @@ nrb-dobson:
     - "prod"
   "prod": 
     pattern: D\d{7}.018
-    buckets: None
-    expected: 1
+    buckets: yearly
+    expected: 260

@@ -22,7 +22,9 @@ def count_files(path: str, pattern: str, dte: datetime=None) -> int:
     """
     count = 0
 
-    if dte:
+    if re.search(r"d\{7\}\.", pattern) and dte:
+        regex_pattern = re.compile(f'(?=.*{pattern})(?=.*{dte.strftime("%j%Y")})')
+    elif dte:
         regex_pattern = re.compile(f'(?=.*{pattern})(?=.*{dte.strftime("%Y%m%d")})')
     else:
         regex_pattern = re.compile(pattern)
