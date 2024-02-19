@@ -1,5 +1,5 @@
 """ 
-Provide classes and methods to read in the the data (measurements level2)
+Provide classes and methods to read in the the gawkenya level2 data (data from world data centers WDCGG and ebas)
 
 Author: Leonie Bernet
 Version: 1.0
@@ -39,11 +39,11 @@ class BaseDataReader(ABC):
     def read_data(self) -> pd.DataFrame:
         pass
     
-
     @abstractmethod
     def process_data(self, data):
         pass
 
+# dataclass to define different datasets
 @dataclass
 class WhichData:
     dataset: str
@@ -64,10 +64,12 @@ class wdcGHGReader(BaseDataReader):
 
     def read_data(self):
         df = wdc.compile_wdcgg_into_dataframe(self.data_path,sampling='hourly')
-        # Perform additional processing if needed
         return df
     
+    # Perform additional processing if needed    
     def process_data(self,df):
+        df.rename_axis('time',inplace=True) # rename time index 
+
         return df
 
 
@@ -89,13 +91,15 @@ class wdcFlaskReader(BaseDataReader):
     
     def process_data(self,df):
         ## Check for duplicate dates:
-        ## events have always twice the same time -> take mean of values with same time
+        ## events have always twice the same time -> take mean of values with same time (parallel flask measurements)
         duplicates = df.index.duplicated(keep='first')
         if duplicates.any():
             numeric_columns = df.select_dtypes(include=['number']).columns # cannot take the mean of non-numeric columns
             df_numeric_mean = df.groupby(df.index)[numeric_columns].mean() # groupby time (same timestep) and the mean for each
             df_non_numeric = df.drop(columns=numeric_columns)
             df = pd.concat([df_numeric_mean, df_non_numeric.groupby(df.index).first()], axis=1)
+
+        df.rename_axis('time',inplace=True) # rename time index 
 
         ## Exclude flagged data
 
@@ -119,11 +123,16 @@ class ebasReader(BaseDataReader):
             self.data_path = os.path.join(data_path, f'wdc/ebas/met/')
         else:
             raise NotImplementedError(
-            f"Please implement code to add the folder where the data of ebas {self.species} is stored.")
+            f"Please add to the code the folder where the data of ebas {self.species} is stored.")
 
     def read_data(self):
         if self.species == 'O3':
-            df = ebas.compile_ebas_ozone_data_into_dataframe(self.data_path)
+            read_unc = True # get all available ozone data, which means not only the mean but also uncertainties (and values in ppb and mug/m3)
+            df = ebas.compile_ebas_ozone_data_into_dataframe(self.data_path,read_unc=read_unc)
+            if read_unc:
+                df.rename(columns={'O3':'value','O3_unc':'value_unc','flag':'QCflag'},inplace=True)
+            else: 
+                df.rename(columns={'O3_0':'value','flag':'QCflag'},inplace=True)
 
         elif self.species == 'aerosols':
             # get aerosol file (for ozone that was done in ebas.py, but I do it now here)
@@ -136,19 +145,20 @@ class ebasReader(BaseDataReader):
 
         else:
             df = None
-        
-        # rename time index
-        df = df.rename_axis('time')
+            raise NotImplementedError(
+            f"The ebas reading for {self.species} has not been ipmlemented yet, please add it to the code.")
         
         return df
     
-        
+       
+    # Perform additional processing if needed    
     def process_data(self, df):
+        df.rename_axis('time',inplace=True) # rename time index 
         return df
     
 
-## Define which species needs which data-reader
 # Dictionary with all the possible data
+# Defines which species needs which data-reader    
     
 AvailableData = {
     "CO2": WhichData(

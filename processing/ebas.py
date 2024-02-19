@@ -35,7 +35,7 @@ def list2df(illformed_list, sep=',', expected_number_of_items=10) -> pd.DataFram
     return df
 
 
-def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor: float=1.99534) -> pd.DataFrame:
+def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor: float=1.99534, read_unc: bool=False) -> pd.DataFrame:
     """read O3 data files and put into data frame
 
     Args:
@@ -65,13 +65,30 @@ def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor:
                 df_O3 = X.merge(V, left_index=True, right_index=True)
                 long_names = list2df(list(df_O3.columns))
                 long_names.rename(columns={0: 'long_name', 1: "unit"}, inplace=True)
-                df_O3.columns = fh.getNADict()['NCOM'][-1].split()
-                inc = itertools.count().__next__
-                dups = df_O3.columns[df_O3.columns.duplicated()]
-                df_O3.rename(columns=lambda x: f"{x}_{inc()}" if x in dups else x, inplace=True)
-                short_names = pd.DataFrame(df_O3.columns)
-                short_names.rename(columns={0: 'short_name'}, inplace=True)
-                mappings = pd.concat([short_names, long_names], axis=1)
+                col_names = fh.getNADict()['NCOM'][-1].split()
+                df_O3.columns = col_names
+
+                if read_unc == False: #default: keep all ozone columns and rename
+                    inc = itertools.count().__next__
+                    dups = df_O3.columns[df_O3.columns.duplicated()]
+                    df_O3.rename(columns=lambda x: f"{x}_{inc()}" if x in dups else x, inplace=True)
+                    short_names = pd.DataFrame(df_O3.columns)
+                    short_names.rename(columns={0: 'short_name'}, inplace=True)
+                    mappings = pd.concat([short_names, long_names], axis=1)
+
+                else:
+                    'To read the uncertainties. Read all available ozone values and make a combined variablename'
+                    for i in range(len(long_names['variable'])):
+                        v = long_names['variable'][i]
+                        if v=='ozone':
+                            unit = long_names['unit'][i].replace(' ','')
+                            stats = long_names[2][i].split('=')[-1].replace(' ','')
+                            #assume arithmeticmean as standard ozone value
+                            stats = [f'_{stats}' if stats!='arithmeticmean' else ''][0]
+                            vnew = f'{v}_{unit}{stats}'
+                            col_names[i] = vnew
+                    df_O3.columns = col_names
+
                 epoch = datetime.strptime("%s-%s-%s" % tuple(fh.DATE), "%Y-%m-%d")
                 df_O3['dtm'] = epoch + pd.to_timedelta(round(df_O3['starttime']), unit='D')
                 df_O3.set_index('dtm',inplace=True)
@@ -79,7 +96,15 @@ def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor:
                 data_O3_all = pd.concat([data_O3_all, df_O3])
 
         # in ppb
-        data_O3_all["O3_0"] = data_O3_all["O3_0"] / o3_conversion_factor 
+        if read_unc == False:
+            data_O3_all["O3_0"] = data_O3_all["O3_0"] / o3_conversion_factor 
+        else:
+            #use the ug/m3 value and convert to ppb (the nmol/mol is not given in all files)
+            # do the same for uncertainties. Remove all other ozone values
+            data_O3_all['O3'] = data_O3_all['ozone_ug/m3']/o3_conversion_factor 
+            data_O3_all['O3_unc'] = data_O3_all['ozone_ug/m3_stddev']/o3_conversion_factor 
+            # only keep O3 and O3_unc
+            data_O3_all=data_O3_all[['endtime','O3','O3_unc','flag']]
 
         return data_O3_all
     
