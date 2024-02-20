@@ -104,8 +104,9 @@ def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor:
             # do the same for uncertainties. Remove all other ozone values
             data_O3_all['O3'] = data_O3_all['ozone_ug/m3']/o3_conversion_factor 
             data_O3_all['O3_unc'] = data_O3_all['ozone_ug/m3_stddev']/o3_conversion_factor 
+            data_O3_all['unit'] = 'ppb'
             # only keep O3 and O3_unc
-            data_O3_all=data_O3_all[['endtime','O3','O3_unc','flag']]
+            data_O3_all=data_O3_all[['endtime','O3','O3_unc','flag','unit']]
 
         return data_O3_all
     

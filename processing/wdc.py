@@ -37,6 +37,11 @@ def compile_wdcgg_into_dataframe(data_path: str, sampling: str) -> pd.DataFrame:
                 #open file
                 with open(file_sel) as f:
                     while line := f.readline():
+                        split_line = line.strip().split()
+                        if len(split_line) > 1:
+                            if line.strip().split()[1] == 'value:units':
+                                unit = line.strip().split()[3]
+                            
                         if line.strip() == "# VARIABLE ORDER":
                             break
                     data_sel = pd.read_csv(f, 
@@ -63,6 +68,7 @@ def compile_wdcgg_into_dataframe(data_path: str, sampling: str) -> pd.DataFrame:
                 df = df.drop(date_columns_start, axis=1)
 
                 df.set_index('starttime',inplace=True)#replace index by dates 
+                df['unit'] = unit
 
 
         return df
