@@ -9,6 +9,7 @@ Modifications: date -> modified
 from abc import ABC, abstractmethod
 import xarray as xr
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
@@ -154,6 +155,10 @@ class ebasReader(BaseDataReader):
     # Perform additional processing if needed    
     def process_data(self, df):
         df.rename_axis('time',inplace=True) # rename time index 
+
+        #replace flag-nan (so far it is set to 0.999)
+        df['flag'].replace(0.999, np.nan,inplace=True)
+
         return df
     
 
