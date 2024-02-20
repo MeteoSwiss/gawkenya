@@ -90,7 +90,8 @@ def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor:
                     df_O3.columns = col_names
 
                 epoch = datetime.strptime("%s-%s-%s" % tuple(fh.DATE), "%Y-%m-%d")
-                df_O3['dtm'] = epoch + pd.to_timedelta(round(df_O3['starttime']), unit='D')
+                #df_O3['dtm'] = epoch + pd.to_timedelta(round(df_O3['starttime']), unit='D') #this gives only days, no hours
+                df_O3['dtm'] = epoch + pd.to_timedelta(df_O3['starttime']*24*3600, unit='s').round('s') #includes hours (first transforming to seconds)
                 df_O3.set_index('dtm',inplace=True)
 
                 data_O3_all = pd.concat([data_O3_all, df_O3])
