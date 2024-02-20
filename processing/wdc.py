@@ -51,13 +51,16 @@ def compile_wdcgg_into_dataframe(data_path: str, sampling: str) -> pd.DataFrame:
                 # assemble all date columns together
                 date_columns_start = ['year', 'month', 'day','hour','minute','second']
                 date_columns_end = ['year1', 'month1', 'day1','hour1','minute1','second1']
-                starttime = (pd.to_datetime(df[date_columns_start]))
-                endtime = (pd.to_datetime(df[date_columns_end].astype(str).agg('-'.join, axis=1),errors='coerce'))
-
+                starttime = pd.to_datetime(df[date_columns_start])
                 df["starttime"] = starttime
                 df = df.drop(date_columns_start, axis=1)
+
+                #rename now the endtime columns
+                df.rename(columns=dict(zip(date_columns_end, date_columns_start)),inplace=True)
+                #endtime = (pd.to_datetime(df[date_columns_end].astype(str).agg('-'.join, axis=1),errors='coerce'))
+                endtime = pd.to_datetime(df[date_columns_start])
                 df["endtime"] = endtime
-                df = df.drop(date_columns_end, axis=1)
+                df = df.drop(date_columns_start, axis=1)
 
                 df.set_index('starttime',inplace=True)#replace index by dates 
 

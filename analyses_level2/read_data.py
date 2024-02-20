@@ -31,17 +31,18 @@ class BaseDataReader(ABC):
     Basic class
     data_path   should be the folder that contains all data-subfolders (e.g. ./data)
     '''
-    def __init__(self, data_path, dataset, species):
+    def __init__(self, data_path, dataset, species, **kwargs):
         self.data_path = data_path
         self.dataset = dataset
         self.species = species
+        self.kwargs = kwargs
 
     @abstractmethod
     def read_data(self) -> pd.DataFrame:
         pass
     
     @abstractmethod
-    def process_data(self, data):
+    def process_data(self, data,**kwargs):
         pass
 
 # dataclass to define different datasets
@@ -58,9 +59,9 @@ class wdcGHGReader(BaseDataReader):
     It is a subclass of BaseInstrumentReader
     """
     # initialize class-specific attributes
-    def __init__(self, data_path, dataset, species):
-        super().__init__(data_path, dataset, species) #include the initialization of the base class (attributes)
-        self.data_path = os.path.join(data_path, f'wdc/wdcgg/{species}')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs) #include the initialization of the base class (attributes)
+        self.data_path = os.path.join(self.data_path, f'wdc/wdcgg/{self.species}')
 
 
     def read_data(self):
@@ -68,7 +69,7 @@ class wdcGHGReader(BaseDataReader):
         return df
     
     # Perform additional processing if needed    
-    def process_data(self,df):
+    def process_data(self,df,**kwargs):
         df.rename_axis('time',inplace=True) # rename time index 
 
         return df
@@ -80,9 +81,9 @@ class wdcFlaskReader(BaseDataReader):
     It is a subclass of BaseInstrumentReader
     """
     # initialize class-specific attributes
-    def __init__(self, data_path, dataset, species):
-        super().__init__(data_path, dataset, species) #include the initialization of the base class (attributes)
-        self.data_path = os.path.join(data_path, f'wdc/wdcgg/{species}')
+    def __init__(self, *args, **kwargs):
+        super().__init__( *args, **kwargs) #include the initialization of the base class (attributes)
+        self.data_path = os.path.join(self.data_path, f'wdc/wdcgg/{self.species}')
 
 
     def read_data(self):
@@ -90,7 +91,7 @@ class wdcFlaskReader(BaseDataReader):
 
         return df
     
-    def process_data(self,df):
+    def process_data(self,df,**kwargs):
         ## Check for duplicate dates:
         ## events have always twice the same time -> take mean of values with same time (parallel flask measurements)
         duplicates = df.index.duplicated(keep='first')
@@ -103,6 +104,9 @@ class wdcFlaskReader(BaseDataReader):
         df.rename_axis('time',inplace=True) # rename time index 
 
         ## Exclude flagged data
+        if 'FLASK_FLAG_CORR' in self.kwargs:
+            if self.kwargs['FLASK_FLAG_CORR']:
+                df.loc[df['QCflag']==3] = np.nan
 
         return df
 
@@ -112,16 +116,16 @@ class ebasReader(BaseDataReader):
     It is a subclass of BaseInstrumentReader
     """
     # initialize class-specific attributes
-    def __init__(self, data_path, dataset, species):
-        super().__init__(data_path, dataset, species) #include the initialization of the base class (attributes)
-        self.data_path = os.path.join(data_path, f'wdc/ebas/')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs) #include the initialization of the base class (attributes)
+        self.data_path = os.path.join(self.data_path, f'wdc/ebas/')
 
         if self.species in ['O3','CO','other_gases']:
-            self.data_path = os.path.join(data_path, f'wdc/ebas/air/')
+            self.data_path = os.path.join(self.data_path, f'air/')
         elif self.species == 'aerosols':
-            self.data_path = os.path.join(data_path, f'wdc/ebas/aerosols/')
+            self.data_path = os.path.join(self.data_path, f'aerosols/')
         elif self.species == 'meteo':
-            self.data_path = os.path.join(data_path, f'wdc/ebas/met/')
+            self.data_path = os.path.join(self.data_path, f'met/')
         else:
             raise NotImplementedError(
             f"Please add to the code the folder where the data of ebas {self.species} is stored.")
@@ -144,6 +148,8 @@ class ebasReader(BaseDataReader):
                     data_file = ebas.ebas_aerosol_file_to_dataframe(file_path)
                 df = pd.concat([df, data_file])
 
+            df.rename(columns={'flag':'QCflag'},inplace=True)
+
         else:
             df = None
             raise NotImplementedError(
@@ -153,11 +159,22 @@ class ebasReader(BaseDataReader):
     
        
     # Perform additional processing if needed    
-    def process_data(self, df):
+    def process_data(self, df,**kwargs):
         df.rename_axis('time',inplace=True) # rename time index 
 
         #replace flag-nan (so far it is set to 0.999)
-        df['flag'].replace(0.999, np.nan,inplace=True)
+        df['QCflag'].replace(0.999, np.nan,inplace=True)
+
+        # check for duplicat dates. Sometimes we have multiple files for the same years. 
+        #Usually, the new file just adds dates where the old file had nan. 
+        # Therefore, we can just take the mean of all duplicated dates. 
+        # Caution: this would be wrong if the new file would REPLACE old values!
+        duplicates = df.index.duplicated(keep='first')
+        if duplicates.any():
+            numeric_columns = df.select_dtypes(include=['number']).columns # cannot take the mean of non-numeric columns
+            df_numeric_mean = df.groupby(df.index)[numeric_columns].mean() # groupby time (same timestep) and the mean for each
+            df_non_numeric = df.drop(columns=numeric_columns)
+            df = pd.concat([df_numeric_mean, df_non_numeric.groupby(df.index).first()], axis=1)
 
         return df
     
@@ -235,17 +252,17 @@ AvailableData = {
 
 }
     
-def create_data_reader(data_path: str, dataset: str) -> BaseDataReader:
+def create_data_reader(data_path: str, dataset: str,**kwargs) -> BaseDataReader:
     database = AvailableData[dataset].database
     species = AvailableData[dataset].species
     dataset = AvailableData[dataset].dataset
     
     if database == 'wdcgg':
-        return wdcGHGReader(data_path=data_path, dataset=dataset, species=species) #return an instance of the wdcGHGReader class
+        return wdcGHGReader(data_path=data_path, dataset=dataset, species=species,**kwargs) #return an instance of the wdcGHGReader class
     elif database == 'wdcgg_flask':
-        return wdcFlaskReader(data_path=data_path, dataset=dataset, species=species)
+        return wdcFlaskReader(data_path=data_path, dataset=dataset, species=species,**kwargs)
     elif database == 'ebas':
-        return  ebasReader(data_path=data_path, dataset=dataset, species=species)
+        return  ebasReader(data_path=data_path, dataset=dataset, species=species,**kwargs)
     else:
         raise ValueError(f"Unsupported database: {database}")
     
