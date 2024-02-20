@@ -154,7 +154,7 @@ def ebas_aerosol_file_to_dataframe(data_path: str) -> pd.DataFrame:
         # convert times to datetime
         epoch = datetime.strptime("%s-%s-%s" % tuple(fh.DATE), "%Y-%m-%d")
         df_aerosol['dtm'] = epoch + pd.to_timedelta(round(df_aerosol['starttime'] / fh.DX[0]), unit='H')
-        df_aerosol.set_index('dtm')
+        df_aerosol.set_index('dtm',inplace=True)
 
         return df_aerosol
     
