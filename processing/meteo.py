@@ -84,24 +84,25 @@ class Meteo:
                 return pl.DataFrame(), str(err)
 
 
-    def compile_vrxa00_to_parquet(self, source: str, target: str, base: str=None, archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
+    def compile_vrxa00_to_parquet(self, source: str, target: str, branch: str=None, archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile VRXA00 bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
-            source (str): Root path to directory to process. <base> will be appended to path. Sub-directories will also be considered.
-            target (str): Root path to directory where .parquet files will be stored.  <base> will be appended to path.
-            base (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
+            source (str): Root path to directory to process. <branch> will be appended to path. Sub-directories will also be considered.
+            target (str): Root path to directory where .parquet files will be stored.  <branch> will be appended to path.
+            branch (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
             archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
             issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+            append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
             log (bool, optional): Should activities be logged? Defaults to True.
         Returns:
             Nothing
         """
-        source = os.path.join(source, base)
-        target = os.path.join(target, base)
+        source = os.path.join(source, branch)
+        target = os.path.join(target, branch)
         os.makedirs(target, exist_ok=True)
-        archive = os.path.join(archive, base)
+        archive = os.path.join(archive, branch)
 
         result = pl.DataFrame()
         errors = dict()
@@ -132,12 +133,19 @@ class Meteo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
+            # if append_parquet==True, check if parquet already exists and append
+            if append_parquet:
+                parquet = os.path.join(target, 'vrxa00.parquet')
+                if os.path.exists(parquet):
+                    df = pl.read_parquet(parquet)
+                    result = pl.concat([result, df], how='diagonal')
+                    
             # remove duplicates, sort data
             result = result.unique()
             result = result.sort("dtm")
 
             # store result as parquet file
-            result.write_parquet(os.path.join(target, 'vrxa00.parquet'))
+            result.write_parquet(parquet)
 
             # write errors to json file
             with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
