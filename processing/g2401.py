@@ -72,7 +72,7 @@ class G2401:
             return pl.DataFrame(), f"{file}: File type unknown."
         
 
-    def compile_g2401_to_parquet(self, source: str, target: str, year: str=None, by_month: bool=True, dtm="dtm", archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
+    def compile_g2401_to_parquet(self, source: str, target: str, year: str=None, by_month: bool=True, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile G2401 DataLog_User_Sync files found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
@@ -83,6 +83,7 @@ class G2401:
             dtm (str): Name of dateTime column.
             archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
             issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+            append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
             log (bool, optional): Should activities be logged? Defaults to True.
         Returns:
@@ -117,17 +118,23 @@ class G2401:
                                 errors.update({file: err})
                                 pass
 
-                # store result as parquet file (append if it exists already and remove duplicates before saving)
+                # store result as parquet file
+                # if append_parquet==True, check if parquet already exists and append
                 dst = os.path.join(target, month)
                 os.makedirs(dst, exist_ok=True)
+                parquet = os.path.join(dst, "g2401.parquet")
                 if not result.is_empty():
-                    file = os.path.join(dst, "g2401.parquet")
-                    if os.path.exists(file):
-                        df = pl.read_parquet(source=file)
-                        result = pl.concat(df, result)
+                    if append_parquet:
+                        if os.path.exists(parquet):
+                            df = pl.read_parquet(source=parquet)
+                            result = pl.concat([result, df], how='diagonal')
+
+                    # remove duplicates, sort data
                     result = result.unique()
                     result = result.sort(dtm)
-                    result.write_parquet(file)
+
+                    # store result as parquet file
+                    result.write_parquet(parquet)
 
                 # write errors to json file (append if it exists already)
                 with open(os.path.join(dst, "g2401.errors.json"), "a") as fh:

@@ -84,13 +84,13 @@ class Meteo:
                 return pl.DataFrame(), str(err)
 
 
-    def compile_vrxa00_to_parquet(self, source: str, target: str, branch: str=None, archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
+    def compile_vrxa00_to_parquet(self, source: str, target: str, year: str=None, archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile VRXA00 bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
-            source (str): Root path to directory to process. <branch> will be appended to path. Sub-directories will also be considered.
-            target (str): Root path to directory where .parquet files will be stored.  <branch> will be appended to path.
-            branch (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
+            source (str): Root path to directory to process. <year> will be appended to path. Sub-directories will also be considered.
+            target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
+            year (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
             archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
             issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
             append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
@@ -99,10 +99,10 @@ class Meteo:
         Returns:
             Nothing
         """
-        source = os.path.join(source, branch)
-        target = os.path.join(target, branch)
+        source = os.path.join(source, year)
+        target = os.path.join(target, year)
         os.makedirs(target, exist_ok=True)
-        archive = os.path.join(archive, branch)
+        archive = os.path.join(archive, year)
 
         result = pl.DataFrame()
         errors = dict()
