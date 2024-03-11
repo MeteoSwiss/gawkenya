@@ -8,6 +8,7 @@ Modifications: date -> modified
 """
 
 from scipy.stats import spearmanr
+import numpy as np
 
 def get_station_coords(stat):
     '''
@@ -36,9 +37,10 @@ def find_best_grid_point(rean, obs):
     for la in rean.latitude:
         for lo in rean.longitude:
             for le in rean.level:
+                print(f'check corr. for {la.values}, {lo.values}, {le.values}')
                 tmp = rean.sel(latitude=la, longitude=lo, level=le)
-                r = spearmanr(obs.values, np.array(tmp.to_array()).squeeze(), nan_policy='omit').statistic
+                r = spearmanr(obs.values, np.array(tmp.values).squeeze(), nan_policy='omit').statistic # initially it was: np.array(tmp.to_array())
                 if r > best_r:
                     best_r = r
-                    best = [la, lo, le]
+                    best = [la.values, lo.values, le.values]
     return best

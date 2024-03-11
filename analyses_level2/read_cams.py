@@ -13,6 +13,9 @@ import xarray as xr
 import pandas as pd
 import glob
 
+from molmass import Formula
+from molmass import ELEMENTS, Element
+
 
 import utilities
 import zipfile
@@ -53,7 +56,16 @@ def read_cams_inv(dir_data,species='co2',yr1=2020,yr2=2023,dx=2.5, dy=1.3, fact_
     yr_start = ds_combined.time[0].dt.year.values
     yr_stop = ds_combined.time[-1].dt.year.values
 
-    ds_combined.to_netcdf(rf'..\data\cams\cams_invGG_{species}_{yr_start}_{yr_stop}_{station}.nc')
+    # unit conversion
+    if species=='co2':
+        ds_combined['CO2'] = ds_combined['CO2'] *1e6 # CO2 in ppm
+        ds_combined['CO2'].attrs['units'] = '1e-6'
+
+    #remove file if already existing
+    fname = rf'..\data\cams\cams_invGG_{species}_{yr_start}_{yr_stop}_{station}.nc'
+    if (os.path.isfile(fname)):
+        os.remove(fname)
+    ds_combined.to_netcdf(fname, mode='w')
 
 #%%
 def read_cams_egg4(dir_data,yr1=2003,yr2=2020, station='MKN'):
@@ -77,7 +89,28 @@ def read_cams_egg4(dir_data,yr1=2003,yr2=2020, station='MKN'):
     yr1 = ds_combined.time[0].dt.year.values
     yr2 = ds_combined.time[-1].dt.year.values
 
-    ds_combined.to_netcdf(rf'..\data\cams\cams_egg4_{yr1}_{yr2}_{station}.nc')
+    # rename variables: 
+    ds_combined = ds_combined.rename({'co2':'CO2', 'ch4':'CH4'})
+
+    # unit conversion (mass mixing ratio to volume mixing ratio)
+    M_air = 28.9647 # molar weight of dry air (g/mol)
+    selected_variables = ds_combined.filter_by_attrs(units='kg kg**-1')
+    for var_name,value in selected_variables.data_vars.items():
+        if var_name == 'CO2':
+            pp = 1e6 #ppm
+            unit = '1e-6'
+        elif var_name == 'CH4':
+            pp = 1e9 #ppb
+            unit = '1e-9'
+        M_gas = Formula(var_name).mass
+        ds_combined[var_name] = ds_combined[var_name] * (M_air/M_gas) * pp #in ppm or ppb
+        ds_combined[var_name] = ds_combined[var_name].assign_attrs(units=unit)
+
+    fname= rf'..\data\cams\cams_egg4_{yr1}_{yr2}_{station}.nc'
+    if (os.path.isfile(fname)):
+        os.remove(fname)
+
+    ds_combined.to_netcdf(fname)
 
 
 #%%
@@ -123,7 +156,90 @@ def read_cams_eac4(dir_data, station='MKN'):
             yr1 = ds_combined.time[0].dt.year.values
             yr2 = ds_combined.time[-1].dt.year.values
 
-    ds_combined.to_netcdf(rf'..\data\cams\cams_eac4_{yr1}_{yr2}_{station}.nc')
+    # Rename variables
+    ds_combined = ds_combined.rename({'go3':'O3', 'co':'CO'})
+
+    # unit conversion (O3 and CO are given in mass mixing ratio, convert to volume mixing ratio)
+    M_air = 28.9647 # molar weight of dry air (g/mol)
+    for var_name in ['CO','O3']:
+        if var_name == 'CO':
+            M_gas = 16+12
+        elif var_name == 'O3':
+            M_gas = 3*16
+        my_attrs = ds_combined[var_name].attrs #workaround to preserve attributes after multiplication
+        ds_combined[var_name] = ds_combined[var_name] * (M_air/M_gas) *1e9 #in ppb
+        ds_combined[var_name].attrs.update(my_attrs) #reassign attributes (not working??)
+        ds_combined[var_name] = ds_combined[var_name].assign_attrs(units='1e-9')
+
+    fname= rf'..\data\cams\cams_eac4_{yr1}_{yr2}_{station}.nc'
+    if (os.path.isfile(fname)):
+        os.remove(fname)
+    ds_combined.to_netcdf(fname,mode='w')
+
+
+
+def get_best_cams(obs_all, obs_datasets=['CO2','CH4','CO', 'O3']):
+    # for now, only concentrate on data starting in 2020! (so no flask data)
+
+    #if obs_datasets==[]:
+    #   obs_datasets = obs_all.dataset #use all available datasets
+    
+    ## take 3h mean of observations
+    print('take 3h mean of observations')
+    obs_all_3h = obs_all.resample(time='3h').mean(keep_attrs=True)
+    print('take 6h mean of observations')
+    obs_all_6h = obs_all.resample(time='6h').mean(keep_attrs=True)
+
+    # Read all cams datasets
+    dir_data_cams = r"../data/cams"
+    cams_invgg_co2 = xr.open_dataset(dir_data_cams + r'/cams_invGG_co2_2020_2023_MKN.nc')
+    cams_invgg_ch4 = xr.open_dataset(dir_data_cams + r'/cams_invGG_ch4_2020_2021_MKN.nc')
+    cams_eac4 = xr.open_dataset(dir_data_cams + r'/cams_eac4_2003_2022_MKN.nc')
+    cams_egg4 = xr.open_dataset(dir_data_cams + r'/cams_egg4_2003_2020_MKN.nc')
+
+    # for each observational dataset, define the corresponding cams dataset and find the best cams-grid
+    datasets = []
+    for ds_sel in obs_datasets:
+        print(f'find best grid for {ds_sel}')
+        if ds_sel == 'CO2':
+            cams_sel = cams_invgg_co2['CO2']
+            obs_sel = obs_all_3h.sel(dataset='CO2')
+            ds_name = 'co2_invgg'
+        if ds_sel == 'CH4':
+            cams_sel = cams_invgg_ch4['CH4']
+            obs_sel = obs_all_6h.sel(dataset='CH4') #methane only 6hourly
+            ds_name = 'ch4_invgg'
+        elif ds_sel == 'CO':
+            cams_sel = cams_eac4['CO']
+            obs_sel = obs_all_3h.sel(dataset='CO')
+            ds_name = 'co_eac4'
+        elif ds_sel == 'O3':
+            cams_sel = cams_eac4['O3']
+            obs_sel = obs_all_3h.sel(dataset='O3')
+            ds_name = 'o3_eac4'
+            
+
+        times_nonan_obs = obs_sel.where(obs_sel.value.notnull(),drop=True).time 
+        times_nonan_cams = cams_sel.where(cams_sel.notnull(),drop=True).time
+        tend = np.min([times_nonan_obs[-1].values,times_nonan_cams[-1].values])
+        tstart = np.max([times_nonan_obs[0].values,times_nonan_cams[0].values])
+        cams = cams_sel.sel(time=slice(tstart,tend))
+        obs = obs_sel.sel(time=slice(tstart,tend)).value.to_dataframe()['value']
+        best_grid = utilities.find_best_grid_point(cams,obs) 
+        
+        cams_best = cams.sel(latitude=best_grid[0],longitude=best_grid[1],level=best_grid[2])
+        cams_best = cams_best.assign_coords(dataset=ds_name)
+        datasets.append(cams_best)
+    
+    cams_best_datasets = xr.concat(datasets,dim="dataset")
+
+    
+    fname= rf'..\data\cams\cams_best_grid_MKN.nc'
+    if (os.path.isfile(fname)):
+        os.remove(fname)
+    cams_best_datasets.to_netcdf(fname,mode='w')
+
+    return cams_best_datasets
 
 
 #%%

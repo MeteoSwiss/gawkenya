@@ -14,3 +14,5 @@ ipympl
 netcdf4
 scipy
 dask
+scikit-learn
+flox
