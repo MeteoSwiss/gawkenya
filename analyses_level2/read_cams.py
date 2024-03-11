@@ -59,7 +59,9 @@ def read_cams_inv(dir_data,species='co2',yr1=2020,yr2=2023,dx=2.5, dy=1.3, fact_
     # unit conversion
     if species=='co2':
         ds_combined['CO2'] = ds_combined['CO2'] *1e6 # CO2 in ppm
-        ds_combined['CO2'].attrs['units'] = '1e-6'
+        ds_combined['CO2'].attrs['units'] = 'ppm'
+    if species=='ch4':
+        ds_combined['CH4'].attrs['units'] = 'ppb'
 
     #remove file if already existing
     fname = rf'..\data\cams\cams_invGG_{species}_{yr_start}_{yr_stop}_{station}.nc'
@@ -98,10 +100,10 @@ def read_cams_egg4(dir_data,yr1=2003,yr2=2020, station='MKN'):
     for var_name,value in selected_variables.data_vars.items():
         if var_name == 'CO2':
             pp = 1e6 #ppm
-            unit = '1e-6'
+            unit = 'ppm'
         elif var_name == 'CH4':
             pp = 1e9 #ppb
-            unit = '1e-9'
+            unit = 'ppb'
         M_gas = Formula(var_name).mass
         ds_combined[var_name] = ds_combined[var_name] * (M_air/M_gas) * pp #in ppm or ppb
         ds_combined[var_name] = ds_combined[var_name].assign_attrs(units=unit)
@@ -169,7 +171,7 @@ def read_cams_eac4(dir_data, station='MKN'):
         my_attrs = ds_combined[var_name].attrs #workaround to preserve attributes after multiplication
         ds_combined[var_name] = ds_combined[var_name] * (M_air/M_gas) *1e9 #in ppb
         ds_combined[var_name].attrs.update(my_attrs) #reassign attributes (not working??)
-        ds_combined[var_name] = ds_combined[var_name].assign_attrs(units='1e-9')
+        ds_combined[var_name] = ds_combined[var_name].assign_attrs(units='ppb')
 
     fname= rf'..\data\cams\cams_eac4_{yr1}_{yr2}_{station}.nc'
     if (os.path.isfile(fname)):
@@ -178,7 +180,7 @@ def read_cams_eac4(dir_data, station='MKN'):
 
 
 
-def get_best_cams(obs_all, obs_datasets=['CO2','CH4','CO', 'O3']):
+def get_best_cams(obs_all, obs_datasets=['CO2','CH4','CO', 'O3'],save_netcdf=True):
     # for now, only concentrate on data starting in 2020! (so no flask data)
 
     #if obs_datasets==[]:
@@ -199,7 +201,8 @@ def get_best_cams(obs_all, obs_datasets=['CO2','CH4','CO', 'O3']):
 
     # for each observational dataset, define the corresponding cams dataset and find the best cams-grid
     datasets = []
-    for ds_sel in obs_datasets:
+    attributes_dict = {}
+    for i,ds_sel in enumerate(obs_datasets):
         print(f'find best grid for {ds_sel}')
         if ds_sel == 'CO2':
             cams_sel = cams_invgg_co2['CO2']
@@ -221,23 +224,29 @@ def get_best_cams(obs_all, obs_datasets=['CO2','CH4','CO', 'O3']):
 
         times_nonan_obs = obs_sel.where(obs_sel.value.notnull(),drop=True).time 
         times_nonan_cams = cams_sel.where(cams_sel.notnull(),drop=True).time
+        # get time period where both are available
         tend = np.min([times_nonan_obs[-1].values,times_nonan_cams[-1].values])
         tstart = np.max([times_nonan_obs[0].values,times_nonan_cams[0].values])
         cams = cams_sel.sel(time=slice(tstart,tend))
         obs = obs_sel.sel(time=slice(tstart,tend)).value.to_dataframe()['value']
+        #find the best grid point (best correlated for whole period)
         best_grid = utilities.find_best_grid_point(cams,obs) 
         
         cams_best = cams.sel(latitude=best_grid[0],longitude=best_grid[1],level=best_grid[2])
         cams_best = cams_best.assign_coords(dataset=ds_name)
-        datasets.append(cams_best)
+        cams_best = cams_best.rename('value') #give the same name ("value") to all species
+        cams_best['unit'] = cams_best.attrs['units']
+        datasets.append(cams_best.to_dataset()) # append 
     
     cams_best_datasets = xr.concat(datasets,dim="dataset")
-
     
-    fname= rf'..\data\cams\cams_best_grid_MKN.nc'
-    if (os.path.isfile(fname)):
-        os.remove(fname)
-    cams_best_datasets.to_netcdf(fname,mode='w')
+
+    ## merge
+    if save_netcdf:
+        fname= rf'..\data\cams\cams_best_grid_MKN.nc'
+        if (os.path.isfile(fname)):
+            os.remove(fname)
+        cams_best_datasets.to_netcdf(fname,mode='w')
 
     return cams_best_datasets
 
