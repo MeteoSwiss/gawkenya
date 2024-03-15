@@ -249,9 +249,11 @@ def get_best_cams(obs_all, obs_datasets=["CO2", "CH4", "CO", "O3"],
         elif ds_name == "ch4_egg4":
             cams_sel = cams_egg4["CH4"] 
             obs_sel = obs_all_3h.sel(dataset="CH4") 
+        #CO
         elif ds_name == "co_eac4":
             cams_sel = cams_eac4["CO"]
             obs_sel = obs_all_3h.sel(dataset="CO")
+        #O3
         elif ds_name == "o3_eac4":
             cams_sel = cams_eac4["O3"]
             obs_sel = obs_all_3h.sel(dataset="O3")
@@ -280,7 +282,7 @@ def get_best_cams(obs_all, obs_datasets=["CO2", "CH4", "CO", "O3"],
 
     ## merge
     if save_netcdf:
-        fname = rf"..\data\cams\cams_best_grid_MKN_all.nc"
+        fname = rf"..\data\cams\cams_best_grid_MKN.nc"
         if os.path.isfile(fname):
             os.remove(fname)
         cams_best_datasets.to_netcdf(fname, mode="w")
