@@ -9,6 +9,7 @@ Modifications: date -> modified
 
 from scipy.stats import spearmanr
 import numpy as np
+import xarray as xr
 
 #for tick format:
 from matplotlib.ticker import FormatStrFormatter,AutoMinorLocator, \
@@ -67,3 +68,28 @@ def form_xdate(ax,Yrfmt,tickMaj, tickMin):
     #ax.xaxis.set_minor_formatter(DateFormatter('%'+ Mthfmt))
     ax.xaxis.set_major_locator(mdates.YearLocator(tickMaj))
     ax.xaxis.set_minor_locator(mdates.MonthLocator(tickMin))
+
+def get_anomalies(ds_m,var,yr1='',yr2=''):
+        ## Calculate anomalies of monthly means for the variable var
+        # If no specific time period is given (yr1 and yr2 = ''), use full time period as reference for anomalies
+        if yr1=='':
+            yr1=ds_m.time.dt.year[0].values
+        if yr2=='':
+            yr2=ds_m.time.dt.year[-1].values
+        climatology_mean = ds_m[var].sel(time=slice('01-01-'+str(yr1),'31-12-'+str(yr2))).groupby("time.month").mean("time")
+        climatology_std = ds_m[var].sel(time=slice('01-01-'+str(yr1),'31-12-'+str(yr2))).groupby("time.month").std("time")
+        ds_m[var + '_anom'] = ds_m[var].groupby("time.month") - climatology_mean
+
+        ds_m[var + '_anom_per'] = xr.apply_ufunc(lambda x, m, s: (x - m) / s *100,
+            ds_m[var].groupby("time.month"),
+            climatology_mean,
+            climatology_mean,
+        )
+        ds_m[var + '_anom_stdz'] = xr.apply_ufunc(lambda x, m, s: (x - m) / s,
+            ds_m[var].groupby("time.month"),
+            climatology_mean,
+            climatology_std,
+        )
+        ds_m[var + '_anom_per'].attrs['Description'] = 'Monthly anomalies in percent (divided by overall monthly mean of each month of the year)'
+        ds_m[var + '_anom_stdz'].attrs['Description'] = 'Standardized monthly anomalies (divided by overall monthly standard deviation of each month of the year)'
+        return ds_m
