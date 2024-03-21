@@ -211,11 +211,12 @@ def get_cams_egg4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
     )
 
 
-def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon, dxy=2 * 0.1):
+def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon):
     """
     Get CAMS GFAS data for a specific station.
+    CAUTION: hard-coded area selected!
 
-    dxy     model resolution. It selcts grids +-dxy around the station.
+    dxy     model resolution. It selcts grids +-dxy around the station. (not used, could be  dxy=2 * 0.1)
 
     """
     print("Get CAMS GFAS data for: {}".format(year))
@@ -229,7 +230,8 @@ def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon, dxy=2 * 0.1):
                 y=year, m=month, d1="01", d2=days_mon
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
             "format": "netcdf",
-            "area": "{}/{}/{}/{}".format(lat + dxy, lon - dxy, lat - dxy, lon + dxy),
+            #"area": "{}/{}/{}/{}".format(lat + 20, lon - 20, lat - 10, lon + 10), #saved in GFAS_17_10SW_47_20NE
+            "area": "{}/{}/{}/{}".format(lat + 20, lon - 30, lat - 20, lon + 15),
             "variable": [
                 "wildfire_flux_of_carbon_monoxide",
                 "wildfire_flux_of_particulate_matter_d_2_5_µm",

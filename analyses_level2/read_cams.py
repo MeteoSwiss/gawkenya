@@ -86,7 +86,7 @@ def read_cams_inv(
 
 
 # %%
-def read_cams_egg4(dir_data, yr1=2003, yr2=2020, station="MKN"):
+def read_cams_egg4(dir_data, yr1=2020, yr2=2020, station="MKN"):
     """
     Read in the CAMS EGG4 data and save as new netcdf.
 
@@ -131,7 +131,37 @@ def read_cams_egg4(dir_data, yr1=2003, yr2=2020, station="MKN"):
         os.remove(fname)
 
     ds_combined.to_netcdf(fname)
+    
+# %%
+def read_cams_gfas(dir_data, yr1=2020, yr2=2023):
+    """
+    Read in all CAMS GFAS biomass burning data and save as new netcdf.
 
+    """
+    ds_combined = None
+    # read data
+
+    for y in np.arange(yr1, yr2 + 1):
+        print(f"read year {y}")
+        ds_temp = xr.open_mfdataset(dir_data + rf"\GFAS\cams_gfas_{y}*.nc")
+
+        # Concatenate along the time dimension to create a single dataset
+        if ds_combined is None:
+            ds_combined = ds_temp
+        else:
+            ds_combined = xr.concat([ds_combined, ds_temp], dim="time")
+
+    yr1 = ds_combined.time[0].dt.year.values
+    yr2 = ds_combined.time[-1].dt.year.values
+
+    # rename variables:
+    #ds_combined = ds_combined.rename({"co2": "CO2", "ch4": "CH4"})
+
+    fname = rf"..\data\cams\cams_gfas_{yr1}_{yr2}.nc"
+    if os.path.isfile(fname):
+        os.remove(fname)
+
+    ds_combined.to_netcdf(fname)
 
 # %%
 def read_cams_eac4(dir_data, station="MKN"):
