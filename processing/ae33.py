@@ -3,6 +3,7 @@ import polars as pl
 import matplotlib.pyplot as plt
 # from io import BytesIO
 import json
+import shutil
 import zipfile
 
 
@@ -79,17 +80,20 @@ class AE33:
 
             return df, None
         except Exception as err:
-            print(err)
+            # print(err)
             return df, str(err)
 
 
-    def zipfiles_to_parquet(self, source: str, target: str, dtm: str="dtm", plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
+    def zipfiles_to_parquet(self, source: str, target: str, dtm: str="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
         """Extract and compile AE33 zipfiles found in source and its sub-folders to polars DataFrame, save as parquet files in target. Optionally plot the data.
 
         Args:
             source (str): Path to directory to process. Sub-directories will also be considered.
             target (str): Path to directory where .parquet files will be stored.
             dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
+            archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
+            issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+            append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
             plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
         Returns:
@@ -102,26 +106,43 @@ class AE33:
             if verbose:
                 print(f"Processing source {source} ...")
             for root, dirs, files in os.walk(source):
+                n = (len(source) - len(root) + 1)
+                relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
                         print(f"Processing {file} ...")
+                    src = os.path.join(root, file)
                     tmp, err = self.extract_zipfile_to_dataframe(os.path.join(root, file))
                     if err:
                         errors.update({file: err})
+                        if issues:
+                            os.makedirs(issues, exist_ok=True)
+                            dst = os.path.join(issues, file)
+                            shutil.move(src=src, dst=dst)
+                            print(f"issue: {src} > {dst}")
+                    elif archive:
+                        dst = os.path.join(archive, relative_path)
+                        os.makedirs(dst, exist_ok=True)
+                        shutil.move(src=src, dst=os.path.join(dst, file))
                     result = pl.concat([result, tmp], how='diagonal')
 
             if not result.is_empty():
-                # create target directoriy if it doesn't yet exist
+                # create target directory if it doesn't yet exist
                 os.makedirs(target, exist_ok=True)
 
-                file = os.path.join(target, "ae33.parquet")
-                if os.path.exists(file):
-                    df = pl.read_parquet(source=file)
-                    # df = df.with_columns(pl.col(pl.Utf8).exclude(f"^(I|D|{dtm}).*$").cast(pl.Float32))
-                    result = pl.concat([df, result])
-                result = result.unique()
-                result = result.sort(dtm)
-                result.write_parquet(file)
+                # if append_parquet==True, check if parquet already exists and append
+                if append_parquet:
+                    file = os.path.join(target, "ae33.parquet")
+                    if os.path.exists(file):
+                        df = pl.read_parquet(source=file)
+                        result = pl.concat([df, result], how='diagonal')
+
+                    # remove duplicates, sort data
+                    result = result.unique()
+                    result = result.sort(dtm)
+        
+                    # store result as parquet file
+                    result.write_parquet(file)
 
                 # plot data
                 if plot:
@@ -146,9 +167,9 @@ class AE33:
         Args:
             df (pl.DataFrame): Polars DataFrame, with columns depending on <type>
             variable (str): ...
-            dtm (str, optional): ...
-            start (str): ...
-            end (str): ...
+            dtm (str, optional): name of dateTime column. Defaults to 'dtm'.
+            start (str): start dateTime, default format is '%Y-%m-%d %H:%M:%S', possibly simplified.
+            end (str): end  dateTime, default format is '%Y-%m-%d %H:%M:%S', possibly simplified.
             title (str): Title of plot. Defaults to "Magee Scientific AE33"
         """
         try:

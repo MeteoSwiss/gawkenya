@@ -132,13 +132,16 @@ class CPD2:
             print(err)         
 
 
-    def tarballs_to_parquet(self, source: str, target: str, dtm="dtm", plot: bool=True, verbose: bool=True) -> dict:
+    def tarballs_to_parquet(self, source: str, target: str, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, plot: bool=True, verbose: bool=True) -> dict:
         """Process CPD2 tarballs found in source and its sub-folders, compile data found in tarball members in polars DataFrames, save as parquet files in target. Optionally plot the data.
 
         Args:
             source (str): Path to directory to process. Sub-directories will also be considered.
             target (str): Path to directory where .parquet files will be stored.
             dtm (str, optional): Name of dateTime column. Defaults to 'dtm'.
+            archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
+            issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+            append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
             plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
         Returns:
@@ -160,12 +163,17 @@ class CPD2:
                     if verbose:
                         print(f"Processing {file} ...")
                     tmp = self.extract_tarball_to_dataframe(os.path.join(root, file))
-                    errors.update(tmp['errors'])
-                    del tmp['errors']
+                    if tmp['errors']:
+                        errors.update(tmp['errors'])
+                        del tmp['errors']
+                        if issues:
+                            print("Moving to issues")
+                    elif archive:
+                        print("Moving to archive") # verify path, add year, month??
                     for k, v in tmp.items():
                         result[k] = pl.concat([result[k], v], how='diagonal')
 
-            # create target directoriy if it doesn't yet exist
+            # create target directory if it doesn't yet exist
             os.makedirs(target, exist_ok=True)
 
             # split result according to data type and store as separate parquet files

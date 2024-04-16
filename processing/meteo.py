@@ -103,6 +103,7 @@ class Meteo:
         target = os.path.join(target, year)
         os.makedirs(target, exist_ok=True)
         archive = os.path.join(archive, year)
+        os.makedirs(archive, exist_ok=True)
 
         result = pl.DataFrame()
         errors = dict()
