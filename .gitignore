@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.nappy-env
 
 # Spyder project settings
 .spyderproject
@@ -163,3 +164,14 @@ cython_debug/
 secrets*
 secrets-jretrieve
 secrets-kplc
+
+
+#private files
+LB_tests/
+
+#output files
+analyses_level2/output
+
+# large data
+#cams data too large
+data/cams

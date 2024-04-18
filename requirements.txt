@@ -7,3 +7,12 @@ Polars
 pyod
 PyYaml
 requests
+#shutil #this is a standard python library
+ipykernel
+xarray
+ipympl
+netcdf4
+scipy
+dask
+scikit-learn
+flox
