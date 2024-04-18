@@ -174,4 +174,6 @@ analyses_level2/output
 
 # large data
 #cams data too large
-data/cams
+data/cams/**
+#except some selected smaller cams files
+!data/cams/cams_best_grid_MKN.nc
