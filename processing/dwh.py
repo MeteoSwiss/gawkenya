@@ -8,13 +8,13 @@ class DWH:
     locationID = ""
     api_token = ""
 
-    def __init__(self, access_token: str, locationID: str, parameterShortNames: str, delimiter: str=",", placeholder: str="None", measCatNr: str="1"):
+    def __init__(self, access_token: str, locationID: str, parameter_short_names: str=None, delimiter: str=",", placeholder: str="None", meas_cat_nr: str="1", dtm: str='dtm'):
         """Constructor for DWH jretrieve instance with verification of successful connection.
 
         Args:
             access_token (str): access token, inquire with MeteoSwiss ITAE or MDI
             locationID (str): DWH internal short identifier of station, e.g. "KEMKN" or "KENAI"
-            parameterShortNames (str): concatenated string, separated with commata, of all DWH variables to be retrieved. Examples:
+            parameter_short_names (str, optional): concatenated string, separated with commata, of all DWH variables to be retrieved. Examples:
                                     tre200h0: Lufttemperatur 2 m über Boden; Stundenmittel (°C, 261)
                                     ure200h0: Relative Luftfeuchtigkeit 2 m über Boden; Stundenmittel (%, 266)
                                     dkl010h0: Windrichtung; Stundenmittel (°, 282)
@@ -24,16 +24,18 @@ class DWH:
                                     rre150h0: Niederschlag; Stundensumme (mm, 267)
             delimiter (str, optional): Delimiter of response items. Defaults to ",".
             placeholder (str, optional): Null value indicator. Defaults to "None".
-            measCatNr (str, optional): DWH internal measurement category identifier. Defaults to "1".
+            meas_cat_nr (str, optional): DWH internal measurement category identifier. Defaults to "1".
+            dtm (str, optional): label for datetime column. Defaults to 'dtm'.
 
         Raises:
             ValueError: Response obtained if connection fails.
         """
         self.location_id = locationID
-        self.parameter_short_names = parameterShortNames
+        self.parameter_short_names = parameter_short_names
         self.delimiter = delimiter
         self.placeholder = placeholder
-        self.meas_cat_nr = measCatNr
+        self.meas_cat_nr = meas_cat_nr
+        self.dtm = dtm
 
         # log into DWH and verify connection
         auth_url='https://service.meteoswiss.ch/auth/realms/meteoswiss.ch/protocol/openid-connect/token'
@@ -49,16 +51,38 @@ class DWH:
         except Exception as err:
             print(err)
 
-    def jretrieve(self, start: str, end: str=None) -> pl.DataFrame:
+
+    def jretrieve(self, start: str, end: str=None, parameter_short_names: str=None) -> pl.DataFrame:
+        """Retrieve data from MeteoSwiss DWH (only works from within MeteoSwiss)
+
+        Args:
+            start (str): yyyymmddHHSSMM
+            end (str, optional): yyyymmddHHMMSS. Defaults to None.
+            parameter_short_names (str, optional): Comma-separated list of DWH parameter short names. Defaults to None, in which case this information must have been provided to the DWH class upon initialization.
+
+        Returns:
+            pl.DataFrame: Polars DataFrame with columns returned from DWH, plus a dtm column of type datetime.
+        """
         df = pl.DataFrame()
         if end is None:
             end = time.strftime("%Y%m%d%H%S%S")
+        if parameter_short_names is None:
+            parameter_short_names = self.parameter_short_names
         try:
             url = f"{self.base_url}?delimiter={self.delimiter}&placeholder={self.placeholder}&locationIds={self.location_id}"
-            url = f"{url}&date={start}-{end}&parameterShortNames={self.parameter_short_names}&measCatNr={self.meas_cat_nr}"
+            url = f"{url}&date={start}-{end}&parameterShortNames={parameter_short_names}&measCatNr={self.meas_cat_nr}"
             res = requests.get(url=url, headers={'Authorization': self.auth_header})
 
             df = pl.read_csv(StringIO(res.text), separator=self.delimiter, null_values='None')
+
+            # remove empty rows, if any
+            df = df.filter(~pl.all_horizontal(pl.all().is_null()))
+
+            # add a proper dateTime column
+            df = df.with_columns(
+                pl.col("termin").cast(dtype=pl.String).str.to_datetime(format="%Y%m%d%H%M%S", time_zone='UTC').alias(self.dtm),
+                pl.col('station').cast(dtype=pl.Int64))
+
             return df
         except Exception as err:
             print(err)
