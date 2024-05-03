@@ -15,7 +15,7 @@ import xarray as xr
 import pandas as pd
 import zipfile
 
-import utilities
+import analyses_level2.utils.utilities as utilities
 
 
 # %%
