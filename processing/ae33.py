@@ -1,4 +1,6 @@
 import os
+import logging
+from asyncio.log import logger
 import polars as pl
 import matplotlib.pyplot as plt
 # from io import BytesIO
@@ -17,8 +19,17 @@ class AE33:
         remove_extremes(self, df: pl.DataFrame, q=0.01) -> pl.DataFrame: Remove extreme values from polars DataFrame. Extremes are defined using quantiles.
     """
 
-    def __init__(self):
-        print("AE33 initialized.")
+    def __init__(self, log: str='ae33.log'):
+        try:
+            if log != "ae33.log":
+                os.makedirs(os.path.dirname(log), exist_ok=True)
+            logger = logging.getLogger(__name__)
+            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            logger.info("Class 'AE33' initialized successfully.")
+
+        except Exception as err:
+            logger = logging.getLogger(__name__)
+            logger.error("Error initializing class 'AE33'.", err)
 
 
     def extract_zipfile_to_dataframe(self, path: str, dtm="dtm", sep="|") -> tuple([pl.DataFrame, str]):
@@ -80,7 +91,7 @@ class AE33:
 
             return df, None
         except Exception as err:
-            # print(err)
+            logger.error(err)
             return df, str(err)
 
 
@@ -126,7 +137,7 @@ class AE33:
                         shutil.move(src=src, dst=os.path.join(dst, file))
                     result = pl.concat([result, tmp], how='diagonal')
 
-            if not result.is_empty():
+            if not result.is_empty:
                 # create target directory if it doesn't yet exist
                 os.makedirs(target, exist_ok=True)
 
@@ -158,6 +169,7 @@ class AE33:
             return result, errors
 
         except Exception as err:
+            logger.error(err)
             print(err)
 
 
@@ -206,6 +218,7 @@ class AE33:
             plt.ylabel(ylabel)
             plt.show()
         except Exception as err:
+            logger.error(err)
             print(err)
 
 
@@ -233,6 +246,7 @@ class AE33:
             return df, cutoffs
 
         except Exception as err:
+            logger.error(err)
             print(err)
 
 

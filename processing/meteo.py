@@ -1,6 +1,7 @@
-from asyncio.log import logger
+# from asyncio.log import logger
 import os
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import pandas as pd
 import polars as pl
 import glob
@@ -18,9 +19,14 @@ class Meteo:
         try:
             if log != "meteo.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
-            logger = logging.getLogger(__name__)
-            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
-            logger.info("Class 'Meteo' initialized successfully.")
+            # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            self.logger = logging.getLogger(__name__)
+            log_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
+            log_handler.setLevel(logging.INFO)
+            log_handler.setFormatter(log_formatter)
+            self.logger.addHandler(log_handler)
+            self.logger.info("Class 'Meteo' initialized successfully.")
 
             self.mappings = {'VRXA00': {
                     'iii': 'MeteoSwiss internal station identifier; MKN=187; NRB=',
@@ -49,7 +55,7 @@ class Meteo:
 
         except Exception as err:
             logger = logging.getLogger(__name__)
-            logger.error("Error initializing class 'Meteo'.", err)
+            logger.exception("Error initializing class 'Meteo'.", err)
 
 
     def extract_vrxa00_to_dataframe(self, file: str, log=True) -> tuple([pl.DataFrame, str]):
@@ -66,7 +72,7 @@ class Meteo:
         """
         if bool(re.search(f'VRXA00', file)):
             if log:
-                logger.info(f"Extracting file {file}.")
+                self.logger.info(f"Extracting file {file}.")
 
             try:
                 if bool(re.search('.zip', file)):
@@ -80,7 +86,7 @@ class Meteo:
                 return df, None
 
             except Exception as err:
-                logger.error(err)
+                self.logger.error(err)
                 return pl.DataFrame(), str(err)
 
 
@@ -134,19 +140,20 @@ class Meteo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
-            # if append_parquet==True, check if parquet already exists and append
-            if append_parquet:
-                parquet = os.path.join(target, 'vrxa00.parquet')
-                if os.path.exists(parquet):
-                    df = pl.read_parquet(parquet)
-                    result = pl.concat([result, df], how='diagonal')
+            if not result.is_empty:
+                # if append_parquet==True, check if parquet already exists and append
+                if append_parquet:
+                    parquet = os.path.join(target, 'vrxa00.parquet')
+                    if os.path.exists(parquet):
+                        df = pl.read_parquet(parquet)
+                        result = pl.concat([result, df], how='diagonal')
                     
-            # remove duplicates, sort data
-            result = result.unique()
-            result = result.sort("dtm")
+                # remove duplicates, sort data
+                result = result.unique()
+                result = result.sort("dtm")
 
-            # store result as parquet file
-            result.write_parquet(parquet)
+                # store result as parquet file
+                result.write_parquet(parquet)
 
             # write errors to json file
             with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
@@ -156,6 +163,7 @@ class Meteo:
             return None
 
         except Exception as err:
+            self.logger.error(err)
             print(err)
 
 
