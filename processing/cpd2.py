@@ -1,15 +1,26 @@
 import os
+import logging
+from asyncio.log import logger
 import polars as pl
 import matplotlib.pyplot as plt
 from io import BytesIO
 import json
+import shutil
 import tarfile
 
 class CPD2:
     """NOAA CPD2 tarball
     """
-    def __init__(self):
-        print("CPD2 initialized.")
+    def __init__(self, log: str='cpd2.log'):
+        try:
+            if log != "cpd2.log":
+                os.makedirs(os.path.dirname(log), exist_ok=True)
+            logger = logging.getLogger(__name__)
+            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            logger.info("Class 'CPD2' initialized successfully.")
+        except Exception as err:
+            logger = logging.getLogger(__name__)
+            logger.error("Error initializing class 'CPD2'.", err)
 
 
     def extract_tarball_to_dataframe(self, path: str, dtm: str="dtm") -> dict:
@@ -49,7 +60,7 @@ class CPD2:
                 ...
                 'A11a' : polars df of aethalometer data
         """
-        cpd2 = {'errors': dict(),
+        cpd2 = {
                 'S11a': pl.DataFrame(), 
                 'S11c': pl.DataFrame(), 
                 'S11k': pl.DataFrame(), 
@@ -57,6 +68,7 @@ class CPD2:
                 'S11s': pl.DataFrame(), 
                 'A11a': pl.DataFrame()
                 }
+        errors = dict()
 
         # configuration of headers
         hdrs_S11 = {'S11a':('S11a','STN','EPOCH',f"{dtm}",'F1_S11','F2_S11','BsB_S11','BsG_S11','BsR_S11','BbsB_S11','BbsG_S11','BbsR_S11','T1_S11','T2_S11','U_S11','P_S11'),
@@ -122,13 +134,15 @@ class CPD2:
                                 cpd2[k] = cpd2[k].sort(f"{dtm}")
 
                         except Exception as err:
-                            cpd2['errors'][member.name] = str(err)
-                            print(f"Error processing {member.name}: {cpd2['errors'][member.name]} ... file ignored!")
+                            logger.error(err)
+                            errors[member.name] = str(err)
+                            print(f"Error processing {member.name}: {errors[member.name]} ... file ignored!")
                             pass
 
-            return cpd2
+            return cpd2, errors
 
         except Exception as err:
+            logger.error(err)
             print(err)         
 
 
@@ -159,17 +173,25 @@ class CPD2:
             if verbose:
                 print(f"Processing source {source} ...")
             for root, dirs, files in os.walk(source):
+                n = (len(source) - len(root) + 1)
+                relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
                         print(f"Processing {file} ...")
-                    tmp = self.extract_tarball_to_dataframe(os.path.join(root, file))
-                    if tmp['errors']:
-                        errors.update(tmp['errors'])
-                        del tmp['errors']
+                    src = os.path.join(root, file)
+                    tmp, error = self.extract_tarball_to_dataframe(os.path.join(root, file))
+                    if error:
+                        errors.update(error)
+                        # del tmp['errors']
                         if issues:
-                            print("Moving to issues")
+                            os.makedirs(issues, exist_ok=True)
+                            dst = os.path.join(issues, file)
+                            shutil.move(src=src, dst=dst)
+                            print(f"issue: {src} > {dst}")
                     elif archive:
-                        print("Moving to archive") # verify path, add year, month??
+                        dst = os.path.join(archive, relative_path)
+                        os.makedirs(dst, exist_ok=True)
+                        shutil.move(src=src, dst=os.path.join(dst, file))
                     for k, v in tmp.items():
                         result[k] = pl.concat([result[k], v], how='diagonal')
 
@@ -178,7 +200,7 @@ class CPD2:
 
             # split result according to data type and store as separate parquet files
             for k, v in result.items():
-                if not result[k].is_empty():
+                if not result[k].is_empty:
                     result[k] = result[k].sort(dtm)
                     file = os.path.join(target, f"{k}.parquet")
                     if os.path.exists(file):
@@ -193,12 +215,13 @@ class CPD2:
                         self.plot_dataframe(result, dtm=dtm, type=k)
 
             # write errors to json file
-            with open(os.path.join(target, f"{k}.errors.json"), "a") as fh:
-                json.dump(errors, fh)
-
-            return errors
+            if errors:
+                with open(os.path.join(target, "cpd.errors.json"), "a") as fh:
+                    json.dump(errors, fh)
+                return errors
 
         except Exception as err:
+            logger.error(err)
             print(err)         
             
 
@@ -211,6 +234,7 @@ class CPD2:
             else:
                 raise ValueError(f"Type not recognized (source: plot_dataframe)")
         except Exception as err:
+            logger.error(err)
             print(err)
 
 
@@ -272,6 +296,7 @@ class CPD2:
             plt.xlabel(dtm)
             plt.show()
         except Exception as err:
+            logger.error(err)
             print(err)
 
 
@@ -311,4 +336,5 @@ class CPD2:
             plt.ylabel(ylabel)
             plt.show()
         except Exception as err:
+            logger.error(err)
             print(err)

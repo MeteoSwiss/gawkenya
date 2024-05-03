@@ -18,9 +18,12 @@ class Thermo:
             if log != "thermo.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
             logger = logging.getLogger(__name__)
-            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
-            logger = logging.getLogger(__name__)
-            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
+            log_handler.setLevel(logging.DEBUG)
+            log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
+            logger.addHandler(log_handler)
+            logger.info("Class 'Meteo' initialized successfully.")
             logger.info("Class 'Thermo' initialized successfully.")
 
             self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
@@ -57,7 +60,11 @@ class Thermo:
                     df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
                 else:
                     df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+            except:
+                df = pl.DataFrame()
+                pass
 
+            try:
                 if "hio3" in df.columns:
                     df = df.drop("hio3")
                 
@@ -121,21 +128,24 @@ class Thermo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
-            # remove duplicates, sort data
-            result = result.unique()
-            result = result.sort(dtm)
+            if not result.is_empty:
+                # remove duplicates, sort data
+                result = result.unique()
+                result = result.sort(dtm)
 
-            # store result as parquet file
-            result.write_parquet(os.path.join(target, f"{file_type}.parquet"))
+                # store result as parquet file
+                result.write_parquet(os.path.join(target, f"{file_type}.parquet"))
 
             # write errors to json file
-            with open(os.path.join(target, f"{file_type}.errors.json"), "w") as fh:
-                json.dump(errors, fh)
+            if errors:
+                with open(os.path.join(target, f"{file_type}.errors.json"), "w") as fh:
+                    json.dump(errors, fh)
 
             # return result, errors
             return None
 
         except Exception as err:
+            logger.error(err)
             print(err)
 
 
