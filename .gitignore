@@ -170,7 +170,7 @@ secrets-kplc
 LB_tests/
 
 #output files
-analyses_level2/output
+analyses/output
 
 # large data
 #cams data too large
