@@ -18,7 +18,7 @@ from molmass import Formula
 from molmass import ELEMENTS, Element
 
 
-import analyses_level2.utils.utilities as utilities
+import analyses.utils.utilities as utilities
 import zipfile
 
 

@@ -16,7 +16,7 @@ import sys
 from dataclasses import dataclass
 
 # add the parent directory to syspath to allow importing modules from the parent directory
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 if not parent_dir in sys.path:
     sys.path.append(parent_dir)
 
