@@ -1,9 +1,9 @@
-# header_lines : 266
+# header_lines : 267
 # Data_Set_Name : co_mkn_surface-insitu_40_9999-9999_monthly
-# Data_Set_Version : 0040-1005-3001-01-01-9999_2023-08-10-1309
+# Data_Set_Version : 0040-1005-3001-01-01-9999_2024-05-06-1011
 # Data_Set_Fair_Use : For Scientific purposes, access to these data is unlimited and provided without charge. By their use you accept that an offer of co-authorship will be made through personal contact with the contributors whenever substantial use is made of their data. In all cases, an acknowledgement must be made to the contributors and to the data centre when these data are used within a publication.
 # Data_Set_DOI : 10.50849/WDCGG_0040-1005-3001-01-01-9999
-# Data_Set_Citation_Format : Martin Steinbacher (Empa), Jörg Klausen (MeteoSwiss), Christoph Zellweger (Empa), David Murithi Njiru (KMD), Mathew Mutuku (KMD), Atmospheric CO at Mt. Kenya by Kenya Meteorological Department, dataset published as CO_MKN_surface-insitu_KMD_data1 at WDCGG, ver.2023-08-10-1309, https://doi.org/10.50849/WDCGG_0040-1005-3001-01-01-9999 (Reference date*: YYYY/MM/DD)
+# Data_Set_Citation_Format : Martin Steinbacher (Empa), Jörg Klausen (MeteoSwiss), Christoph Zellweger (Empa), David Murithi Njiru (KMD), Mathew Mutuku (KMD), Atmospheric CO at Mt. Kenya by Kenya Meteorological Department, dataset published as CO_MKN_surface-insitu_KMD_data1 at WDCGG, ver.2024-05-06-1011, https://doi.org/10.50849/WDCGG_0040-1005-3001-01-01-9999 (Reference date*: YYYY/MM/DD)
 # Data_Set_Citation_Format : * As the reference date, please indicate the date you downloaded the files.
 #
 # GLOBAL ATTRIBUTES
@@ -23,7 +23,7 @@
 # site_lst2utc : UTC+03:00
 # site_climate_zone : Cfb
 # site_climate_zone:comment : Warm temperate climate, fully humid, warm summer
-# dataset_creation_date : 2023-08-15
+# dataset_creation_date : 2024-05-13
 # dataset_parameter : co
 # dataset_parameter_large_class : Reactive Gas
 # dataset_parameter_small_class : 
@@ -38,7 +38,7 @@
 # dataset_selection_tag : monthly
 # dataset_time_zone : UTC
 # dataset_start_date : 2002-06-01T00:00:00Z
-# dataset_end_date : 2022-12-01T00:00:00Z
+# dataset_end_date : 2023-12-01T00:00:00Z
 # dataset_statistic_code : 1
 # dataset_statistic : contributor
 # dataset_description : The MKN station is situated on the north-western slope of Mt. Kenya at an altitude of 3680 m a.s.l. and is surrounded by alpine grassland and brushes. As part of the Mt.Kenya National Park the whole mountain area is protected and there are no local anthropogenic emissions, making the site suitable for continuous observations of the background free tropospheric composition. The closest human settlement with rather low emission sources is situated 17 km in north-westerly direction.
@@ -70,8 +70,9 @@
 # dataset_mo_mean_processing : daily data are aggregated to monthly means. Thus, nvalue (the number of observations) refers to the number of available daily averages within the respective month. A minimum of 10 daily averages needs to be available to calculate monthly averages; otherwise, monthly data are reported as not available. 
 # dataset_transition_flag : 1
 # dataset_transition_comment : Dataset was made using the former WDCGG data file
-# dataset_reference_total_listed : 1
+# dataset_reference_total_listed : 2
 # dataset_reference_1_name : Henne, S., Junkermann, W., Kariuki, J. M., Aseyo, J., & Klausen, J. (2008). Mount Kenya Global Atmosphere Watch Station (MKN): Installation and Meteorological Characterization, Journal of Applied Meteorology and Climatology, 47(11), 2946-2962. DOI: 10.1175/2008JAMC1834.1
+# dataset_reference_2_name : Henne, S., Klausen, J., Junkermann, W., Kariuki, J. M., Aseyo, J. O., and Buchmann, B.: Representativeness and climatology of carbon monoxide and ozone at the global GAW station Mt. Kenya in equatorial Africa, Atmos. Chem. Phys., 8, 3119–3139, https://doi.org/10.5194/acp-8-3119-2008, 2008. 
 # contributor_organization_code : 40
 # contributor_acronym : KMD
 # contributor_name : Kenya Meteorological Department
@@ -162,7 +163,7 @@
 # intake_height_2 : 10
 # intake_height_2_units : m
 # intake_height_2_start_date : 2019-12-14T23:59:59Z
-# intake_height_2_end_date : 2022-12-01T00:00:00Z
+# intake_height_2_end_date : 2023-12-01T00:00:00Z
 # instrument_total_listed : 2
 # instrument_1 : TEI 48C TL (SN: 66838-352)
 # instrument_1_measurement_method_type_code : 9
@@ -173,7 +174,7 @@
 # instrument_2_measurement_method_type_code : 18
 # instrument_2_measurement_method_name : CRDS
 # instrument_2_start_date : 2019-12-14T23:59:59Z
-# instrument_2_end_date : 2022-12-01T00:00:00Z
+# instrument_2_end_date : 2023-12-01T00:00:00Z
 # scale_total_listed : 2
 # scale_1_code : 93
 # scale_1_name : WMO CO X2000
@@ -182,7 +183,7 @@
 # scale_2_code : 8
 # scale_2_name : WMO CO X2014A
 # scale_2_start_date : 2019-12-14T23:59:59Z
-# scale_2_end_date : 2022-12-01T00:00:00Z
+# scale_2_end_date : 2023-12-01T00:00:00Z
 # observation_status_code : 1
 # observation_status : Operational/Reporting
 # measurement_calibration : For the NDIR instrument (2002 to 2006):
@@ -348,3 +349,15 @@ MKN 2022 09 01 00 00 00 -999 -9 -9 -9 -9 -9 100.67 17.87 29 -0.0621999986 37.297
 MKN 2022 10 01 00 00 00 -999 -9 -9 -9 -9 -9 96.14 11.73 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
 MKN 2022 11 01 00 00 00 -999 -9 -9 -9 -9 -9 93.26 6.93 28 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
 MKN 2022 12 01 00 00 00 -999 -9 -9 -9 -9 -9 100.25 4.48 31 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 01 01 00 00 00 -999 -9 -9 -9 -9 -9 98.42 4.65 31 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 02 01 00 00 00 -999 -9 -9 -9 -9 -9 105.67 9.68 25 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 03 01 00 00 00 -999 -9 -9 -9 -9 -9 112.2 11.23 19 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 04 01 00 00 00 -999 -9 -9 -9 -9 -9 83.63 6.65 27 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 05 01 00 00 00 -999 -9 -9 -9 -9 -9 87.4 9.33 25 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 06 01 00 00 00 -999 -9 -9 -9 -9 -9 90.01 15.09 21 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 07 01 00 00 00 -999 -9 -9 -9 -9 -9 107.88 7.9 23 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 08 01 00 00 00 -999 -9 -9 -9 -9 -9 98.9 9.74 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 09 01 00 00 00 -999 -9 -9 -9 -9 -9 107.22 6 30 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 10 01 00 00 00 -999 -9 -9 -9 -9 -9 91.81 7.63 31 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 11 01 00 00 00 -999 -9 -9 -9 -9 -9 98.32 8.13 24 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
+MKN 2023 12 01 00 00 00 -999 -9 -9 -9 -9 -9 105.85 8.78 29 -0.0621999986 37.2971992493 3688 3678 10 -999.999 -999.999 2 2 18 8
