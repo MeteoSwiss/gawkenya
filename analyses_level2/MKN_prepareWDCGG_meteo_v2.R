@@ -123,6 +123,8 @@ datout <- mkndat[c(reldata),]
 ###################################################################################################################################################
 
 
+# wind direction: change 360 to 0
+mkndat$dkl010h0[which(mkndat$dkl010h0 == 360)] <- 0
 
 
 ################################################
@@ -328,7 +330,7 @@ summary(wdcgg.input$wind_direction)
 na <- which(is.na(wdcgg.input$wind_direction)); wdcgg.input$wind_direction[na] <- -99.9
 na <- which(is.na(wdcgg.input$wind_speed)); wdcgg.input$wind_speed[na] <- -99.9
 na <- which(is.na(wdcgg.input$relative_humidity)); wdcgg.input$relative_humidity[na] <- -99.9
-na <- which(is.na(wdcgg.input$air_pressure)); wdcgg.input$air_pressure[na] <- -99.
+na <- which(is.na(wdcgg.input$air_pressure)); wdcgg.input$air_pressure[na] <- -99.9
 na <- which(is.na(wdcgg.input$air_temperature)); wdcgg.input$air_temperature[na] <- -99.9
 na <- which(is.na(wdcgg.input$precipitation_amount)); wdcgg.input$precipitation_amount[na] <- -99.9
 
