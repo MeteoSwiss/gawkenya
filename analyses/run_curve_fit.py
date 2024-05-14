@@ -24,6 +24,8 @@ def run_ccgfilter(
     xp = ds_nonan.time.values
     yp = ds_nonan.values
 
+    ## Initialize df_interp with a default value
+    df_interp = None
     if len(xp)>0 and len(yp)>0: #if we have data
         # get time as decimal date
         xp_dec = [ccg_dates.decimalDateFromDatetime(d) for d in pd.to_datetime(xp)]
@@ -45,7 +47,7 @@ def run_ccgfilter(
 
         ## save required data
         x0 = filt.xinterp
-        datetimes = [ccg_dates.datetimeFromDecimalDate(d) for d in x0]
+        datetimes = [ccg_dates.datetimeFromDecimalDate(np.round(d,12)) for d in x0] # round to avoid floating point errors
         df_interp = pd.DataFrame(
             {
                 "time": datetimes,
@@ -62,4 +64,4 @@ def run_ccgfilter(
         ds_interp = ds_interp.assign_coords(dataset=dataset_str)
     else:
         filt = None
-    return filt
+    return filt, df_interp, ds_interp
