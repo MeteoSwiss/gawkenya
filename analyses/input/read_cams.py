@@ -17,14 +17,20 @@ import glob
 from molmass import Formula
 from molmass import ELEMENTS, Element
 
-
-import analyses.utils.utilities as utilities
 import zipfile
+import shutil
+
+## Add parent directory to syspath
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if not parent_dir in sys.path:
+    sys.path.append(parent_dir)
+from utils import utilities
 
 
 # %%
 def read_cams_inv(
     dir_data,
+    dir_out="..\..\data\cams",
     species="co2",
     yr1=2020,
     yr2=2023,
@@ -48,25 +54,64 @@ def read_cams_inv(
     # file_list = glob.glob(os.path.join(dir_path + rf'\cams73_latest_{species}_conc_*.nc'))
 
     ds_combined = None
-    # read data
+    
+    # first, extract all zip files
+    file_list = os.listdir(dir_path)
+    for file_name in file_list:
+        if file_name.endswith(".zip"):
+            zip_path = os.path.join(dir_path, file_name)
+            zip_extract = os.path.join(dir_path, os.path.splitext(file_name)[0])
+            os.makedirs(zip_extract, exist_ok=True)
 
+            # read and extract the zip file
+            with zipfile.ZipFile(zip_path, "r") as zip_sel:
+                zip_sel.extractall(zip_extract)
+            # move the extracted files to the main directory
+            extracted_files = os.listdir(zip_extract)
+            for extracted_file in extracted_files:
+                src_file = os.path.join(zip_extract, extracted_file)
+                dst_file = os.path.join(dir_path, extracted_file)
+                shutil.move(src_file, dst_file)
+            # remove the empty directory and the zip file
+            os.rmdir(zip_extract)
+            os.remove(zip_path)
+    
+    # read data
     for y in np.arange(yr1, yr2 + 1):
         print(f"read year {y}")
-        data_chunk = xr.open_mfdataset(
-            dir_path + rf"\cams73_latest_{species}_conc_*_{y}*.nc"
-        )
-        data_chunk = data_chunk.sortby(
-            "latitude"
-        )  # co2 data and ch4 data are not the same (starting with 90 or -90)!
-        ds_sel = data_chunk.sel(
+        # data_chunk = xr.open_mfdataset(
+        #     dir_path + rf"\cams73_latest_{species}_conc_*_{y}*.nc"
+        # )
+        # data_chunk = data_chunk.sortby(
+        #     "latitude"
+        # )  # co2 data and ch4 data are not the same (starting with 90 or -90)!
+        # ds_sel = data_chunk.sel(
+        #     latitude=slice(lat - dy * fact_dxy, lat + dy * fact_dxy),
+        #     longitude=slice(lon - dx * fact_dxy, lon + dx * fact_dxy),
+        # ).load()
+        # # Concatenate along the time dimension to create a single dataset
+        # if ds_combined is None:
+        #     ds_combined = ds_sel
+        # else:
+        #     ds_combined = xr.concat([ds_combined, ds_sel], dim="time")
+
+        # alternative: 
+        data_files = glob.glob(dir_path + rf"\cams73_latest_{species}_conc_*_{y}*.nc")
+        data_chunks = []
+        for file in data_files:
+            data_chunk = xr.open_dataset(file)
+            data_chunk = data_chunk.sortby("latitude")
+            ds_sel = data_chunk.sel(
             latitude=slice(lat - dy * fact_dxy, lat + dy * fact_dxy),
             longitude=slice(lon - dx * fact_dxy, lon + dx * fact_dxy),
-        ).load()
+            ).load()
+            data_chunks.append(ds_sel)
+        ds_year = xr.concat(data_chunks, dim="time")
         # Concatenate along the time dimension to create a single dataset
         if ds_combined is None:
-            ds_combined = ds_sel
+            ds_combined = ds_year
         else:
-            ds_combined = xr.concat([ds_combined, ds_sel], dim="time")
+            ds_combined = xr.concat([ds_combined, ds_year], dim="time")
 
     yr_start = ds_combined.time[0].dt.year.values
     yr_stop = ds_combined.time[-1].dt.year.values
@@ -79,14 +124,14 @@ def read_cams_inv(
         ds_combined["CH4"].attrs["units"] = "ppb"
 
     # remove file if already existing
-    fname = rf"..\data\cams\cams_invGG_{species}_{yr_start}_{yr_stop}_{station}.nc"
+    fname = rf"{dir_out}\cams_invGG_{species}_{yr_start}_{yr_stop}_{station}.nc"
     if os.path.isfile(fname):
         os.remove(fname)
     ds_combined.to_netcdf(fname, mode="w")
 
 
 # %%
-def read_cams_egg4(dir_data, yr1=2020, yr2=2020, station="MKN"):
+def read_cams_egg4(dir_data,dir_out="..\..\data\cams", yr1=2020, yr2=2020, station="MKN"):
     """
     Read in the CAMS EGG4 data and save as new netcdf.
 
@@ -126,14 +171,14 @@ def read_cams_egg4(dir_data, yr1=2020, yr2=2020, station="MKN"):
         )  # in ppm or ppb
         ds_combined[var_name] = ds_combined[var_name].assign_attrs(units=unit)
 
-    fname = rf"..\data\cams\cams_egg4_{yr1}_{yr2}_{station}.nc"
+    fname = rf"{dir_out}\cams_egg4_{yr1}_{yr2}_{station}.nc"
     if os.path.isfile(fname):
         os.remove(fname)
 
     ds_combined.to_netcdf(fname)
     
 # %%
-def read_cams_gfas(dir_data, yr1=2020, yr2=2023):
+def read_cams_gfas(dir_data, dir_out="..\..\data\cams",yr1=2020, yr2=2023):
     """
     Read in all CAMS GFAS biomass burning data and save as new netcdf.
 
@@ -157,14 +202,14 @@ def read_cams_gfas(dir_data, yr1=2020, yr2=2023):
     # rename variables:
     #ds_combined = ds_combined.rename({"co2": "CO2", "ch4": "CH4"})
 
-    fname = rf"..\data\cams\cams_gfas_{yr1}_{yr2}.nc"
+    fname = rf"{dir_out}\cams\cams_gfas_{yr1}_{yr2}.nc"
     if os.path.isfile(fname):
         os.remove(fname)
 
     ds_combined.to_netcdf(fname)
 
 # %%
-def read_cams_eac4(dir_data, station="MKN"):
+def read_cams_eac4(dir_data, dir_out="..\..\data\cams",station="MKN"):
     """
     Read in the full cams EAC4 data.
     Two seperate .nc files are saved as a zip file for each month. The files should already contain 9 grids around the MKN station (downloadedf with kadi_get_cams.py)
@@ -229,15 +274,20 @@ def read_cams_eac4(dir_data, station="MKN"):
         )  # reassign attributes (not working??)
         ds_combined[var_name] = ds_combined[var_name].assign_attrs(units="ppb")
 
-    fname = rf"..\data\cams\cams_eac4_{yr1}_{yr2}_{station}.nc"
+    fname = rf"{dir_out}\cams_eac4_{yr1}_{yr2}_{station}.nc"
     if os.path.isfile(fname):
         os.remove(fname)
     ds_combined.to_netcdf(fname, mode="w")
 
 
-def get_best_cams(obs_all, obs_datasets=["CO2", "CH4", "CO", "O3"], 
+def get_best_cams(obs_all, dir_in="..\..\..\Data\CAMS" ,dir_out="..\..\data\cams",obs_datasets=["CO2", "CH4", "CO", "O3"], 
                   cams_datasets = ["co2_invgg","co2_egg4","ch4_invgg","ch4_egg4","co_eac4","o3_eac4"],
                   save_netcdf=True):
+    '''
+    Get the best grid point for each observational dataset and save the corresponding CAMS data as netcdf.
+    cams_datasets: list of CAMS datasets to consider
+    obs_datasets: list of observational datasets to consider (finally not used)
+    '''
     # for now, only concentrate on data starting in 2020! (so no flask data)
 
     # if obs_datasets==[]:
@@ -255,9 +305,9 @@ def get_best_cams(obs_all, obs_datasets=["CO2", "CH4", "CO", "O3"],
         dir_data_cams + r"/cams_invGG_co2_2020_2023_MKN.nc"
     )
     cams_invgg_ch4 = xr.open_dataset(
-        dir_data_cams + r"/cams_invGG_ch4_2020_2021_MKN.nc"
+        dir_data_cams + r"/cams_invGG_ch4_2020_2022_MKN.nc"
     )
-    cams_eac4 = xr.open_dataset(dir_data_cams + r"/cams_eac4_2003_2022_MKN.nc")
+    cams_eac4 = xr.open_dataset(dir_data_cams + r"/cams_eac4_2003_2023_MKN.nc")
     cams_egg4 = xr.open_dataset(dir_data_cams + r"/cams_egg4_2003_2020_MKN.nc")
 
     # for each observational dataset, define the corresponding cams dataset and find the best cams-grid
@@ -312,7 +362,7 @@ def get_best_cams(obs_all, obs_datasets=["CO2", "CH4", "CO", "O3"],
 
     ## merge
     if save_netcdf:
-        fname = rf"..\data\cams\cams_best_grid_MKN.nc"
+        fname = rf"{dir_out}\cams_best_grid_MKN.nc"
         if os.path.isfile(fname):
             os.remove(fname)
         cams_best_datasets.to_netcdf(fname, mode="w")
@@ -321,7 +371,7 @@ def get_best_cams(obs_all, obs_datasets=["CO2", "CH4", "CO", "O3"],
 
 
 # %%
-def main(dir_data=r"..\Data\CAMS", station="MKN"):
+def main(dir_data=r"..\..\..\data\cams", station="MKN"):
     # when debugging directly in the file: dir_data = r"..\..\Data"
     read_cams_inv(
         dir_data,

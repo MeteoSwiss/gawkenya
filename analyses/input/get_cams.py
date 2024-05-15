@@ -15,7 +15,11 @@ import xarray as xr
 import pandas as pd
 import zipfile
 
-import analyses_level2.utils.utilities as utilities
+## Add parent directory to syspath
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if not parent_dir in sys.path:
+    sys.path.append(parent_dir)
+from utils import utilities
 
 
 # %%
@@ -114,11 +118,11 @@ def get_cams_inv_co2(dir_data, year, month, days_mon, stat, lat, lon, dx=4, dy=2
             #'area':  '{}/{}/{}/{}'.format(lat+dy,lon-dx,lat-dy,lon+dx),  #not sure if it works here?
             "time_aggregation": "instantaneous",
         },
-        "cams_inv_co2.zip",
+        f"{dir_data}\invGG\cams_inv_co2_{year}_{month}.zip",
     )
 
 
-def get_cams_inv_ch4_all(dir_data, year, stat, lat, lon, dx=4, dy=2):
+def get_cams_inv_ch4_all(dir_data, year, month, stat, lat, lon, dx=4, dy=2):
     """
     Get CAMS global inversion-optimised greenhouse gas fluxes and concentrations (Not tried yet, so far: run in online form)
     = >finally I was running it in the online form!
@@ -141,24 +145,11 @@ def get_cams_inv_ch4_all(dir_data, year, stat, lat, lon, dx=4, dy=2):
             # [
             #  '2020', '2021', '2022',
             # '2023',            ],
-            "month": [
-                "01",
-                "02",
-                "03",
-                "04",
-                "05",
-                "06",
-                "07",
-                "08",
-                "09",
-                "10",
-                "11",
-                "12",
-            ],
+            "month": month,
             #'area':  '{}/{}/{}/{}'.format(lat+dy,lon-dx,lat-dy,lon+dx),  #not working?
             "time_aggregation": "instantaneous",
         },
-        f"{dir_data}\invGG\cams_egg4_{year}_{stat}.zip",
+        f"{dir_data}\invGG\cams_inv_ch4_{year}_{stat}.zip",
     )
 
 
@@ -280,10 +271,10 @@ def is_leap_year(year):
 
 # %%
 def main(
-    dir_data=r"..\..\Data\CAMS",
-    yr1=2020,
-    yr2=2023,
-    which="cams_gfas",
+    dir_data=r"..\..\Data\CAMS", #local path to save the data
+    yr1=2022,
+    yr2=2022,
+    which="cams_inv_ch4",
     station=["MKN"],
 ):
     """
@@ -307,7 +298,7 @@ def main(
                     get_cams_inv_co2(dir_data, year, month, str(days_mon), s, lat, lon)
 
                 if which == "cams_inv_ch4":
-                    get_cams_inv_ch4_all(dir_data, year, s, lat, lon)
+                    get_cams_inv_ch4_all(dir_data, year, month, s, lat, lon)
 
                 if which == "cams_eac4":
                     get_cams_eac4(dir_data, year, month, str(days_mon), s, lat, lon)
