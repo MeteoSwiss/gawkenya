@@ -1,7 +1,7 @@
 # %%
 import os
 import logging
-from asyncio.log import logger
+# from asyncio.log import logger
 import glob
 import json
 import matplotlib as plt
@@ -17,21 +17,20 @@ class Thermo:
         try:
             if log != "thermo.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
-            logger = logging.getLogger(__name__)
+            self.logger = logging.getLogger(__name__)
             # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
             log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
             log_handler.setLevel(logging.DEBUG)
             log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
-            logger.addHandler(log_handler)
-            logger.info("Class 'Meteo' initialized successfully.")
-            logger.info("Class 'Thermo' initialized successfully.")
+            self.logger.addHandler(log_handler)
 
             self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
                            'tei49i': [pl.Utf8]*5 + [pl.Float64]*2 + [pl.Int64]*2 + [pl.Float64]*6,}
+            self.logger.info("Class 'Thermo' initialized successfully.")
 
         except Exception as err:
-            logger = logging.getLogger(__name__)
-            logger.error("Error initializing class 'Thermo'.", err)
+            self.logger = logging.getLogger(__name__)
+            self.logger.error("Error initializing class 'Thermo'.", err)
 
 
     def extract_thermo_to_dataframe(self, file: str, dtm="dtm", log=True) -> tuple([pl.DataFrame, str, str]):
@@ -52,7 +51,7 @@ class Thermo:
 
         if bool(re.search(file_type, file)):
             if log:
-                logger.info(f"Extracting file {file}.")
+                self.logger.info(f"Extracting file {file}.")
 
             try:
                 if bool(re.search('.zip', file)):
@@ -74,7 +73,7 @@ class Thermo:
                 return df, None, file_type
 
             except Exception as err:
-                logger.error(err)
+                self.logger.error(err)
                 return pl.DataFrame(), str(err), None
 
 
@@ -145,7 +144,7 @@ class Thermo:
             return None
 
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
             print(err)
 
 
@@ -318,13 +317,13 @@ class Thermo:
             files = glob.glob(pathname=pathname, recursive=recursive) 
             msg = f"Found {len(files)} files to un-archive."
             if log:
-                logger.info(msg)
+                self.logger.info(msg)
 
             for file in files:
                 dst = os.path.join(os.path.dirname(os.path.dirname(file)), os.path.basename(file))
                 shutil.move(src=file, dst=dst)
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
 
            
 
