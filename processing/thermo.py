@@ -1,5 +1,6 @@
 # %%
 import os
+import io
 import logging
 # from asyncio.log import logger
 import glob
@@ -55,10 +56,27 @@ class Thermo:
 
             try:
                 if bool(re.search('.zip', file)):
-                    zf = zipfile.ZipFile(file)
-                    df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+                    with zipfile.ZipFile(file, 'r') as zf:
+                        with zf.open(zf.namelist()[0]) as fh:
+                            content = fh.read().decode('utf-8')
+                    # df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
                 else:
-                    df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+                    with open(file, 'r') as fh:
+                        content = fh.read()
+                    # df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+
+                # Split the content into lines
+                lines = content.splitlines()
+                
+                # Process the header, replace multiple spaces with a single space
+                header = lines[0].replace('  ', ' ')
+                
+                # Join the processed header with the rest of the lines
+                corrected_content = '\n'.join([header] + lines[1:])
+                
+                # Read the corrected content into a Polars DataFrame
+                df = pl.read_csv(source=io.StringIO(corrected_content), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+
             except:
                 df = pl.DataFrame()
                 pass
@@ -77,7 +95,7 @@ class Thermo:
                 return pl.DataFrame(), str(err), None
 
 
-    def compile_thermo_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
+    def compile_thermo_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile Thermo bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
@@ -127,13 +145,20 @@ class Thermo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
-            if not result.is_empty:
+            if not result.is_empty():
+                parquet = os.path.join(target, f"{file_type}.parquet")
+                if append_parquet:                    
+                    # avoid over-writing an existing parquet file
+                    if os.path.exists(parquet):
+                        df = pl.read_parquet(source=parquet)
+                        result = pl.concat([result, df], how='diagonal')
+                
                 # remove duplicates, sort data
                 result = result.unique()
                 result = result.sort(dtm)
 
                 # store result as parquet file
-                result.write_parquet(os.path.join(target, f"{file_type}.parquet"))
+                result.write_parquet(parquet)
 
             # write errors to json file
             if errors:
