@@ -21,7 +21,7 @@ import zipfile
 import shutil
 
 ## Add parent directory to syspath
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if not parent_dir in sys.path:
     sys.path.append(parent_dir)
 from utils import utilities
@@ -53,8 +53,6 @@ def read_cams_inv(
     dir_path = dir_data + rf"\invGG"
     # file_list = glob.glob(os.path.join(dir_path + rf'\cams73_latest_{species}_conc_*.nc'))
 
-    ds_combined = None
-    
     # first, extract all zip files
     file_list = os.listdir(dir_path)
     for file_name in file_list:
@@ -75,8 +73,9 @@ def read_cams_inv(
             # remove the empty directory and the zip file
             os.rmdir(zip_extract)
             os.remove(zip_path)
-    
+
     # read data
+    ds_combined = None
     for y in np.arange(yr1, yr2 + 1):
         print(f"read year {y}")
         # data_chunk = xr.open_mfdataset(
@@ -95,23 +94,23 @@ def read_cams_inv(
         # else:
         #     ds_combined = xr.concat([ds_combined, ds_sel], dim="time")
 
-        # alternative: 
+        # alternative:
         data_files = glob.glob(dir_path + rf"\cams73_latest_{species}_conc_*_{y}*.nc")
         data_chunks = []
         for file in data_files:
             data_chunk = xr.open_dataset(file)
             data_chunk = data_chunk.sortby("latitude")
             ds_sel = data_chunk.sel(
-            latitude=slice(lat - dy * fact_dxy, lat + dy * fact_dxy),
-            longitude=slice(lon - dx * fact_dxy, lon + dx * fact_dxy),
+                latitude=slice(lat - dy * fact_dxy, lat + dy * fact_dxy),
+                longitude=slice(lon - dx * fact_dxy, lon + dx * fact_dxy),
             ).load()
-            data_chunks.append(ds_sel)
-        ds_year = xr.concat(data_chunks, dim="time")
-        # Concatenate along the time dimension to create a single dataset
-        if ds_combined is None:
-            ds_combined = ds_year
-        else:
-            ds_combined = xr.concat([ds_combined, ds_year], dim="time")
+            #data_chunks.append(ds_sel)
+        #ds_year = xr.concat(data_chunks, dim="time")
+            # Concatenate along the time dimension to create a single dataset
+            if ds_combined is None:
+                ds_combined = data_chunk
+            else:
+                ds_combined = xr.concat([ds_combined, data_chunk], dim="time")
 
     yr_start = ds_combined.time[0].dt.year.values
     yr_stop = ds_combined.time[-1].dt.year.values
@@ -131,7 +130,9 @@ def read_cams_inv(
 
 
 # %%
-def read_cams_egg4(dir_data,dir_out="..\..\data\cams", yr1=2020, yr2=2020, station="MKN"):
+def read_cams_egg4(
+    dir_data, dir_out="..\..\data\cams", yr1=2020, yr2=2020, station="MKN"
+):
     """
     Read in the CAMS EGG4 data and save as new netcdf.
 
@@ -176,9 +177,10 @@ def read_cams_egg4(dir_data,dir_out="..\..\data\cams", yr1=2020, yr2=2020, stati
         os.remove(fname)
 
     ds_combined.to_netcdf(fname)
-    
+
+
 # %%
-def read_cams_gfas(dir_data, dir_out="..\..\data\cams",yr1=2020, yr2=2023):
+def read_cams_gfas(dir_data, dir_out="..\..\data\cams", yr1=2020, yr2=2023):
     """
     Read in all CAMS GFAS biomass burning data and save as new netcdf.
 
@@ -200,7 +202,7 @@ def read_cams_gfas(dir_data, dir_out="..\..\data\cams",yr1=2020, yr2=2023):
     yr2 = ds_combined.time[-1].dt.year.values
 
     # rename variables:
-    #ds_combined = ds_combined.rename({"co2": "CO2", "ch4": "CH4"})
+    # ds_combined = ds_combined.rename({"co2": "CO2", "ch4": "CH4"})
 
     fname = rf"{dir_out}\cams\cams_gfas_{yr1}_{yr2}.nc"
     if os.path.isfile(fname):
@@ -208,8 +210,9 @@ def read_cams_gfas(dir_data, dir_out="..\..\data\cams",yr1=2020, yr2=2023):
 
     ds_combined.to_netcdf(fname)
 
+
 # %%
-def read_cams_eac4(dir_data, dir_out="..\..\data\cams",station="MKN"):
+def read_cams_eac4(dir_data, dir_out="..\..\data\cams", station="MKN"):
     """
     Read in the full cams EAC4 data.
     Two seperate .nc files are saved as a zip file for each month. The files should already contain 9 grids around the MKN station (downloadedf with kadi_get_cams.py)
@@ -280,14 +283,26 @@ def read_cams_eac4(dir_data, dir_out="..\..\data\cams",station="MKN"):
     ds_combined.to_netcdf(fname, mode="w")
 
 
-def get_best_cams(obs_all, dir_in="..\..\..\Data\CAMS" ,dir_out="..\..\data\cams",obs_datasets=["CO2", "CH4", "CO", "O3"], 
-                  cams_datasets = ["co2_invgg","co2_egg4","ch4_invgg","ch4_egg4","co_eac4","o3_eac4"],
-                  save_netcdf=True):
-    '''
+def get_best_cams(
+    obs_all,
+    dir_in="..\..\..\Data\CAMS",
+    dir_out="..\..\data\cams",
+    obs_datasets=["CO2", "CH4", "CO", "O3"],
+    cams_datasets=[
+        "co2_invgg",
+        "co2_egg4",
+        "ch4_invgg",
+        "ch4_egg4",
+        "co_eac4",
+        "o3_eac4",
+    ],
+    save_netcdf=True,
+):
+    """
     Get the best grid point for each observational dataset and save the corresponding CAMS data as netcdf.
     cams_datasets: list of CAMS datasets to consider
     obs_datasets: list of observational datasets to consider (finally not used)
-    '''
+    """
     # for now, only concentrate on data starting in 2020! (so no flask data)
 
     # if obs_datasets==[]:
@@ -315,25 +330,25 @@ def get_best_cams(obs_all, dir_in="..\..\..\Data\CAMS" ,dir_out="..\..\data\cams
     attributes_dict = {}
     for i, ds_name in enumerate(cams_datasets):
         print(f"find best grid for {ds_name}")
-        #CO2
+        # CO2
         if ds_name == "co2_invgg":
             cams_sel = cams_invgg_co2["CO2"]
             obs_sel = obs_all_3h.sel(dataset="CO2")
         elif ds_name == "co2_egg4":
             cams_sel = cams_egg4["CO2"]
-            obs_sel = obs_all_3h.sel(dataset="CO2") 
-        #CH4
+            obs_sel = obs_all_3h.sel(dataset="CO2")
+        # CH4
         elif ds_name == "ch4_invgg":
             cams_sel = cams_invgg_ch4["CH4"]
             obs_sel = obs_all_6h.sel(dataset="CH4")  # methane only 6hourly
         elif ds_name == "ch4_egg4":
-            cams_sel = cams_egg4["CH4"] 
-            obs_sel = obs_all_3h.sel(dataset="CH4") 
-        #CO
+            cams_sel = cams_egg4["CH4"]
+            obs_sel = obs_all_3h.sel(dataset="CH4")
+        # CO
         elif ds_name == "co_eac4":
             cams_sel = cams_eac4["CO"]
             obs_sel = obs_all_3h.sel(dataset="CO")
-        #O3
+        # O3
         elif ds_name == "o3_eac4":
             cams_sel = cams_eac4["O3"]
             obs_sel = obs_all_3h.sel(dataset="O3")
@@ -343,21 +358,55 @@ def get_best_cams(obs_all, dir_in="..\..\..\Data\CAMS" ,dir_out="..\..\data\cams
         # get time period where both are available
         tend = np.min([times_nonan_obs[-1].values, times_nonan_cams[-1].values])
         tstart = np.max([times_nonan_obs[0].values, times_nonan_cams[0].values])
-        cams = cams_sel.sel(time=slice(tstart, tend))
-        obs = obs_sel.sel(time=slice(tstart, tend)).value.to_dataframe()["value"]
-        # find the best grid point (best correlated for whole period)
-        best_grid = utilities.find_best_grid_point(cams, obs)
+            
+        # Function to select the best grid. Append the selection to datasets
+        def get_best(tstart,tend,cams_sel,obs_sel,ds_name):
+            cams = cams_sel.sel(time=slice(tstart, tend))
+            obs = obs_sel.sel(time=slice(tstart, tend)).value.to_dataframe()["value"]
+            # find the best grid point (best correlated for whole period)
+            best_grid = utilities.find_best_grid_point(cams, obs)
 
-        cams_best = cams.sel(
-            latitude=best_grid[0], longitude=best_grid[1], level=best_grid[2]
-        )
-        cams_best = cams_best.assign_coords(dataset=ds_name)
-        cams_best = cams_best.rename(
-            "value"
-        )  # give the same name ("value") to all species
-        cams_best["unit"] = cams_best.attrs["units"]
-        datasets.append(cams_best.to_dataset())  # append
+            cams_best = cams.sel(
+                latitude=best_grid[0], longitude=best_grid[1], level=best_grid[2]
+            )
+            # add dataset as a new dimension and use the dataset name as a coordinate
+            cams_best = cams_best.expand_dims(dataset = [ds_name])
+            #cams_best = cams_best.assign_coords(dataset=ds_name)
+            cams_best = cams_best.rename(
+                "value"
+            )  # give the same name ("value") to all species
+            #transform dataarray to dataset
+            ds_cams_best = cams_best.to_dataset()
+            #add dataset-dimension to all coordinates
+            ds_cams_best = ds_cams_best.assign(
+                latitude=("dataset", [cams_best.latitude.values]),
+                longitude=("dataset", [cams_best.longitude.values]),
+                level=("dataset", [cams_best.level.values]),
+                unit=("dataset", [cams_best.attrs["units"]])
+            )
+            ds_cams_best["unit"] = cams_best.attrs["units"]
 
+            datasets.append(ds_cams_best)  # append
+            return cams_best
+
+        # Exception: for the inversion GHG products, the resolution changes with time. 
+        # Therefore, we have to select the best grid seperately for the specific periods.
+        # save them seperately as co2_invgg and co2_invgg2
+        if ds_name == "co2_invgg":
+            # For co2, the resolution changes in July 2022:
+            period1 = {"tstart": tstart, "tend": np.datetime64("2023-06-30 23:00:00"),"ds_name":ds_name}
+            period2 = {"tstart": np.datetime64("2023-07-01"), "tend": tend,"ds_name":ds_name+'2'}
+            for period in [period1, period2]:
+                cams_best = get_best(period['tstart'],period['tend'],cams_sel,obs_sel,period['ds_name'])
+        elif ds_name == "ch4_invgg":
+            # For ch4, the resolution changes in Jan 2022:
+            period1 = {"tstart": tstart, "tend": np.datetime64("2021-12-31 23:00:00"),"ds_name":ds_name}
+            period2 = {"tstart": np.datetime64("2022-01-01"), "tend": tend,"ds_name":ds_name+'2'}
+            for period in [period1, period2]:
+                cams_best = get_best(period['tstart'],period['tend'],cams_sel,obs_sel,period['ds_name'])
+        else:
+            cams_best = get_best(tstart,tend,cams_sel,obs_sel,ds_name)    
+        
     cams_best_datasets = xr.concat(datasets, dim="dataset")
 
     ## merge
