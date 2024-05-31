@@ -1,9 +1,12 @@
 # %%
 # Author: joerg.klausen@meteoswiss.ch
 import os
+import platform
 import re
 import shutil
+import subprocess
 import time
+from datetime import datetime
 
 
 # %%
@@ -103,6 +106,118 @@ def move_files(source: str, target: str, pattern: str=None, verbose: bool=True) 
             print(f"{n} files moved from {source} to {target} before encountering above error.")
         return n
 
+
+def organize_files_by_year_month_day(source: str, verbose: bool=True) -> int:
+    """Move files from source and sub-folders to target.
+
+    Args:
+        source (str): Absolute path to source directory
+        verbose (bool, optional): Print current activity to stdout. Defaults to True.
+    """
+    if verbose:
+        print(f"### organize_files_by_year_month_day under '{source}' ...")
+    if not os.path.exists(source):
+        print(f"Source folder '{source}' does not exist.")
+        return
+
+    duplicates_folder = os.path.join(source, 'duplicates')
+    if not os.path.exists(duplicates_folder):
+        os.makedirs(duplicates_folder)
+
+    for root, dirs, files in os.walk(source):
+        for file in files:
+            try:
+                # Split file name and extension
+                name, ext = os.path.splitext(file)
+                parts = name.split('-')
+                
+                # if len(parts) != 2:
+                #     continue
+                
+                prefix, datetime_part = parts
+                # if len(datetime_part) != 12:
+                #     continue
+
+                # Parse the date and time part
+                try:
+                    dt = datetime.strptime(datetime_part, '%Y%m%d%H%M')
+                except ValueError:
+                    print(f"{file} name does not contain a proper datetime.")
+                    continue
+                
+                year = dt.strftime('%Y')
+                month = dt.strftime('%m')
+                day = dt.strftime('%d')
+
+                # Create target directory structure
+                target_dir = os.path.join(source, year, month, day)
+                if not os.path.exists(target_dir):
+                    os.makedirs(target_dir)
+
+                source_path = os.path.join(root, file)
+                target_path = os.path.join(target_dir, file)
+
+                # Check if the file is already in the right place
+                if os.path.abspath(source_path) == os.path.abspath(target_path):
+                    continue
+
+                if os.path.exists(target_path):
+                    # Move to duplicates if file already exists
+                    duplicate_target = os.path.join(duplicates_folder, file)
+                    count = 1
+                    while os.path.exists(duplicate_target):
+                        duplicate_target = os.path.join(duplicates_folder, f"{os.path.splitext(file)[0]}_{count}{ext}")
+                        count += 1
+                    if verbose:
+                        print(f"Moving duplicate file to {duplicate_target}.")
+                    shutil.move(source_path, duplicate_target)
+                else:
+                    # Move file to the target directory
+                    if verbose:
+                        print(f"Moving {source_path} to {target_path}.")
+                    shutil.move(source_path, target_path)
+            except Exception as err:
+                print(f"Error processing file '{file}': {err}")
+
+
+def find_empty_folders(source: str, verbose: bool=True, delete: bool=True) -> int:
+    """Remove empty folders under source. Uses the system function 'find', which is only available under linux.
+
+    Args:
+        source (str): full path to source folder
+        verbose (bool, optional): Should the path of empty folders be printed to stdout?. Defaults to True.
+
+    Returns:
+        int: Number of empty folders found
+    """
+    if verbose:
+        print(f"### find_empty_folders under '{source}' with option delete={delete} ...")
+    delete = '-delete' if delete else ''
+    if platform.system() in ['Linux', 'Darwin']:  # 'Darwin' is macOS
+        try:
+            # Ensure the folder exists
+            if not os.path.isdir(source):
+                print(f"The specified folder '{source}' does not exist.")
+                return
+
+            # Run the `find` command with the specified parameters (use the -print option and subprocess.PIPE to redirect output)
+            result = subprocess.run(['find', source, '-empty', '-type', 'd', '-print', delete], 
+                                    text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            folders = result.stdout.strip().split('\n')
+            # Print the output
+            if verbose:
+                if result:
+                    if delete:
+                        caveat = " and deleted."
+                    print(f"Empty folders found{caveat}: {folders}")
+                else:
+                    print("No empty folders found.")
+            return len(folders)
+        except subprocess.CalledProcessError as err:
+            # Handle any errors that occur during the execution of the command
+            print(f"Error executing find command: {err}")
+    else:
+        raise ValueError("OS currently not supported.")
 
 # %%
 if __name__ == "__main__":

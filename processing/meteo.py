@@ -8,7 +8,6 @@ import glob
 import json
 import re
 import shutil
-import time
 import zipfile
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -26,7 +25,6 @@ class Meteo:
             log_handler.setLevel(logging.INFO)
             log_handler.setFormatter(log_formatter)
             self.logger.addHandler(log_handler)
-            self.logger.info("Class 'Meteo' initialized successfully.")
 
             self.mappings = {'VRXA00': {
                     'iii': 'MeteoSwiss internal station identifier; MKN=187; NRB=',
@@ -47,18 +45,19 @@ class Meteo:
                     'gor000z0': 'Global solar radiation (W, 10-min average) at 2m above ground (Lufft)',
                     'ta2200s0': 'Temperature (°C, 10-min average) at 2m above ground, parallel measurement (Rotronic)',
                     'ua2200s0': 'Pressure (hPa, 10-min average) at 2m above ground, parallel measurement (Rotronic)',
-                    # 'itosurr0': 'Surface ozone (ppb, 5-min average)'
+                    # 'itosurr0': 'Surface ozone (ppb, 5-min average)' --- will be needed for Nairobi
                 }
             }
 
             self.dtypes = {'VRXA00': [pl.Utf8]*2 + [pl.Float64]*16,}
+            self.logger.info("Class 'Meteo' initialized successfully.")
 
         except Exception as err:
             logger = logging.getLogger(__name__)
             logger.exception("Error initializing class 'Meteo'.", err)
 
 
-    def extract_vrxa00_to_dataframe(self, file: str, log=True) -> tuple([pl.DataFrame, str]):
+    def extract_vrxa00_to_dataframe(self, file: str, log=True, verbose: bool=True) -> tuple([pl.DataFrame, str]):
         """
         Open a file, determine its type from the file name, then extract content into a Polars dataframe.
 
@@ -86,17 +85,18 @@ class Meteo:
                 return df, None
 
             except Exception as err:
+                if verbose:
+                    print(f"Error extracting {file}: {err}.")                
                 self.logger.error(err)
                 return pl.DataFrame(), str(err)
 
 
-    def compile_vrxa00_to_parquet(self, source: str, target: str, year: str=None, archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
-        """Extract and compile VRXA00 bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
+    def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
+        """Extract and compile VRXA00 bulletins found in source and its sub-folders to a single polars DataFrame, save as parquet file in target.
 
         Args:
             source (str): Root path to directory to process. <year> will be appended to path. Sub-directories will also be considered.
             target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
-            year (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
             archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
             issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
             append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
@@ -105,10 +105,7 @@ class Meteo:
         Returns:
             Nothing
         """
-        source = os.path.join(source, year)
-        target = os.path.join(target, year)
         os.makedirs(target, exist_ok=True)
-        archive = os.path.join(archive, year)
         os.makedirs(archive, exist_ok=True)
 
         result = pl.DataFrame()
@@ -140,10 +137,10 @@ class Meteo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
-            if not result.is_empty:
+            if not result.is_empty():
                 # if append_parquet==True, check if parquet already exists and append
+                parquet = os.path.join(target, 'vrxa00.parquet')
                 if append_parquet:
-                    parquet = os.path.join(target, 'vrxa00.parquet')
                     if os.path.exists(parquet):
                         df = pl.read_parquet(parquet)
                         result = pl.concat([result, df], how='diagonal')
@@ -156,8 +153,9 @@ class Meteo:
                 result.write_parquet(parquet)
 
             # write errors to json file
-            with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
-                json.dump(errors, fh)
+            if errors:
+                with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
+                    json.dump(errors, fh)
 
             # return result, errors
             return None

@@ -1,7 +1,8 @@
 # %%
 import os
+import io
 import logging
-from asyncio.log import logger
+# from asyncio.log import logger
 import glob
 import json
 import matplotlib as plt
@@ -17,21 +18,20 @@ class Thermo:
         try:
             if log != "thermo.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
-            logger = logging.getLogger(__name__)
+            self.logger = logging.getLogger(__name__)
             # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
             log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
             log_handler.setLevel(logging.DEBUG)
             log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
-            logger.addHandler(log_handler)
-            logger.info("Class 'Meteo' initialized successfully.")
-            logger.info("Class 'Thermo' initialized successfully.")
+            self.logger.addHandler(log_handler)
 
             self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
                            'tei49i': [pl.Utf8]*5 + [pl.Float64]*2 + [pl.Int64]*2 + [pl.Float64]*6,}
+            self.logger.info("Class 'Thermo' initialized successfully.")
 
         except Exception as err:
-            logger = logging.getLogger(__name__)
-            logger.error("Error initializing class 'Thermo'.", err)
+            self.logger = logging.getLogger(__name__)
+            self.logger.error("Error initializing class 'Thermo'.", err)
 
 
     def extract_thermo_to_dataframe(self, file: str, dtm="dtm", log=True) -> tuple([pl.DataFrame, str, str]):
@@ -52,14 +52,31 @@ class Thermo:
 
         if bool(re.search(file_type, file)):
             if log:
-                logger.info(f"Extracting file {file}.")
+                self.logger.info(f"Extracting file {file}.")
 
             try:
                 if bool(re.search('.zip', file)):
-                    zf = zipfile.ZipFile(file)
-                    df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+                    with zipfile.ZipFile(file, 'r') as zf:
+                        with zf.open(zf.namelist()[0]) as fh:
+                            content = fh.read().decode('utf-8')
+                    # df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
                 else:
-                    df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+                    with open(file, 'r') as fh:
+                        content = fh.read()
+                    # df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+
+                # Split the content into lines
+                lines = content.splitlines()
+                
+                # Process the header, replace multiple spaces with a single space
+                header = lines[0].replace('  ', ' ')
+                
+                # Join the processed header with the rest of the lines
+                corrected_content = '\n'.join([header] + lines[1:])
+                
+                # Read the corrected content into a Polars DataFrame
+                df = pl.read_csv(source=io.StringIO(corrected_content), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+
             except:
                 df = pl.DataFrame()
                 pass
@@ -74,11 +91,11 @@ class Thermo:
                 return df, None, file_type
 
             except Exception as err:
-                logger.error(err)
+                self.logger.error(err)
                 return pl.DataFrame(), str(err), None
 
 
-    def compile_thermo_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, verbose: bool=True, log: bool=True) -> None:
+    def compile_thermo_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile Thermo bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
@@ -128,13 +145,20 @@ class Thermo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
-            if not result.is_empty:
+            if not result.is_empty():
+                parquet = os.path.join(target, f"{file_type}.parquet")
+                if append_parquet:                    
+                    # avoid over-writing an existing parquet file
+                    if os.path.exists(parquet):
+                        df = pl.read_parquet(source=parquet)
+                        result = pl.concat([result, df], how='diagonal')
+                
                 # remove duplicates, sort data
                 result = result.unique()
                 result = result.sort(dtm)
 
                 # store result as parquet file
-                result.write_parquet(os.path.join(target, f"{file_type}.parquet"))
+                result.write_parquet(parquet)
 
             # write errors to json file
             if errors:
@@ -145,7 +169,7 @@ class Thermo:
             return None
 
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
             print(err)
 
 
@@ -318,13 +342,13 @@ class Thermo:
             files = glob.glob(pathname=pathname, recursive=recursive) 
             msg = f"Found {len(files)} files to un-archive."
             if log:
-                logger.info(msg)
+                self.logger.info(msg)
 
             for file in files:
                 dst = os.path.join(os.path.dirname(os.path.dirname(file)), os.path.basename(file))
                 shutil.move(src=file, dst=dst)
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
 
            
 

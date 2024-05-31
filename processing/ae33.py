@@ -24,7 +24,11 @@ class AE33:
             if log != "ae33.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
             logger = logging.getLogger(__name__)
-            logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+            log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
+            log_handler.setLevel(logging.DEBUG)
+            log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
+            logger.addHandler(log_handler)
             logger.info("Class 'AE33' initialized successfully.")
 
         except Exception as err:
