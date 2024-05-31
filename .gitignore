@@ -176,4 +176,4 @@ analyses/output/*
 #cams data too large
 data/cams/**
 #except some selected smaller cams files
-!data/cams/cams_best_grid_MKN.nc
+!data/cams/cams_best_grid_merged_MKN.nc

@@ -34,6 +34,8 @@ def read_cams_inv(
     species="co2",
     yr1=2020,
     yr2=2023,
+    month1=1,
+    month2=12,
     dx=2.5,
     dy=1.3,
     fact_dxy=2,
@@ -46,7 +48,13 @@ def read_cams_inv(
     dx          longitude grid width
     dy          latitude grid width
     fact_dxy    number of grids to select in each direction around the station
+    yr1,yr2     Starting and ending year
+    month1,month2   Starting month in yr1 and ending month in yr2, only needed if we should not read full data of a year
     """
+    # get months as string with leading zero
+    month1_str = "{:02d}".format(int(month1))
+    month2_str = "{:02d}".format(int(month2))
+
     # get station coordinates
     lat, lon, alt = utilities.get_station_coords(station)
 
@@ -78,42 +86,28 @@ def read_cams_inv(
     ds_combined = None
     for y in np.arange(yr1, yr2 + 1):
         print(f"read year {y}")
-        # data_chunk = xr.open_mfdataset(
-        #     dir_path + rf"\cams73_latest_{species}_conc_*_{y}*.nc"
-        # )
-        # data_chunk = data_chunk.sortby(
-        #     "latitude"
-        # )  # co2 data and ch4 data are not the same (starting with 90 or -90)!
-        # ds_sel = data_chunk.sel(
-        #     latitude=slice(lat - dy * fact_dxy, lat + dy * fact_dxy),
-        #     longitude=slice(lon - dx * fact_dxy, lon + dx * fact_dxy),
-        # ).load()
-        # # Concatenate along the time dimension to create a single dataset
-        # if ds_combined is None:
-        #     ds_combined = ds_sel
-        # else:
-        #     ds_combined = xr.concat([ds_combined, ds_sel], dim="time")
-
-        # alternative:
         data_files = glob.glob(dir_path + rf"\cams73_latest_{species}_conc_*_{y}*.nc")
-        data_chunks = []
         for file in data_files:
+            if y == yr1 and file[-5:-3] < month1_str:
+                # skip months before given first month1 in yr1
+                continue
+            if y == yr2 and file[-5:-3] > month2_str:
+                # skip months after given last month2 in yr2
+                continue
             data_chunk = xr.open_dataset(file)
             data_chunk = data_chunk.sortby("latitude")
             ds_sel = data_chunk.sel(
                 latitude=slice(lat - dy * fact_dxy, lat + dy * fact_dxy),
                 longitude=slice(lon - dx * fact_dxy, lon + dx * fact_dxy),
             ).load()
-            #data_chunks.append(ds_sel)
-        #ds_year = xr.concat(data_chunks, dim="time")
             # Concatenate along the time dimension to create a single dataset
             if ds_combined is None:
-                ds_combined = data_chunk
+                ds_combined = ds_sel
             else:
-                ds_combined = xr.concat([ds_combined, data_chunk], dim="time")
+                ds_combined = xr.concat([ds_combined, ds_sel], dim="time")
 
-    yr_start = ds_combined.time[0].dt.year.values
-    yr_stop = ds_combined.time[-1].dt.year.values
+    date_start = str(ds_combined.time[0].dt.year.values) + "{:02d}".format(int(ds_combined.time[0].dt.month.values))
+    date_stop = str(ds_combined.time[-1].dt.year.values)  + "{:02d}".format(int(ds_combined.time[-1].dt.month.values))
 
     # unit conversion
     if species == "co2":
@@ -123,7 +117,7 @@ def read_cams_inv(
         ds_combined["CH4"].attrs["units"] = "ppb"
 
     # remove file if already existing
-    fname = rf"{dir_out}\cams_invGG_{species}_{yr_start}_{yr_stop}_{station}.nc"
+    fname = rf"{dir_out}\cams_invGG_{species}_{date_start}_{date_stop}_{station}.nc"
     if os.path.isfile(fname):
         os.remove(fname)
     ds_combined.to_netcdf(fname, mode="w")
@@ -290,8 +284,10 @@ def get_best_cams(
     obs_datasets=["CO2", "CH4", "CO", "O3"],
     cams_datasets=[
         "co2_invgg",
+        "co2_invgg2", #2nd period with higer resolution
         "co2_egg4",
         "ch4_invgg",
+        "ch4_invgg2",#2nd period with higer resolution
         "ch4_egg4",
         "co_eac4",
         "o3_eac4",
@@ -314,13 +310,19 @@ def get_best_cams(
     print("take 6h mean of observations")
     obs_all_6h = obs_all.resample(time="6h").mean(keep_attrs=True)
 
-    # Read all cams datasets
+    # Read all cams datasets (Give the correct filenames!)
     dir_data_cams = r"../data/cams"
     cams_invgg_co2 = xr.open_dataset(
-        dir_data_cams + r"/cams_invGG_co2_2020_2023_MKN.nc"
+        dir_data_cams + r"/cams_invGG_co2_202001_202306_MKN.nc"
+    )
+    cams_invgg_co2_2 = xr.open_dataset(
+        dir_data_cams + r"/cams_invGG_co2_202307_202309_MKN.nc"
     )
     cams_invgg_ch4 = xr.open_dataset(
-        dir_data_cams + r"/cams_invGG_ch4_2020_2022_MKN.nc"
+        dir_data_cams + r"/cams_invGG_ch4_202001_202112_MKN.nc"
+    )
+    cams_invgg_ch4_2 = xr.open_dataset(
+        dir_data_cams + r"/cams_invGG_ch4_202201_202212_MKN.nc"
     )
     cams_eac4 = xr.open_dataset(dir_data_cams + r"/cams_eac4_2003_2023_MKN.nc")
     cams_egg4 = xr.open_dataset(dir_data_cams + r"/cams_egg4_2003_2020_MKN.nc")
@@ -334,12 +336,18 @@ def get_best_cams(
         if ds_name == "co2_invgg":
             cams_sel = cams_invgg_co2["CO2"]
             obs_sel = obs_all_3h.sel(dataset="CO2")
+        if ds_name == "co2_invgg2":#2nd period with higer resolution
+            cams_sel = cams_invgg_co2_2["CO2"]
+            obs_sel = obs_all_3h.sel(dataset="CO2")
         elif ds_name == "co2_egg4":
             cams_sel = cams_egg4["CO2"]
             obs_sel = obs_all_3h.sel(dataset="CO2")
         # CH4
         elif ds_name == "ch4_invgg":
             cams_sel = cams_invgg_ch4["CH4"]
+            obs_sel = obs_all_6h.sel(dataset="CH4")  # methane only 6hourly
+        elif ds_name == "ch4_invgg2":#2nd period with higer resolution
+            cams_sel = cams_invgg_ch4_2["CH4"]
             obs_sel = obs_all_6h.sel(dataset="CH4")  # methane only 6hourly
         elif ds_name == "ch4_egg4":
             cams_sel = cams_egg4["CH4"]
@@ -388,24 +396,7 @@ def get_best_cams(
 
             datasets.append(ds_cams_best)  # append
             return cams_best
-
-        # Exception: for the inversion GHG products, the resolution changes with time. 
-        # Therefore, we have to select the best grid seperately for the specific periods.
-        # save them seperately as co2_invgg and co2_invgg2
-        if ds_name == "co2_invgg":
-            # For co2, the resolution changes in July 2022:
-            period1 = {"tstart": tstart, "tend": np.datetime64("2023-06-30 23:00:00"),"ds_name":ds_name}
-            period2 = {"tstart": np.datetime64("2023-07-01"), "tend": tend,"ds_name":ds_name+'2'}
-            for period in [period1, period2]:
-                cams_best = get_best(period['tstart'],period['tend'],cams_sel,obs_sel,period['ds_name'])
-        elif ds_name == "ch4_invgg":
-            # For ch4, the resolution changes in Jan 2022:
-            period1 = {"tstart": tstart, "tend": np.datetime64("2021-12-31 23:00:00"),"ds_name":ds_name}
-            period2 = {"tstart": np.datetime64("2022-01-01"), "tend": tend,"ds_name":ds_name+'2'}
-            for period in [period1, period2]:
-                cams_best = get_best(period['tstart'],period['tend'],cams_sel,obs_sel,period['ds_name'])
-        else:
-            cams_best = get_best(tstart,tend,cams_sel,obs_sel,ds_name)    
+        cams_best = get_best(tstart,tend,cams_sel,obs_sel,ds_name)    
         
     cams_best_datasets = xr.concat(datasets, dim="dataset")
 

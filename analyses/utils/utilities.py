@@ -45,9 +45,9 @@ def find_best_grid_point(rean, obs):
     for la in rean.latitude:
         for lo in rean.longitude:
             for le in rean.level:
-                print(f'check corr. for {la.values}, {lo.values}, {le.values}')
                 tmp = rean.sel(latitude=la, longitude=lo, level=le)
                 r = spearmanr(obs.values, np.array(tmp.values).squeeze(), nan_policy='omit').statistic # initially it was: np.array(tmp.to_array())
+                print(f'corr. for {la.values}lat, {lo.values}lon, level {le.values}: {r}')
                 if r > best_r:
                     best_r = r
                     best = [la.values, lo.values, le.values]
