@@ -276,6 +276,38 @@ def read_cams_eac4(dir_data, dir_out="..\..\data\cams", station="MKN"):
         os.remove(fname)
     ds_combined.to_netcdf(fname, mode="w")
 
+def read_cams_eac4_aerosols(dir_data, yr1=2020,yr2=2023, dir_out="data\cams", station="MKN"):
+    """
+    Read in the cams EAC4 aerosol mxing ratio data.
+
+    Read in the files and merge to a netcdf.
+    Save the merged data as new netcdf.
+
+    """
+    dir_path = dir_data + rf"\EAC4_aerosols"
+
+    ds_combined = None
+    # read data
+
+    for y in np.arange(yr1, yr2 + 1):
+        print(f"read year {y}")
+        ds_temp = xr.open_mfdataset(dir_path + rf"\cams_eac4_{y}*.nc")
+
+        # Concatenate along the time dimension to create a single dataset
+        if ds_combined is None:
+            ds_combined = ds_temp
+        else:
+            ds_combined = xr.concat([ds_combined, ds_temp], dim="time")
+
+    yr1 = ds_combined.time[0].dt.year.values
+    yr2 = ds_combined.time[-1].dt.year.values
+
+
+    fname = rf"{dir_out}\cams_eac4_aerosols_{yr1}_{yr2}_{station}.nc"
+    if os.path.isfile(fname):
+        os.remove(fname)
+    ds_combined.to_netcdf(fname, mode="w")
+
 
 def get_best_cams(
     obs_all,
@@ -411,22 +443,25 @@ def get_best_cams(
 
 
 # %%
-def main(dir_data=r"..\..\..\data\cams", station="MKN"):
-    # when debugging directly in the file: dir_data = r"..\..\Data"
-    read_cams_inv(
-        dir_data,
-        species="ch4",
-        yr1=2020,
-        yr2=2021,
-        dx=3,
-        dy=2,
-        fact_dxy=2,
-        station=station,
-    )  # ch4: coarser resolution
-    read_cams_inv(dir_data, species="co2", yr1=2020, yr2=2023, station=station)
+def main(dir_data=r"..\..\Data\CAMS", station="MKN"):
+    # when debugging directly in the file: dir_data = r"..\..\Data\CAMS"
+    # read_cams_inv(
+    #     dir_data,
+    #     species="ch4",
+    #     yr1=2020,
+    #     yr2=2021,
+    #     dx=3,
+    #     dy=2,
+    #     fact_dxy=2,
+    #     station=station,
+    # )  # ch4: coarser resolution
+    # read_cams_inv(dir_data, species="co2", yr1=2020, yr2=2023, station=station)
 
-    read_cams_eac4(dir_data, station=station)
-    read_cams_egg4(dir_data, yr1=2003, yr2=2020, station=station)
+    # read_cams_eac4(dir_data, station=station)
+    # read_cams_egg4(dir_data, yr1=2003, yr2=2020, station=station)
+
+    read_cams_eac4_aerosols(dir_data, station=station)
+
 
 
 if __name__ == "__main__":
