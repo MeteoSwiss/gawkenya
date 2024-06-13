@@ -4,6 +4,7 @@
 import os
 import ee
 import pandas as pd
+import polars as pl
 import matplotlib.pyplot as plt
 
 # Specify data sources
@@ -28,8 +29,8 @@ collections = {
         'start': '2018-11-22',
         'end': '2024-06-10',
         'variables': [
-            'CO_column_number_density',
-            'H2O_column_number_density',
+            'CO_column_number_density', # mol/m^2
+            'H2O_column_number_density', # mol/m^2
             'cloud_height',
         #   'sensor_altitude',
         #   'sensor_azimuth_angle',
@@ -958,19 +959,19 @@ def get_mean_value(ee_collection, point, start_date, end_date) -> dict:
         return dict()
 
 # plot data
-def plot_data(df, target, collection, variable, save=True):
+def plot_time_series(df, collection, variable, save: bool=True, target: str=None):
     fig = plt.figure(figsize=(10, 5))
     plt.plot(df['dte'], df['nrb'], label='Nairobi (NRB)')
     plt.plot(df['dte'], df['mkn'], label='Mount Kenya (MKN)')
     plt.xlabel('Date')
     plt.ylabel(variable)
-    plt.suptitle("Time series of satellite data for Nairobi and Mount Kenya")
+    plt.suptitle("Satellite data for Nairobi and Mount Kenya")
     plt.title(f"source: {collection}/{variable}", size=10)
     plt.legend()
     plt.grid(True)
     plt.show()
     if save:
-        fig.savefig(fname=os.path.join(target, f"{variable}.png"), bbox_inches='tight')#, dpi=300, format='png')
+        fig.savefig(fname=os.path.join(target, f"{variable}.png"), bbox_inches='tight')
 
 
 def process_collection(collection, variable):
@@ -1008,7 +1009,7 @@ def process_collection(collection, variable):
     print(df.describe())
 
     # plot data
-    plot_data(df, target, collection, variable)
+    plot_time_series(df, target, collection, variable)
 
 
 def regenerate_all_plots(collections, root: str='data/level3') -> tuple[list, list]:
@@ -1024,7 +1025,7 @@ def regenerate_all_plots(collections, root: str='data/level3') -> tuple[list, li
                     df = pl.read_parquet(df_file)
                     # display(df.describe())
                     target = os.path.join(root, collection.lower())
-                    plot_data(df, target=target, collection=collection, variable=variable)
+                    plot_time_series(df, target=target, collection=collection, variable=variable)
                 except Exception as err:
                     print(err)
                     df_read_error.append(df_file)
@@ -1032,5 +1033,5 @@ def regenerate_all_plots(collections, root: str='data/level3') -> tuple[list, li
             else:
                 collection_needs_processing.append(collection)
                 pass
-    print(f"collection not yet processed: {collection_needs_processing}\ndf could not be read: {df_read_error}")
-    return collection_needs_processing, df_read_error
+    print(f"collection not yet processed: {list(set(collection_needs_processing))}\ndf could not be read: {df_read_error}")
+    return list(set(collection_needs_processing)), df_read_error
