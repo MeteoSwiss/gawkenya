@@ -10,6 +10,8 @@ Modifications: date -> modified
 from scipy.stats import spearmanr
 import numpy as np
 import xarray as xr
+import matplotlib.colors as mc
+import colorsys 
 
 #for tick format:
 from matplotlib.ticker import FormatStrFormatter,AutoMinorLocator, \
@@ -93,3 +95,12 @@ def get_anomalies(ds_m,var,yr1='',yr2=''):
         ds_m[var + '_anom_per'].attrs['Description'] = 'Monthly anomalies in percent (divided by overall monthly mean of each month of the year)'
         ds_m[var + '_anom_stdz'].attrs['Description'] = 'Standardized monthly anomalies (divided by overall monthly standard deviation of each month of the year)'
         return ds_m
+
+# adjust the lightness of a color
+def adjust_lightness(color, amount=0.5):
+    try:
+        c = mc.cnames[color]
+    except:
+        c = color
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])

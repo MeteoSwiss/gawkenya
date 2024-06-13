@@ -60,6 +60,12 @@ def get_cams_eac4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
                 "total_column_methane",
                 "total_column_ozone",
                 "total_column_water_vapour",
+                'dust_aerosol_0.03-0.55um_mixing_ratio', 
+                'dust_aerosol_0.55-0.9um_mixing_ratio', 
+                'dust_aerosol_0.9-20um_mixing_ratio',
+                'hydrophilic_black_carbon_aerosol_mixing_ratio', 
+                'hydrophobic_black_carbon_aerosol_mixing_ratio', 
+                'sulphate_aerosol_mixing_ratio',
             ],
             "time": [
                 "00:00",
@@ -86,7 +92,60 @@ def get_cams_eac4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
                 y=year, m=month, d1="01", d2=days_mon
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
         },
+        #f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
         f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
+    )  # contains 2 files, one with plevels, one single-level file
+
+def get_cams_eac4_aerosols(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
+    """
+    Download CAMS reanalyses (EAC4) data. Same as above, but here we only download aerosol multilevel data.
+    Normally, this can be done together with the other data, with get_cams_eac4(). 
+    lat, lon    Station latitude and longitude
+    dxy         Model resolution. It selcts grids +-dxy around the station.
+    """
+    print("Get data for: {}-{}".format(year, month))
+
+    c = cdsapi.Client()
+
+    c.retrieve(
+        "cams-global-reanalysis-eac4",
+        {
+            "format": "netcdf",
+            "variable": [
+                'dust_aerosol_0.03-0.55um_mixing_ratio', 
+                'dust_aerosol_0.55-0.9um_mixing_ratio', 
+                'dust_aerosol_0.9-20um_mixing_ratio',
+                'hydrophilic_black_carbon_aerosol_mixing_ratio', 
+                'hydrophobic_black_carbon_aerosol_mixing_ratio', 
+                'sulphate_aerosol_mixing_ratio',
+            ],
+            "time": [
+                "00:00",
+                "03:00",
+                "06:00",
+                "09:00",
+                "12:00",
+                "15:00",
+                "18:00",
+                "21:00",
+            ],
+            "pressure_level": [
+                "600",
+                "700",
+                "800",
+                "850",
+                "900",
+                "925",
+                "950",
+                "1000",
+            ],
+            "area": "{}/{}/{}/{}".format(lat + dxy, lon - dxy, lat - dxy, lon + dxy),
+            "date": "{y}-{m}-{d1}/{y}-{m}-{d2}".format(
+                y=year, m=month, d1="01", d2=days_mon
+            ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
+        },
+        #f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
+        f"{dir_data}\EAC4_aerosols\cams_eac4_{year}_{month}_{stat}.zip",
     )  # contains 2 files, one with plevels, one single-level file
 
 
@@ -272,9 +331,9 @@ def is_leap_year(year):
 # %%
 def main(
     dir_data=r"..\..\Data\CAMS", #local path to save the data
-    yr1=2022,
-    yr2=2022,
-    which="cams_inv_ch4",
+    yr1=2020,
+    yr2=2023,
+    which="cams_eac4",
     station=["MKN"],
 ):
     """
@@ -302,6 +361,9 @@ def main(
 
                 if which == "cams_eac4":
                     get_cams_eac4(dir_data, year, month, str(days_mon), s, lat, lon)
+                
+                if which == "cams_eac4_aerosols":
+                    get_cams_eac4_aerosols(dir_data, year, month, str(days_mon), s, lat, lon)
 
                 if which == "cams_gfas": 
                     get_cams_gfas(dir_data, year, month, str(days_mon), s, lat, lon)

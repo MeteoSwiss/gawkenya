@@ -278,7 +278,7 @@ def read_cams_eac4(dir_data, dir_out="..\..\data\cams", station="MKN"):
 
 def read_cams_eac4_aerosols(dir_data, yr1=2020,yr2=2023, dir_out="data\cams", station="MKN"):
     """
-    Read in the cams EAC4 aerosol mxing ratio data.
+    Read in the cams EAC4 aerosol mxing ratio data (because that was downloaded seperately, not required if you download all EAC4 data at once).
 
     Read in the files and merge to a netcdf.
     Save the merged data as new netcdf.
