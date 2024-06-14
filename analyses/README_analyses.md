@@ -5,37 +5,27 @@ This folder contains scripts to analyse the processed Mt. Kenya measurement data
 The analyses is focussing on data since 2020. However, some additional data (e.g. flask data) is available for earlier years. 
 
 
-### Scripts
+# Files and folder structure of the analyses-folder
+### Folders
+`input/`: scripts to read the data (CAMS model data and measurement data from WDC and ) \
+`output/`: Save analyses figures (saved locally only, excluded from git) \
+`plotting/`: scripts for plotting:
+  * `plot_curve_fits.ipynb`: Use the NOAA curve-fitting approach (saved in `utils/ccg_filter`) to run curve fits and remove trends from the data. Make plots with the fitted lines.
+
+`utils`:  utilities required for the analyses 
+
+### Files
+Jupyter-notebooks for data-analysis and plotting: 
+* `analyses_stepbystep.ipynb`: step-by-step procedure to obtain measurement and CAMS data
+* `check_camsp.ipynb`: Notebook to check and analyse cams data
+* `check_data.ipynb`: General notebook to check measurement data
+* `check_fires.ipynb`: Notebook to check CAMS GFAS fire data, also compare it with e.g. CO measurement data. 
+
+
+# How to
 To obtain the CAMS data and read in the measurement data from the WDC (World data center), use the file `analyses_stepbystep.ipynb`
 
-# ...From Sarinas readme....
-## Data
-### Greehouse gases 
-* **Variables**: CO2, CH4, N2O
-  * data obtained from WDCGG: https://gaw.kishou.go.jp/
-* Flask (event) and continuous daily aggregated data
+To plot different datasets and do some analyses, use the `check_[...].ipynb` notebooks
 
-### Other gases
-* **Variables**: O3, CO
-  * O3, COdata obtained from EBAS: https://ebas-data.nilu.no/Default.aspx
-  * newest O3 data obtained from MCH (?)
-* Flask (event) and continuous daily aggregated data, hourly averages for O3 data
-  
-### Aerosol particles
-* **Variables**: Aerosol light backscattering coefficient & Aerosol light scattering coefficient (at 450nm, 525nm & 635nm), Equivalent black carbon at 880nm
-  * _Aerosol light backscattering coefficient & Aerosol light scattering coefficient (at 450nm, 525nm & 635nm) in 2015 from EBAS: https://ebas-data.nilu.no/Default.aspx_
-  * _All other data from MCH: M:\pay-data\data\pay\Kenya\MKN\incoming\ (\ae33 & \aerosol)_
-* hourly averages
 
-### Meteorology
-* **Variables**: Pressure, Relative Humidity, Temperature, Wind direction, Wind speed, Global radiation, Precipitation
-  * Older Pressure, Relative Humidity, Temperature, Wind direction & Wind speed data from EBAS: https://ebas-data.nilu.no/Default.aspx
-  * Newer data from MCH: through jretrieve from dwh (see Jörg's git: \gaw-kenya\jretrieve.ipynb) (**not working yet!?**)
-* hourly data
-* [Script to create Plot](SD_Meteorology.ipynb)
-
-## How To add new data to Plots
-1. Download data from Data centre and add to data/wdc/ebas or data/wdc/wdcgg
-2. If the species was not used so far, add it to the dictionary `AvailableData` (defined in `read_wdc_data.py`)
-3. Run the plotting scripts
 
