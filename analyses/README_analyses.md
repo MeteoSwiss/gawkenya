@@ -35,13 +35,14 @@ The analyses is focussing on data since 2020. However, some additional data (e.g
 Jupyter-notebooks for data-analysis and plotting: 
 * `analyses_stepbystep.ipynb`: step-by-step procedure to obtain measurement and CAMS data
 * `check_camsp.ipynb`: Notebook to check and analyse cams data
-* `check_data.ipynb`: General notebook to check measurement data
+* `check_data.ipynb`: General notebook to check measurement data, for example the seasonal cycles
 * `check_fires.ipynb`: Notebook to check CAMS GFAS fire data, also compare it with e.g. CO measurement data. 
 
 
 ## <a name='Howto'></a>How to
 To obtain the CAMS data and read in the measurement data from the WDC (World data center), use the file `analyses_stepbystep.ipynb`.  
-To plot different datasets and do some analyses, use the `check_[...].ipynb` notebooks
+To plot different datasets and do some analyses, use the `check_[...].ipynb` notebooks (e.g. `check_cams.ipynb`).  
+More advanced scripts for figures are found in `plotting/` (e.g. the notebook to create figures with curve fitting, `plotting/plot_curve_fits.ipynb`). 
 
 ## <a name='CAMSdata'></a>CAMS data
 The CAMS data is very large and is thus not saved in this git repository. 
