@@ -2,6 +2,7 @@
 # !pip install earthengine-api
 
 import os
+import time
 import ee
 import pandas as pd
 import polars as pl
@@ -11,7 +12,7 @@ import matplotlib.pyplot as plt
 collections = {
     'COPERNICUS/S5P/NRTI/L3_AER_AI': {
         'start': '2018-07-10',
-        'end': '2024-05-31', 
+        'end': '', 
         'variables': [
             'absorbing_aerosol_index', 
             ],
@@ -19,7 +20,7 @@ collections = {
     },
     'COPERNICUS/S5P/OFFL/L3_AER_AI': {
         'start': '2018-07-10',
-        'end': '2024-05-31', 
+        'end': '', 
         'variables': [
             'absorbing_aerosol_index', 
             ],
@@ -27,7 +28,7 @@ collections = {
     },
     'COPERNICUS/S5P/NRTI/L3_CO': {
         'start': '2018-11-22',
-        'end': '2024-06-10',
+        'end': '',
         'variables': [
             'CO_column_number_density', # mol/m^2
             'H2O_column_number_density', # mol/m^2
@@ -42,7 +43,8 @@ collections = {
     }, 
     'COPERNICUS/S5P/OFFL/L3_CO': {
         'start': '2018-07-10',
-        'end': '2024-05-31',
+        # 'start': '2024-06-1',
+        'end': '',
         'variables': [
             'CO_column_number_density',
             'H2O_column_number_density',
@@ -57,7 +59,7 @@ collections = {
     },
     'COPERNICUS/S5P/NRTI/L3_NO2': {
         'start': '2018-07-10',
-        'end': '2024-05-31',
+        'end': '',
         'variables': ['NO2_column_number_density',
                       'tropospheric_NO2_column_number_density',
                       'stratospheric_NO2_column_number_density',
@@ -75,7 +77,7 @@ collections = {
     }, 
     'COPERNICUS/S5P/OFFL/L3_NO2': {
         'start': '2018-07-10',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'NO2_column_number_density',
             'tropospheric_NO2_column_number_density',
@@ -94,7 +96,7 @@ collections = {
     }, 
     'COPERNICUS/S5P/NRTI/L3_O3': {
         'start': '2018-07-10',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'O3_column_number_density',
             'O3_effective_temperature',
@@ -108,7 +110,7 @@ collections = {
     }, 
     'COPERNICUS/S5P/OFFL/L3_O3': {
         'start': '2018-09-08',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'O3_column_number_density',
             'O3_effective_temperature',
@@ -122,7 +124,7 @@ collections = {
     }, 
     'COPERNICUS/S5P/OFFL/L3_O3_TCL': {
         'start': '2018-04-30',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'ozone_tropospheric_mixing_ratio',
             'ozone_tropospheric_mixing_ratio_precision',
@@ -133,7 +135,7 @@ collections = {
     }, 
     'COPERNICUS/S5P/OFFL/L3_CH4': {
         'start': '2019-02-08',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'CH4_column_volume_mixing_ratio_dry_air',
             'aerosol_height',
@@ -150,7 +152,7 @@ collections = {
     'MODIS/061/MCD19A2_GRANULES': {
         # 'start': '1999-01-01',
         'start': '2019-01-01',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'Optical_Depth_047', 
             'Optical_Depth_055', 
@@ -170,7 +172,7 @@ collections = {
     },
     'MODIS/061/MCD64A1': {
         'start': '1999-01-01',
-        'end': '2024-05-31',
+        'end': '',
         'variables': [
             'BurnDate', 
             'Uncertainty', 
@@ -203,7 +205,7 @@ collections = {
     },
     'JAXA/GCOM-C/L3/LAND/LST/V3': {
         'start': '2021-11-29',
-        'end': '2024-06-05',
+        'end': '',
         'variables': [
             'LST_AVE',  # Temperature of land surface (Kelvin).
             'LST_QA_flag',
@@ -212,7 +214,7 @@ collections = {
     },
     'JAXA/GPM_L3/GSMaP/v8/operational': {
         'start': '1998-01-01',
-        'end': '2024-06-05',
+        'end': '',
         'variables': [
             'hourlyPrecipRate',     # Snapshot of hourly precipitation rate
             'hourlyPrecipRateGC',   # Snapshot of hourly precipitation rate adjusted to rain gauge
@@ -230,7 +232,7 @@ collections = {
     # },
     'MODIS/061/MOD08_M3': {
         'start': '2000-02-01',
-        'end': '2024-04-01',
+        'end': '',
         'variables': [
             # 'Solar_Zenith_Mean_Mean',
             # 'Solar_Zenith_Std_Deviation_Mean',
@@ -866,13 +868,13 @@ collections = {
     },
     'MODIS/061/MOD14A1': {
         'start': '2000-02-24',
-        'end': '2024-05-31',
+        'end': '',
         'variables': ['FireMask', 'MaxFRP', 'sample', 'QA'],
         'description': 'https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD14A1',
     },
     'MODIS/061/MYD14A1': {
         'start': '2002-07-04',
-        'end': '2024-05-31',
+        'end': '',
         'variables': ['FireMask', 'MaxFRP', 'sample', 'QA'],
         'description': 'https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MYD14A1',
     },
@@ -892,7 +894,7 @@ collections = {
     },
     'TOMS/MERGED': {
         'start': '1978-11-01',
-        'end': '2024-05-31',
+        'end': '',
         'variables': ['ozone'], 
         'description': 'https://developers.google.com/earth-engine/datasets/catalog/TOMS_MERGED',
         'units': ['Dobson',]
@@ -974,13 +976,37 @@ def plot_time_series(df, collection, variable, save: bool=True, target: str=None
         fig.savefig(fname=os.path.join(target, f"{variable}.png"), bbox_inches='tight')
 
 
-def process_collection(collection, variable):
+def process_collection(collection, variable, append=True, verbosity: int=0):
+    """_summary_
+
+    Args:
+        collection (_type_): _description_
+        variable (_type_): _description_
+        append (bool, optional): Should new data be appended to existing data? If False, then existing data will be over-written. Defaults to True. 
+        verbosity (int, optional): _description_. Defaults to 0.
+    """
     print(f"Retrieving and extracting variable '{variable}' from collection '{collection}' ...")
     start = collections[collection]['start']
-    end = collections[collection]['end']
-    ee_collection = ee.ImageCollection(collection).select(variable).filterDate(start, end)
+    end = collections[collection].get('end', None)
+    if end is None or end=='':
+        end = time.strftime('%Y-%m-%d')
+
     target = os.path.join('data/level3/', collection.lower())
     os.makedirs(target, exist_ok=True)
+
+    if append:
+        file = os.path.join(target, f"{variable}.parquet")
+        if os.path.exists(file):
+            _df = pl.read_parquet(file)
+            if not _df.is_empty():
+                start = _df['dte'].max().strftime("%Y-%m-%d")
+
+    ee_collection = ee.ImageCollection(collection).select(variable).filterDate(start, end)
+    if verbosity >0:
+        print(f"- start: {start}")
+        print(f"- end: {end}")
+        print(f"- target: {target}")
+        print(f"- append: {append}")
 
     # get time series data for individual variable
     dates = pd.date_range(start, end, freq='D')
@@ -998,34 +1024,49 @@ def process_collection(collection, variable):
             print(f"MKN: {date}: {err}")
             pass
 
-    # Create a DataFrame and save data
-    df = pd.DataFrame({
-        'dte': dates,
-        'nrb': nrb_data,
-        'mkn': mkn_data
-    })
-    df.to_parquet(os.path.join(target, f"{variable}.parquet"))
-    print(f"Collection/variable: {collection}/{variable}")
-    print(df.describe())
+    # # Create a DataFrame and save data
+    # df = pd.DataFrame({
+    #     'dte': dates,
+    #     'nrb': nrb_data,
+    #     'mkn': mkn_data
+    # })
+    df = pl.DataFrame({'dte': dates, 
+                       'nrb': nrb_data,
+                       'mkn': mkn_data,
+                       })
+
+    if append:
+        file = os.path.join(target, f"{variable}.parquet")
+        if os.path.exists(file):
+            _df = pl.read_parquet(file)
+            if not _df.is_empty():
+                df = pl.concat([_df, df], how='diagonal')
+
+    df = df.unique()
+    df = df.sort('dte')
+    df.write_parquet(file)
+    
+    if verbosity > 0:
+        print(f"Collection/variable: {collection}/{variable}")
+        print(df.describe())
 
     # plot data
-    plot_time_series(df, target, collection, variable)
+    plot_time_series(df=df.to_pandas(), collection=collection, variable=variable, target=target)
 
 
-def regenerate_all_plots(collections, root: str='data/level3') -> tuple[list, list]:
+def regenerate_all_plots(collections, root: str='data/level3', verbosity: int=0) -> tuple[list, list]:
     df_read_error = list()
     collection_needs_processing = list()
-    # root = 'data/level3'
     for collection in collections.keys():
         for variable in collections[collection]['variables']:
             df_file = f"{os.path.join(root, collection.lower(), variable)}.parquet"
             if os.path.exists(df_file):
-                print(df_file)
+                if verbosity > 0:
+                    print(df_file)
                 try:
                     df = pl.read_parquet(df_file)
-                    # display(df.describe())
                     target = os.path.join(root, collection.lower())
-                    plot_time_series(df, target=target, collection=collection, variable=variable)
+                    plot_time_series(df, collection=collection, variable=variable, target=target)
                 except Exception as err:
                     print(err)
                     df_read_error.append(df_file)
@@ -1033,5 +1074,6 @@ def regenerate_all_plots(collections, root: str='data/level3') -> tuple[list, li
             else:
                 collection_needs_processing.append(collection)
                 pass
-    print(f"collection not yet processed: {list(set(collection_needs_processing))}\ndf could not be read: {df_read_error}")
+    if verbosity>0:
+        print(f"collection not yet processed: {list(set(collection_needs_processing))}\ndf could not be read: {df_read_error}")
     return list(set(collection_needs_processing)), df_read_error
