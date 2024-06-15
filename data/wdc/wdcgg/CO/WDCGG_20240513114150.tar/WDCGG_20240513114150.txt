@@ -1,0 +1,23 @@
+Filename Contact Email
+co_mkn_surface-flask_2_3001-9999_event.txt Gabrielle Petron Gabrielle.Petron@noaa.gov
+co_mkn_surface-flask_2_3001-9999_monthly.txt Gabrielle Petron Gabrielle.Petron@noaa.gov
+co_mkn_surface-insitu_40_9999-9999_hourly.txt David Murithi Njiru njimdv@gmail.com
+co_mkn_surface-insitu_40_9999-9999_hourly.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+co_mkn_surface-insitu_40_9999-9999_hourly.txt Christoph Zellweger christoph.zellweger@empa.ch
+co_mkn_surface-insitu_40_9999-9999_hourly.txt Mathew Mutuku mathewmutuku38@gmail.com
+co_mkn_surface-insitu_40_9999-9999_hourly.txt Martin Steinbacher martin.steinbacher@empa.ch
+co_mkn_surface-insitu_40_9999-9999_daily.txt David Murithi Njiru njimdv@gmail.com
+co_mkn_surface-insitu_40_9999-9999_daily.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+co_mkn_surface-insitu_40_9999-9999_daily.txt Christoph Zellweger christoph.zellweger@empa.ch
+co_mkn_surface-insitu_40_9999-9999_daily.txt Mathew Mutuku mathewmutuku38@gmail.com
+co_mkn_surface-insitu_40_9999-9999_daily.txt Martin Steinbacher martin.steinbacher@empa.ch
+co_mkn_surface-insitu_40_9999-9999_monthly.txt David Murithi Njiru njimdv@gmail.com
+co_mkn_surface-insitu_40_9999-9999_monthly.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+co_mkn_surface-insitu_40_9999-9999_monthly.txt Christoph Zellweger christoph.zellweger@empa.ch
+co_mkn_surface-insitu_40_9999-9999_monthly.txt Mathew Mutuku mathewmutuku38@gmail.com
+co_mkn_surface-insitu_40_9999-9999_monthly.txt Martin Steinbacher martin.steinbacher@empa.ch
+co_mkn_surface-insitu_40_9999-9999_hourly_met.txt David Murithi Njiru njimdv@gmail.com
+co_mkn_surface-insitu_40_9999-9999_hourly_met.txt Jörg Klausen joerg.klausen@meteoswiss.ch
+co_mkn_surface-insitu_40_9999-9999_hourly_met.txt Christoph Zellweger christoph.zellweger@empa.ch
+co_mkn_surface-insitu_40_9999-9999_hourly_met.txt Mathew Mutuku mathewmutuku38@gmail.com
+co_mkn_surface-insitu_40_9999-9999_hourly_met.txt Martin Steinbacher martin.steinbacher@empa.ch

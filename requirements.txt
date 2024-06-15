@@ -16,3 +16,4 @@ scipy
 dask
 scikit-learn
 flox
+git+https://github.com/mathause/mplotutils/archive/refs/tags/v0.5.0.zip

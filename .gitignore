@@ -133,6 +133,9 @@ venv.bak/
 .spyderproject
 .spyproject
 
+# vs code settings
+.vscode
+
 # Rope project settings
 .ropeproject
 
@@ -170,8 +173,10 @@ secrets-kplc
 LB_tests/
 
 #output files
-analyses_level2/output
+analyses/output/*
 
 # large data
 #cams data too large
-data/cams
+data/cams/**
+#except some selected smaller cams files
+!data/cams/cams_best_grid_merged_MKN.nc
