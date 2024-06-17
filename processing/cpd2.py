@@ -90,7 +90,7 @@ class CPD2:
                 # Iterate over each file in the tarball
                 for member in tar.getmembers():
                     if 'S11' in member.name or 'A11' in member.name:
-                        print(f"Processing {member.name} ...")
+                        print(f"  > Processing {member.name} ...")
 
                         # read the contents of the file
                         file_content = tar.extractfile(member).read()
@@ -150,7 +150,7 @@ class CPD2:
             print(err)         
 
 
-    def tarballs_to_parquet(self, source: str, target: str, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, plot: bool=True, verbose: bool=True) -> dict:
+    def tarballs_to_parquet(self, source: str, target: str, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True) -> dict:
         """Process CPD2 tarballs found in source and its sub-folders, compile data found in tarball members in polars DataFrames, save as parquet files in target. Optionally plot the data.
 
         Args:
@@ -163,8 +163,12 @@ class CPD2:
             plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
         Returns:
-            dict: name of files that could not be processed as well as errors encountered.
+            Nothing
         """
+        os.makedirs(target, exist_ok=True)        
+        if archive:
+            os.makedirs(archive, exist_ok=True)
+
         result = {'S11a': pl.DataFrame(), 
                 'S11c': pl.DataFrame(), 
                 'S11k': pl.DataFrame(), 
@@ -172,6 +176,7 @@ class CPD2:
                 'S11s': pl.DataFrame(), 
                 'A11a': pl.DataFrame()}
         errors = dict()
+
         try:
             # process files
             if verbose:
@@ -181,12 +186,11 @@ class CPD2:
                 relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
-                        print(f"Processing {file} ...")
+                        print(f"> Processing {file} ...")
                     src = os.path.join(root, file)
                     tmp, error = self.extract_tarball_to_dataframe(os.path.join(root, file))
                     if error:
                         errors.update(error)
-                        # del tmp['errors']
                         if issues:
                             os.makedirs(issues, exist_ok=True)
                             dst = os.path.join(issues, file)
@@ -199,30 +203,35 @@ class CPD2:
                     for k, v in tmp.items():
                         result[k] = pl.concat([result[k], v], how='diagonal')
 
-            # create target directory if it doesn't yet exist
-            os.makedirs(target, exist_ok=True)
+                # clean up if folder is empty
+                if not os.listdir(root):
+                    os.rmdir(root)                        
 
             # split result according to data type and store as separate parquet files
             for k, v in result.items():
-                if not result[k].is_empty:
-                    result[k] = result[k].sort(dtm)
-                    file = os.path.join(target, f"{k}.parquet")
-                    if os.path.exists(file):
-                        df = pl.read_parquet(source=file)
-                        result[k] = pl.concat([df, result[k]])
-                    result[k] = result[k].unique()
-                    result[k] = result[k].sort(dtm)
-                    result[k].write_parquet(file)
+                # if not result[k].is_empty():
+                result[k] = result[k].sort(dtm)
+                parquet = os.path.join(target, f"{k}.parquet")
 
-                    # plot data
-                    if plot:
-                        self.plot_dataframe(result, dtm=dtm, type=k)
+                if append_parquet:
+                    if os.path.exists(parquet):
+                        df = pl.read_parquet(parquet)
+                        result[k] = pl.concat([df, result[k]], how='diagonal')
+
+                # remove duplicates, sort data
+                result[k] = result[k].unique()
+                result[k] = result[k].sort(dtm)
+
+                # store result as parquet file
+                result[k].write_parquet(parquet)
 
             # write errors to json file
             if errors:
-                with open(os.path.join(target, "cpd.errors.json"), "a") as fh:
+                with open(os.path.join(target, "cpd2.errors.json"), "a") as fh:
                     json.dump(errors, fh)
                 return errors
+            
+            return None
 
         except Exception as err:
             logger.error(err)

@@ -7,6 +7,7 @@ mkn:
     incoming: incoming
     archive: archive
     issues: incoming_with_issues
+    logs: logs
   folders:
     - aerosol
     - ae33/data

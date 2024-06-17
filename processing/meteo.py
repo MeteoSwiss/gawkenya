@@ -106,7 +106,8 @@ class Meteo:
             Nothing
         """
         os.makedirs(target, exist_ok=True)
-        os.makedirs(archive, exist_ok=True)
+        if archive:
+            os.makedirs(archive, exist_ok=True)
 
         result = pl.DataFrame()
         errors = dict()
@@ -120,7 +121,7 @@ class Meteo:
                 relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
-                        print(f"Processing {file} ...")
+                        print(f"> Processing {file} ...")
                     src = os.path.join(root, file)
                     tmp, err = self.extract_vrxa00_to_dataframe(src, log=log)
                     if err:
@@ -136,6 +137,10 @@ class Meteo:
                         shutil.move(src=src, dst=os.path.join(dst, file))
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
+                
+                # clean up iffolder is empty
+                if not os.listdir(root):
+                    os.rmdir(root)
 
             if not result.is_empty():
                 # if append_parquet==True, check if parquet already exists and append
@@ -143,7 +148,7 @@ class Meteo:
                 if append_parquet:
                     if os.path.exists(parquet):
                         df = pl.read_parquet(parquet)
-                        result = pl.concat([result, df], how='diagonal')
+                        result = pl.concat([df, result], how='diagonal')
                     
                 # remove duplicates, sort data
                 result = result.unique()
@@ -157,7 +162,6 @@ class Meteo:
                 with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
                     json.dump(errors, fh)
 
-            # return result, errors
             return None
 
         except Exception as err:
