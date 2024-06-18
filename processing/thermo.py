@@ -48,22 +48,23 @@ class Thermo:
             str: Errors encountered
             str: File (=instrument) type
         """
-        file_type = "tei49c" if bool(re.search("tei49c", file)) else "tei49i" if bool(re.search("tei49i", file)) else "unknown"
+        if not os.path.exists(file):
+            raise ValueError('File not found.')
+        
+        file_type = 'tei49c' if 'tei49c' in file else 'tei49i' if 'tei49i' in file else 'unknown'
 
-        if bool(re.search(file_type, file)):
+        if file_type in file:
             if log:
                 self.logger.info(f"Extracting file {file}.")
 
             try:
-                if bool(re.search('.zip', file)):
+                if '.zip' in file:
                     with zipfile.ZipFile(file, 'r') as zf:
                         with zf.open(zf.namelist()[0]) as fh:
                             content = fh.read().decode('utf-8')
-                    # df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
                 else:
                     with open(file, 'r') as fh:
                         content = fh.read()
-                    # df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
 
                 # Split the content into lines
                 lines = content.splitlines()

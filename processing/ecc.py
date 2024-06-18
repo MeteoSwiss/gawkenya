@@ -8,22 +8,22 @@ import pandas as pd
 import polars as pl
 import matplotlib.colors as mcolors
 from matplotlib.cm import get_cmap
-from ipywidgets import interact, widgets
-from IPython.display import display
+# from ipywidgets import interact, widgets
+# from IPython.display import display
 
 class ECCSONDE:
     def __init__(self):
         pass
 
-    def extract_ecc_asap(self, file: str) -> 'dict[str:str, str:str, str:pl.DataFrame]':
+    def extract_ecc_asap(self, file: str) -> 'dict[str:str, str:str, str:str, str:pl.DataFrame]':
         """
         Reads an ozone sonde measurement text file and extracts its content into a dictionary.
 
         The dictionary contains:
-        - 'file': the path of the file.
+        - 'date': the date of the test.
+        - 'file': the (relative) path of the file.
         - 'metadata': a dictionary of metadata extracted from the file.
         - 'data': a Polars DataFrame containing the measurement data.
-        - 'footer': a list of footer lines from the file.
 
         Parameters:
         file (str): The path to the ozone sonde measurement text file.
@@ -72,7 +72,6 @@ class ECCSONDE:
                 "metadata": metadata,
                 "data": df,
             }
-
             return result
         except Exception as err:
             print(f"Error extracting file '{file}: {err}.")
@@ -166,52 +165,6 @@ class ECCSONDE:
                         except Exception as err:
                             print(f"Error concatenating data from file {filename}: {err}")
                             pass
-        # metadata_list = []
-        # data_list = []
-
-        # # Regular expression to match files with the format YYYYMMDD*.TXT
-        # pattern = re.compile(r'^\d{8}.*\.TXT$', re.IGNORECASE)
-
-        # # Iterate over all files in the specified folder
-        # for filename in os.listdir(folder_path):
-        #     if pattern.match(filename):
-        #         file_path = os.path.join(folder_path, filename)
-                
-        #         if os.path.isfile(file_path):
-        #             # Extract data and metadata from the file
-        #             result = self.extract_ecc_asap(file_path)
-                    
-        #             if result['metadata'] and not result['data'].is_empty():
-        #                 # Add a 'file' column to identify the source file
-        #                 metadata = result['metadata']
-        #                 metadata['file'] = filename
-        #                 metadata_list.append(metadata)
-
-        #                 # Add 'file' and 'dte' columns to the data
-        #                 try:
-        #                     data = result['data'].with_columns(
-        #                         pl.lit(filename).alias('file'),
-        #                         pl.lit(time.strftime("%Y-%m-%d", 
-        #                             time.strptime(os.path.basename(filename)[:8], "%Y%m%d"))).alias('dte')
-        #                     )
-        #                     data_list.append(data)
-        #                 except Exception as err:
-        #                     print(f"Error processing data from file {filename}: {err}")
-        
-        # # Compile metadata into a Polars DataFrame
-        # try:
-        #     metadata_df = pl.DataFrame(metadata_list)
-        # except Exception as err:
-        #     print(f"Error creating metadata DataFrame: {err}")
-        #     metadata_df = pl.DataFrame()
-
-        # # Compile data into a single Polars DataFrame
-        # try:
-        #     data_df = pl.concat(data_list)
-        # except Exception as err:
-        #     print(f"Error creating data DataFrame: {err}")
-        #     data_df = pl.DataFrame()
-
         return {'metadata': metadata_df, 'data': data_df}
     
 
