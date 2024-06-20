@@ -8,8 +8,10 @@ import pandas as pd
 import polars as pl
 import matplotlib.colors as mcolors
 from matplotlib.cm import get_cmap
-# from ipywidgets import interact, widgets
+from ipywidgets import interact, widgets
 # from IPython.display import display
+
+# [TODO] always compare the ...T... (7 days prior to launch) file with the ...S... file (day of launch).
 
 class ECCSONDE:
     def __init__(self):

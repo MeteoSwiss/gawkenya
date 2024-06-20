@@ -4,12 +4,23 @@
 import os
 import time
 import ee
+import json
 import pandas as pd
 import polars as pl
 import matplotlib.pyplot as plt
+import requests
+from io import StringIO
+import re
+
 
 # Specify data sources
-collections = {
+avdc_collections = {
+    'Aura/OMI/V03/L2OVP/OMTO3': {
+        'url': 'https://avdc.gsfc.nasa.gov/pub/data/satellite/Aura/OMI/V03/L2OVP/OMTO3/',
+        'products': ['aura_omi_l2ovp_omto3_v8.5_nairobi_175.txt'],
+    }
+}
+gee_collections = {
     'COPERNICUS/S5P/NRTI/L3_AER_AI': {
         'start': '2018-07-10',
         'end': '', 
@@ -986,8 +997,8 @@ def process_collection(collection, variable, append=True, verbosity: int=0):
         verbosity (int, optional): _description_. Defaults to 0.
     """
     print(f"Retrieving and extracting variable '{variable}' from collection '{collection}' ...")
-    start = collections[collection]['start']
-    end = collections[collection].get('end', None)
+    start = gee_collections[collection]['start']
+    end = gee_collections[collection].get('end', None)
     if end is None or end=='':
         end = time.strftime('%Y-%m-%d')
 
@@ -1054,11 +1065,11 @@ def process_collection(collection, variable, append=True, verbosity: int=0):
     plot_time_series(df=df.to_pandas(), collection=collection, variable=variable, target=target)
 
 
-def regenerate_all_plots(collections, root: str='data/level3', verbosity: int=0) -> tuple[list, list]:
+def regenerate_all_plots(gee_collections, root: str='data/level3', verbosity: int=0) -> tuple[list, list]:
     df_read_error = list()
     collection_needs_processing = list()
-    for collection in collections.keys():
-        for variable in collections[collection]['variables']:
+    for collection in gee_collections.keys():
+        for variable in gee_collections[collection]['variables']:
             df_file = f"{os.path.join(root, collection.lower(), variable)}.parquet"
             if os.path.exists(df_file):
                 if verbosity > 0:
@@ -1077,3 +1088,78 @@ def regenerate_all_plots(collections, root: str='data/level3', verbosity: int=0)
     if verbosity>0:
         print(f"collection not yet processed: {list(set(collection_needs_processing))}\ndf could not be read: {df_read_error}")
     return list(set(collection_needs_processing)), df_read_error
+
+
+def download_avdc_omi_station_data(product: str, url: str='https://avdc.gsfc.nasa.gov/pub/data/satellite/Aura/', 
+                                   collection: str='OMI/V03/L2OVP/OMTO3', target: str='data/level3/aura') -> dict[pl.DataFrame, dict]:
+    url = f"{url}/{collection}/{product}"
+    basename = product.lower().split('.txt')[0]
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad status
+
+        text_content = response.text
+
+        # Separate metadata and data
+        lines = text_content.splitlines()
+        metadata = {}
+        data_start_idx = 0
+
+        # Process lines to extract metadata and find the start of data
+        for i, line in enumerate(lines):
+            if ':' in line:
+                key, value = line.split(':', 1)
+                if 'OVPID' in key:
+                    metadata['station'] = key.split('OVPID')[0].strip()
+                    rest_of_line = re.sub(r'\s+', ' ', value.strip()).split(' ')
+                    metadata['OVPID'] = rest_of_line[0]
+                    metadata[rest_of_line[1]] = rest_of_line[2]
+                    metadata[rest_of_line[4]] = rest_of_line[5]
+                    metadata[rest_of_line[7]] = rest_of_line[8]
+                    
+                else:
+                    metadata[key.strip()] = value.strip()
+
+            if 'Read format (FORTRAN/IDL)' in line:
+                data_start_idx = i + 3
+                break
+
+        # The header row is the 2nd row after the metadata
+        # Since it is in such a poor format, we provide it directly
+        columns = ['Datetime','MJD2000','Year','DOY','sec. (UT)','Orbit','CTP','Lat.','Lon.','Dist.','SZA','Ozone','O3blwCld','Surf. P.','Cld. P.','Cld. F.','Ref.','AI','SOI']
+
+
+        # Preprocess the data to replace multiple spaces with a single comma
+        data_lines = [re.sub(r'\s+', ',', line.strip()) for line in lines[data_start_idx:]]
+        data = "\n".join(data_lines)
+
+        # Read the data into a Polars DataFrame
+        df = pl.read_csv(
+            StringIO(data),
+            separator=',',
+            null_values='-90000',
+            has_header = False,
+        )
+        df.columns = columns
+        
+        # Convert 'Datetime' column to datetime
+        # Pretend the last 3 digits in the datetime stamp are microseconds, then ignore them 
+        df = df.with_columns(
+            pl.col('Datetime').str.replace('Z', '000000Z'),
+        )
+        df = df.with_columns(
+            pl.col('Datetime').str.strptime(pl.Datetime, format='%Y%m%dT%H%M%S%fZ').alias('dtm')
+        )
+        df = df.with_columns(pl.col('dtm').dt.date().alias('dte'))
+        df = df.drop('Datetime')
+
+        if target:
+            os.makedirs(target, exist_ok=True)
+            df.write_parquet(os.path.join(target, f"{basename}.parquet"))
+            with open(os.path.join(target, f"{basename}.json"), "w") as fh:
+                json.dump(metadata, fh)
+        
+        return  df, metadata
+    except Exception as err:
+        print(err)
