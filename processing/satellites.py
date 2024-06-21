@@ -987,7 +987,7 @@ def plot_time_series(df, collection, variable, save: bool=True, target: str=None
         fig.savefig(fname=os.path.join(target, f"{variable}.png"), bbox_inches='tight')
 
 
-def process_collection(collection, variable, append=True, verbosity: int=0):
+def process_gee_collection(collection, variable, append=True, verbosity: int=0):
     """_summary_
 
     Args:
@@ -1127,7 +1127,8 @@ def download_avdc_omi_station_data(product: str, url: str='https://avdc.gsfc.nas
 
         # The header row is the 2nd row after the metadata
         # Since it is in such a poor format, we provide it directly
-        columns = ['Datetime','MJD2000','Year','DOY','sec. (UT)','Orbit','CTP','Lat.','Lon.','Dist.','SZA','Ozone','O3blwCld','Surf. P.','Cld. P.','Cld. F.','Ref.','AI','SOI']
+        columns = ['Datetime','MJD2000','Year','DOY','sec. (UT)','Orbit','CTP','Lat.','Lon.','Dist.',
+                   'SZA','Ozone','O3blwCld','Surf. P.','Cld. P.','Cld. F.','Ref.','AI','SOI']
 
 
         # Preprocess the data to replace multiple spaces with a single comma
