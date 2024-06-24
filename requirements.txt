@@ -16,3 +16,4 @@ scipy
 dask
 scikit-learn
 flox
+cdsapi
