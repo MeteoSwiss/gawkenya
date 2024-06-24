@@ -48,22 +48,23 @@ class Thermo:
             str: Errors encountered
             str: File (=instrument) type
         """
-        file_type = "tei49c" if bool(re.search("tei49c", file)) else "tei49i" if bool(re.search("tei49i", file)) else "unknown"
+        if not os.path.exists(file):
+            raise ValueError('File not found.')
+        
+        file_type = 'tei49c' if 'tei49c' in file else 'tei49i' if 'tei49i' in file else 'unknown'
 
-        if bool(re.search(file_type, file)):
+        if file_type in file:
             if log:
                 self.logger.info(f"Extracting file {file}.")
 
             try:
-                if bool(re.search('.zip', file)):
+                if '.zip' in file:
                     with zipfile.ZipFile(file, 'r') as zf:
                         with zf.open(zf.namelist()[0]) as fh:
                             content = fh.read().decode('utf-8')
-                    # df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
                 else:
                     with open(file, 'r') as fh:
                         content = fh.read()
-                    # df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
 
                 # Split the content into lines
                 lines = content.splitlines()
@@ -95,13 +96,12 @@ class Thermo:
                 return pl.DataFrame(), str(err), None
 
 
-    def compile_thermo_to_parquet(self, source: str, target: str, base: str=None, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
+    def compile_thermo_to_parquet(self, source: str, target: str, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
         """Extract and compile Thermo bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
 
         Args:
             source (str): Root path to directory to process. <base> will be appended to path. Sub-directories will also be considered.
             target (str): Root path to directory where .parquet files will be stored.  <base> will be appended to path.
-            base (str): Relative path that will be appended to <source> before this path will be processed using os.walk().
             dtm (str): Name of dateTime column.
             archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
             issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
@@ -110,11 +110,11 @@ class Thermo:
         Returns:
             Nothing
         """
-        source = os.path.join(source, base)
-        target = os.path.join(target, base)
+        # source = os.path.join(source, base)
+        # target = os.path.join(target, base)
         os.makedirs(target, exist_ok=True)
         if archive:
-            archive = os.path.join(archive, base)
+            archive = os.path.join(archive)
 
         result = pl.DataFrame()
         errors = dict()
@@ -128,7 +128,7 @@ class Thermo:
                 relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
-                        print(f"Processing {file} ...")
+                        print(f"> Processing {file} ...")
                     src = os.path.join(root, file)
                     tmp, err, file_type = self.extract_thermo_to_dataframe(src, log=log)
                     if err:
@@ -145,13 +145,17 @@ class Thermo:
                         # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
+                # clean up iffolder is empty
+                if not os.listdir(root):
+                    os.rmdir(root)
+
             if not result.is_empty():
                 parquet = os.path.join(target, f"{file_type}.parquet")
                 if append_parquet:                    
                     # avoid over-writing an existing parquet file
                     if os.path.exists(parquet):
                         df = pl.read_parquet(source=parquet)
-                        result = pl.concat([result, df], how='diagonal')
+                        result = pl.concat([df, result], how='diagonal')
                 
                 # remove duplicates, sort data
                 result = result.unique()

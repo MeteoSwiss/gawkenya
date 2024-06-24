@@ -125,7 +125,7 @@ class AE33:
                 relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
-                        print(f"Processing {file} ...")
+                        print(f"> Processing {file} ...")
                     src = os.path.join(root, file)
                     tmp, err = self.extract_zipfile_to_dataframe(os.path.join(root, file))
                     if err:
@@ -134,30 +134,33 @@ class AE33:
                             os.makedirs(issues, exist_ok=True)
                             dst = os.path.join(issues, file)
                             shutil.move(src=src, dst=dst)
-                            print(f"issue: {src} > {dst}")
+                            # print(f"issue: {src} > {dst}")
                     elif archive:
                         dst = os.path.join(archive, relative_path)
                         os.makedirs(dst, exist_ok=True)
                         shutil.move(src=src, dst=os.path.join(dst, file))
                     result = pl.concat([result, tmp], how='diagonal')
 
-            if not result.is_empty:
+                # clean up if folder is empty
+                if not os.listdir(root):
+                    os.rmdir(root)                                
+
+            if not result.is_empty():
                 # create target directory if it doesn't yet exist
                 os.makedirs(target, exist_ok=True)
+                parquet = os.path.join(target, "ae33.parquet")
 
-                # if append_parquet==True, check if parquet already exists and append
                 if append_parquet:
-                    file = os.path.join(target, "ae33.parquet")
-                    if os.path.exists(file):
-                        df = pl.read_parquet(source=file)
+                    if os.path.exists(parquet):
+                        df = pl.read_parquet(parquet)
                         result = pl.concat([df, result], how='diagonal')
 
-                    # remove duplicates, sort data
-                    result = result.unique()
-                    result = result.sort(dtm)
-        
-                    # store result as parquet file
-                    result.write_parquet(file)
+                # remove duplicates, sort data
+                result = result.unique()
+                result = result.sort(dtm)
+    
+                # store result as parquet file
+                result.write_parquet(parquet)
 
                 # plot data
                 if plot:

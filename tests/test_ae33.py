@@ -3,7 +3,11 @@ import polars as pl
 import unittest
 from processing.ae33 import AE33
 
-class AE33_TestCases(unittest.TestCase):
+class TestAE33(unittest.TestCase):
+    def setUp(self):
+        self.source = "tests/data/ae33"
+        self.target = "tests/data"
+
     def test_extract_zipfile_to_dataframe(self): 
         ae33 = AE33()
         path="tests/data/ae33/ae33-202310190000.zip"
@@ -15,13 +19,18 @@ class AE33_TestCases(unittest.TestCase):
 
     def test_zipfiles_to_parquet(self):
         ae33 = AE33()
-        source = "tests/data/ae33"
-        target = "tests/data/_level1"
-        df, errors = ae33.zipfiles_to_parquet(source=source, target=target, plot=False)
+        target = os.path.join(self.target, 'ae33.parquet')
+        if os.path.exists(target):
+            os.remove(target)
+
+        df, errors = ae33.zipfiles_to_parquet(source=self.source, target=self.target, plot=False)
 
         self.assertEqual(df.shape, (307, 74))
         self.assertEqual(errors, {})
 
+        # clean up
+        if os.path.exists(target):
+            os.remove(target)
 
 if __name__ == '__main__':
     unittest.main()

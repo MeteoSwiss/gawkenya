@@ -69,12 +69,12 @@ class Meteo:
             pl.DataFrame: DataFrame with DateTime and source columns added to data
             str: Errors encountered
         """
-        if bool(re.search(f'VRXA00', file)):
+        if 'VRXA00' in file:
             if log:
                 self.logger.info(f"Extracting file {file}.")
 
             try:
-                if bool(re.search('.zip', file)):
+                if '.zip' in file:
                     zf = zipfile.ZipFile(file)
                     df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=3, null_values='/', dtypes=self.dtypes['VRXA00'])
                 else:
@@ -91,7 +91,8 @@ class Meteo:
                 return pl.DataFrame(), str(err)
 
 
-    def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True, log: bool=True) -> None:
+    def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, 
+                                  append_parquet: bool=True, verbose: bool=True, log: bool=True) -> tuple([pl.DataFrame, str]):
         """Extract and compile VRXA00 bulletins found in source and its sub-folders to a single polars DataFrame, save as parquet file in target.
 
         Args:
@@ -103,10 +104,11 @@ class Meteo:
             verbose (bool, optional): Should information on process be written to console? Defaults to True.
             log (bool, optional): Should activities be logged? Defaults to True.
         Returns:
-            Nothing
+            tuple[pl.DataFrame, str]: polars DataFrame of compiled bulletins, and errors if any
         """
         os.makedirs(target, exist_ok=True)
-        os.makedirs(archive, exist_ok=True)
+        if archive:
+            os.makedirs(archive, exist_ok=True)
 
         result = pl.DataFrame()
         errors = dict()
@@ -120,7 +122,7 @@ class Meteo:
                 relative_path = root[n:] if n < 0 else ""
                 for file in files:
                     if verbose:
-                        print(f"Processing {file} ...")
+                        print(f"> Processing {file} ...")
                     src = os.path.join(root, file)
                     tmp, err = self.extract_vrxa00_to_dataframe(src, log=log)
                     if err:
@@ -134,8 +136,11 @@ class Meteo:
                         dst = os.path.join(archive, relative_path)
                         os.makedirs(dst, exist_ok=True)
                         shutil.move(src=src, dst=os.path.join(dst, file))
-                        # print(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
+                
+                # clean up if folder is empty
+                if not os.listdir(root):
+                    os.rmdir(root)
 
             if not result.is_empty():
                 # if append_parquet==True, check if parquet already exists and append
@@ -143,7 +148,7 @@ class Meteo:
                 if append_parquet:
                     if os.path.exists(parquet):
                         df = pl.read_parquet(parquet)
-                        result = pl.concat([result, df], how='diagonal')
+                        result = pl.concat([df, result], how='diagonal')
                     
                 # remove duplicates, sort data
                 result = result.unique()
@@ -157,8 +162,7 @@ class Meteo:
                 with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
                     json.dump(errors, fh)
 
-            # return result, errors
-            return None
+            return result, errors
 
         except Exception as err:
             self.logger.error(err)
