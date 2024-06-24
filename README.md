@@ -38,6 +38,12 @@ If that does not work, try:
   - `level1`
     - monthly folders for monthly .parquet files (g2401)
     - yearly .parquet data (ae33, aerosol: A11a, S11a, S11c, S11k, S11m, S11s)
+  - `level2`
+  - `level3`: various gridded model and satellite data
+    - `cams`: all selected cams data at the Mt. Kenya grid (`cams_best_Grid_merged_MKN.nc`)
+  - `noaa`
+  - `ups`
+  - `wdc`: Mount Kenya measurement downloaded from the World Data centers (ebas and WDCGG)
 - `ez_flag_data`
   - TODO: explainations
 - `housekeeping`
