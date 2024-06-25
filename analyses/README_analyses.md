@@ -49,7 +49,7 @@ The CAMS data is very large and is thus not saved in this git repository.
 You can download all the CAMS data as done step-by-step in `analyses_stepbystep.ipynb`. However, it requires to have a login at the [Atmosphere data store](https://ads.atmosphere.copernicus.eu/cdsapp#!/home) and an installation of [cdsapi](https://cds.climate.copernicus.eu/api-how-to). Also, the download may take several hours to days.  
 
 
-Instead of downloading all the CAMS data, you can also just use the CAMS data that was already selected for the Mt. Kenya station, and that is saved in that repository at `data/cams/cams_best_grid_merged_MKN.nc`
+Instead of downloading all the CAMS data, you can also just use the CAMS data that was already selected for the Mt. Kenya station, and that is saved in that repository at `data/level3/cams/cams_best_grid_merged_MKN.nc`
 Some of the analyses will not work when only this selected CAMS-data is loaded (some cells in `check_cams.ipynb` or `check_fires.ipynb` will not work), but most figures and analyses work with this selection of CAMS data. 
 
 > Remark: CAMS data selected for the Mt. Kenya station is saved in `cams_best_grid_merged_MKN.nc`. Why `_merged`? In the CAMS-INVGG data, the horizontal resolution changed in 2023. The original file `cams_best_grid_MKN.nc` (not saved in the git repository) contained both datasets (before and after the change) seperately (e.g. as co2_invgg and co2_invgg2). After selecting the best grid, they were merged into one single dataset (e.g. `CO2_invgg`) in the mentioned file `cams_best_grid_merged_MKN.nc`.  
