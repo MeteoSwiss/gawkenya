@@ -50,14 +50,14 @@ def rem_out(ds, vars=["value"], std_fac=10, z_threshold=4):
         ds_withtime = ds_withtime.where(ds_withtime.zscore < z_threshold)
         ds_withtime = ds_withtime.drop("zscore")
 
-        ## to check outliers:
-        # f, axs = plt.subplots(2, 1, sharex=True)
-        # plt.suptitle("Removed outliers")
-        # ds_init[var].plot(ls="", marker="o", ax=axs[0])
-        # ds_init[var + "_unc"].plot(ls="", marker="o", ax=axs[1])
-        # # new data:
-        # ds_withtime[var].plot(ls="", marker=".", ax=axs[0])
-        # ds_withtime[var + "_unc"].plot(ls="", marker=".", ax=axs[1])
+        # ## to check outliers:
+        f, axs = plt.subplots(2, 1, sharex=True)
+        plt.suptitle("Removed outliers")
+        ds_init[var].plot(ls="", marker="o", ax=axs[0])
+        ds_init[var + "_unc"].plot(ls="", marker="o", ax=axs[1])
+        # new data:
+        ds_withtime[var].plot(ls="", marker=".", ax=axs[0])
+        ds_withtime[var + "_unc"].plot(ls="", marker=".", ax=axs[1])
         # ## If values with high stdev are present, plot them:
         # if len(ds.where(ds.o3_stdev>stdmean*std_fac,drop=True).time) > 0:
         #     ds.where(ds.o3_stdev>stdmean*std_fac,drop=True).o3.plot(ls='',marker='x',ax=axs[0])
