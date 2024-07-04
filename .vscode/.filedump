@@ -1,0 +1,6 @@
+
+		begin
+      f = addfile("/home/zue/users/jkl/Public/git/gawkenya/data/level3/copernicus/cams/eac4/cams-global-reanalysis-eac4-monthly_2015.nc","r")
+      print(f)
+		end
+    

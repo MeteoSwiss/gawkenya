@@ -13,10 +13,13 @@ from ipywidgets import interact, widgets
 from IPython.display import display
 import zipfile
 from datetime import datetime
+from toolbox.numerical_analysis_1d import interpolate_logarithmic
 
-class ECCSONDE:
+
+class ECC:
     def __init__(self):
         pass
+
 
     def extract_ecc_asap(self, file: str) -> 'dict[str:str, str:str, str:pl.DataFrame]':
         """
@@ -169,51 +172,6 @@ class ECCSONDE:
                         except Exception as err:
                             print(f"Error concatenating data from file {filename}: {err}")
                             pass
-        # metadata_list = []
-        # data_list = []
-
-        # # Regular expression to match files with the format YYYYMMDD*.TXT
-        # pattern = re.compile(r'^\d{8}.*\.TXT$', re.IGNORECASE)
-
-        # # Iterate over all files in the specified folder
-        # for filename in os.listdir(folder_path):
-        #     if pattern.match(filename):
-        #         file_path = os.path.join(folder_path, filename)
-                
-        #         if os.path.isfile(file_path):
-        #             # Extract data and metadata from the file
-        #             result = self.extract_ecc_asap(file_path)
-                    
-        #             if result['metadata'] and not result['data'].is_empty():
-        #                 # Add a 'file' column to identify the source file
-        #                 metadata = result['metadata']
-        #                 metadata['file'] = filename
-        #                 metadata_list.append(metadata)
-
-        #                 # Add 'file' and 'dte' columns to the data
-        #                 try:
-        #                     data = result['data'].with_columns(
-        #                         pl.lit(filename).alias('file'),
-        #                         pl.lit(time.strftime("%Y-%m-%d", 
-        #                             time.strptime(os.path.basename(filename)[:8], "%Y%m%d"))).alias('dte')
-        #                     )
-        #                     data_list.append(data)
-        #                 except Exception as err:
-        #                     print(f"Error processing data from file {filename}: {err}")
-        
-        # # Compile metadata into a Polars DataFrame
-        # try:
-        #     metadata_df = pl.DataFrame(metadata_list)
-        # except Exception as err:
-        #     print(f"Error creating metadata DataFrame: {err}")
-        #     metadata_df = pl.DataFrame()
-
-        # # Compile data into a single Polars DataFrame
-        # try:
-        #     data_df = pl.concat(data_list)
-        # except Exception as err:
-        #     print(f"Error creating data DataFrame: {err}")
-        #     data_df = pl.DataFrame()
 
         return {'metadata': metadata_df, 'data': data_df}
     
@@ -301,174 +259,204 @@ class ECCSONDE:
             print(f"An error occurred during plotting: {e}")
 
 
-def download_and_extract_shadoz_zip(year: int, url: str='https://acd-ext.gsfc.nasa.gov/anonftp/acd/shadoz/V06', 
-                                    station: str='nairobi', target: str='data/level1/shadoz') -> tuple[pl.DataFrame, pl.DataFrame]:
-    """
-    Downloads a .zip file containing SHADOZ data for a specific station and year, extracts the .dat files,
-    and combines them into a single polars DataFrame. The resulting DataFrame is saved as a parquet file.
-    
-    Parameters:
-    url (str): The base URL where the .zip files are hosted.
-    station (str): The station name (e.g., 'nairobi').
-    year (int): The year of the data to download (e.g., 1998).
-    target (str): The directory to save the resulting parquet file.
-    
-    Returns:
-    tuple: A tuple containing polars DataFrames of the data and the metadata for the entire year.
-    """
-    
-    # Function to parse each .dat file
-    def parse_dat_file(file_content, filename):
-        lines = file_content.decode('utf-8').splitlines()
-        metadata = {}
+    def total_column_ozone_from_pressure_profile(self, df: pl.DataFrame, pressure_col: str, ozone_col: str, other_cols: 'list[str]'=[]) -> pl.DataFrame:
+        """
+        Calculate total column ozone from ozone partial pressure data in a Polars DataFrame.
         
-        # Number of metadata lines
-        num_metadata_lines = int(lines[0].strip())
-        
-        # Extract metadata
-        comment_id = 1
-        for i in range(1, num_metadata_lines):
-            line = lines[i].strip()
-            if 'Comment :' in line:
-                key, value = line.split(':', 1)
-                if value.strip():
-                    metadata[f"{key.strip()}_{comment_id}"] = value.strip()
-                comment_id += 1
-            elif ':' in line:
-                key, value = line.split(':', 1)
-                metadata[key.strip()] = value.strip()
+        Parameters:
+            df (pl.DataFrame): Polars DataFrame containing the data.
+            pressure_col (str): Column name for pressure levels in hectopascals (hPa).
+            ozone_col (str): Column name for ozone partial pressures in millipascals (mPa).
 
-        metadata['filename'] = filename            
-        variables = lines[num_metadata_lines - 2].strip().split()
-        metadata['variables'] = variables
-        metadata['units'] = lines[num_metadata_lines - 1].strip().split()
+        Returns:
+            pl.DataFrame: Polars DataFrame with cumulative ozone column 'O3_DU_calc' in Dobson Units (DU). Additionally, columns pressure_col, ozone_col and other_col are returned.
+        """
+        # Constants
+        N_A = 6.02214076E+23  # Avogadro's number, 1/mol
+        M = 0.0289652  # Molar mass of dry air in kg/mol
+        g = 9.80665  # Acceleration due to gravity in m/s^2
+        DU = 2.69e20  # Conversion factor for Dobson Units, molecules/m^2
 
-        # Extract data
-        data = [line.split() for line in lines[num_metadata_lines:]]
+        f_DU = N_A / M / g / DU  # Conversion factor for Dobson Units, Pa/molecule
 
-        # Convert to polars DataFrame
-        df = pl.DataFrame(data, schema=dict(zip(variables, [pl.Float32]*len(variables))))
+        # Sort the dataframe by pressure in descending order
+        df_sorted = df.sort(by=pressure_col, descending=True)
 
-        # Encode missing or invalid as Null
-        invalid = int(metadata['Missing or bad values'])
-        df = df.select([
-            pl.when(pl.col(column) == invalid).then(None).otherwise(pl.col(column)).alias(column)
-            for column in df.columns
+        # Extract relevant columns, eliminate Null values
+        df_sorted = df_sorted.select([pressure_col, ozone_col] + other_cols)#.drop_nulls()
+
+        # Interpolate missing values
+        df_sorted = df_sorted.with_columns(
+            df_sorted[ozone_col].interpolate(method='linear')
+        )
+
+        # Convert columns to numpy arrays for processing
+        p_atm = df_sorted[pressure_col].to_numpy() * 100  # convert hPa to Pa
+        p_o3 = df_sorted[ozone_col].to_numpy() * 1e-3  # convert mPa to Pa
+
+        # Calculate the cumulative integrated number density of ozone using the trapezoidal rule
+        o3_du_calc = np.array([
+            np.trapz(p_o3[:i+1] / p_atm[:i+1], p_atm[:i+1]) * (-1) * f_DU
+            for i in range(len(p_atm))
         ])
 
-        # Add filename and datetime
-        dtm = datetime.strptime(re.search(r'\d{8}T\d{2}', filename).group(), '%Y%m%dT%H')
-        df = df.with_columns([
-            pl.lit(metadata['filename']).alias('filename'),
-            pl.lit(dtm).alias('dtm')
-        ])
+        # Create a new DataFrame with the cumulative ozone column added
+        df_result = df_sorted.with_columns(
+            pl.Series("O3_DU_calc", o3_du_calc),
+        )
         
-        return df, metadata
-
-    # Construct the full URL to the zip file
-    zip_url = f"{url}/{station}/shadoz_{station}_{year}_V06.zip"
-    print(f"Downloading {zip_url} ...")
-    response = requests.get(zip_url)
-    response.raise_for_status()  # Check if the request was successful
-    
-    # Extract the zip file contents into memory
-    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-        file_list = z.namelist()
-        dat_files = [file for file in file_list if file.endswith('.dat')]
-
-        # Combine all .dat files into one DataFrame
-        all_dataframes = []
-        all_metadata = {}
-        for dat_file in dat_files:
-            print(f"> Extracting {dat_file}")
-            with z.open(dat_file) as file:
-                file_content = file.read()
-                df, metadata = parse_dat_file(file_content, dat_file)
-                if df is not None:
-                    all_dataframes.append(df)
-                    all_metadata[dat_file] = metadata
-
-        df_data = pl.concat(all_dataframes)
-        df_metadata = pl.DataFrame([{**{"source": k}, **v} for k, v in all_metadata.items()])
-
-    # Store the resulting DataFrame as a parquet file
-    os.makedirs(target, exist_ok=True)
-    df_data_path = os.path.join(target, f'ecc_sonde_data_{year}.parquet')
-    print(f"Saving data to {df_data_path}")
-    df_data.write_parquet(df_data_path)
-    df_metadata.write_parquet(os.path.join(target, f'ecc_sonde_metadata_{year}.parquet'))
-
-    return df_data, df_metadata
+        return df_result
 
 
-# def compute_total_column_ozone_from_insitu_profile(pressure: pl.Series, ozone_partial_pressure: pl.Series) -> float:
-#     """
-#     Compute the total column ozone in Dobson Units (DU) from (in-situ) ozone profile data.
-    
-#     Parameters:
-#     pressure (pl.Series): A Polars Series containing atmospheric pressure in hPa.
-#     ozone_partial_pressure (pl.Series): A Polars Series containing ozone partial pressure in mPa.
-    
-#     Returns:
-#     float: The total column ozone in Dobson Units (DU).
-#     """
-#     # Remove rows with Null or NaN values
-#     df = pl.DataFrame({
-#         'ozone_partial_pressure': ozone_partial_pressure,
-#         'pressure': pressure
-#     }).drop_nulls()
-    
-#     # Convert Polars Series to NumPy arrays
-#     pressure_values = df['pressure'].to_numpy()
-#     ozone_partial_pressure_values = df['ozone_partial_pressure'].to_numpy()
-    
-#     # Sort the values by pressure in descending order (from surface to top of atmosphere)
-#     sorted_indices = np.argsort(pressure_values)[::-1]
-#     ozone_partial_pressure_values = ozone_partial_pressure_values[sorted_indices]
-#     pressure_values = pressure_values[sorted_indices]
-    
-#     # Compute the total column ozone in DU using the trapezoidal rule for integration
-#     column_ozone = np.trapz(ozone_partial_pressure_values / pressure_values, pressure_values) / 10
-    
-#     return column_ozone
+    def plot_ecc_profile(self, df_ecc: pl.DataFrame, df_model: pl.DataFrame=pl.DataFrame(), model: str=str(), title: str='', save: bool=True, path: str=str()):
+        """
+        Plot an ozone sonde profile, together with the residual profile obtained from some other source, e.g., CAMS.
+
+        Parameters:
+        df_ecc (pl.DataFrame): Polars DataFrame with columns including 'Press', 'O3_mPa'[, 'filename'].
+        df_model (pl.DataFrame): Polars DataFrame with columns including 'Press', 'O3_mPa'[, 'filename'].
+
+        Returns:
+        None
+        """
+        try:
+            if 'filename' in df_ecc.columns:
+                label_ecc = df_ecc['filename'][0].split('.')[0]
+            else:
+                label_ecc = 'ECC'
+
+            if not df_model.is_empty():
+                if 'filename' in df_model.columns:
+                    label_model = df_model['filename']
+                elif model:
+                    label_model = model
+                else:
+                    label_model = 'model'
+                burst_pressure = min(df_ecc['Press'])
+                df_residual_interpolated = interpolate_logarithmic(df_model['Press'], df_model['O3_mPa'], N=5, x0=burst_pressure)
+                df_above_burst = df_residual_interpolated.filter(pl.col('x') <= burst_pressure)
+            fig = plt.figure(figsize=(8, 6))
+            plt.scatter(df_ecc['O3_mPa'], df_ecc['Press'], marker='o', s=12, label=label_ecc)
+            plt.plot(df_residual_interpolated['y'], df_residual_interpolated['x'], c='red', label=label_model)
+            plt.scatter(df_above_burst['y'], df_above_burst['x'], marker='x', c='red', s=12, label=f'{label_model} above burst')
+            plt.xlabel('O3 partial pressure [mPa]')
+            plt.ylabel('Pressure [hPa]')
+            plt.gca().invert_yaxis()
+            plt.yscale('log')
+            plt.title(title)
+            plt.legend()
+            # plt.grid(True)
+            plt.show()
+
+            if save:
+                if path==str():
+                    path = 'results/ecc/shadoz'
+                    os.makedirs(path, exist_ok=True)
+                file = os.path.join(path, f"{label_ecc}.png")
+                fig.savefig(file)
+        except Exception as err:
+            print(err)
 
 
-def calculate_total_column_ozone(df: pl.DataFrame, ozone_col: str='O3_mPa', temp_col: str='Temp', pressure_col: str='Press') -> float:
-    """
-    Calculate the total column ozone in Dobson Units (DU) from vertical ozone profile data.
+class SHADOZ:
+    def __init__(self):
+        pass
 
-    Parameters:
-    df (pl.DataFrame): Polars DataFrame containing the ozone profile data.
-    ozone_col (str): Column name for ozone partial pressures (mPa).
-    temp_col (str): Column name for temperatures (°C).
-    pressure_col (str): Column name for atmospheric pressures (hPa).
+    def download_and_extract_shadoz_zip(self, year: int, url: str='https://acd-ext.gsfc.nasa.gov/anonftp/acd/shadoz/V06', 
+                                        station: str='nairobi', target: str='data/level1/ecc/shadoz') -> tuple[pl.DataFrame, pl.DataFrame]:
+        """
+        Downloads a .zip file containing SHADOZ data for a specific station and year, extracts the .dat files,
+        and combines them into a single polars DataFrame. The resulting DataFrame is saved as a parquet file.
+        
+        Parameters:
+        url (str): The base URL where the .zip files are hosted.
+        station (str): The station name (e.g., 'nairobi').
+        year (int): The year of the data to download (e.g., 1998).
+        target (str): The directory to save the resulting parquet file.
+        
+        Returns:
+        tuple: A tuple containing polars DataFrames of the data and the metadata for the entire year.
+        """
+        
+        # Function to parse each .dat file
+        def parse_dat_file(file_content, filename):
+            lines = file_content.decode('utf-8').splitlines()
+            metadata = {}
+            
+            # Number of metadata lines
+            num_metadata_lines = int(lines[0].strip())
+            
+            # Extract metadata
+            comment_id = 1
+            for i in range(1, num_metadata_lines):
+                line = lines[i].strip()
+                if 'Comment :' in line:
+                    key, value = line.split(':', 1)
+                    if value.strip():
+                        metadata[f"{key.strip()}_{comment_id}"] = value.strip()
+                    comment_id += 1
+                elif ':' in line:
+                    key, value = line.split(':', 1)
+                    metadata[key.strip()] = value.strip()
 
-    Returns:
-    float: Total column ozone in Dobson Units (DU).
-    """
-    # Constants
-    k_B = 1.380649e-23  # Boltzmann constant in J/K
-    conversion_factor = 2.687e16  # Conversion factor from molecules/cm^2 to DU
+            metadata['filename'] = filename            
+            variables = lines[num_metadata_lines - 2].strip().split()
+            metadata['variables'] = variables
+            metadata['units'] = lines[num_metadata_lines - 1].strip().split()
 
-    # Eliminate rows with Null values and sort by pressure
-    df = df.select([ozone_col, temp_col, pressure_col]).drop_nulls()
-    df = df.sort(by=pressure_col, descending=True)
-    
-    # Extract columns as numpy arrays
-    ozone_partial_pressures = df[ozone_col].to_numpy() * 1e-3  # Convert from mPa to Pa
-    temperatures_celsius = df[temp_col].to_numpy()
-    pressures = df[pressure_col].to_numpy() * 100  # Convert from hPa to Pa
+            # Extract data
+            data = [line.split() for line in lines[num_metadata_lines:]]
 
-    # Convert temperatures from °C to K
-    temperatures_kelvin = temperatures_celsius + 273.15
+            # Convert to polars DataFrame
+            df = pl.DataFrame(data, schema=dict(zip(variables, [pl.Float32]*len(variables))))
 
-    # Calculate ozone number density (molecules/m^3) at each pressure level
-    ozone_number_densities = ozone_partial_pressures / (k_B * temperatures_kelvin)
+            # Encode missing or invalid as Null
+            invalid = int(metadata['Missing or bad values'])
+            df = df.select([
+                pl.when(pl.col(column) == invalid).then(None).otherwise(pl.col(column)).alias(column)
+                for column in df.columns
+            ])
 
-    # Integrate ozone number densities over pressure
-    total_column_ozone_number_density = np.trapz(ozone_number_densities, pressures)
+            # Add filename and datetime
+            dtm = datetime.strptime(re.search(r'\d{8}T\d{2}', filename).group(), '%Y%m%dT%H')
+            df = df.with_columns([
+                pl.lit(metadata['filename']).alias('filename'),
+                pl.lit(dtm).alias('dtm')
+            ])
+            
+            return df, metadata
 
-    # Convert total column ozone number density to Dobson Units
-    total_column_ozone_du = total_column_ozone_number_density / (conversion_factor * 1e4)
+        # Construct the full URL to the zip file
+        zip_url = f"{url}/{station}/shadoz_{station}_{year}_V06.zip"
+        print(f"Downloading {zip_url} ...")
+        response = requests.get(zip_url)
+        response.raise_for_status()  # Check if the request was successful
+        
+        # Extract the zip file contents into memory
+        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+            file_list = z.namelist()
+            dat_files = [file for file in file_list if file.endswith('.dat')]
 
-    return total_column_ozone_du
+            # Combine all .dat files into one DataFrame
+            all_dataframes = []
+            all_metadata = {}
+            for dat_file in dat_files:
+                print(f"> Extracting {dat_file}")
+                with z.open(dat_file) as file:
+                    file_content = file.read()
+                    df, metadata = parse_dat_file(file_content, dat_file)
+                    if df is not None:
+                        all_dataframes.append(df)
+                        all_metadata[dat_file] = metadata
+
+            df_data = pl.concat(all_dataframes)
+            df_metadata = pl.DataFrame([{**{"source": k}, **v} for k, v in all_metadata.items()])
+
+        # Store the resulting DataFrame as a parquet file
+        os.makedirs(target, exist_ok=True)
+        df_data_path = os.path.join(target, f'ecc_sonde_data_{year}.parquet')
+        print(f"Saving data to {df_data_path}")
+        df_data.write_parquet(df_data_path)
+        df_metadata.write_parquet(os.path.join(target, f'ecc_sonde_metadata_{year}.parquet'))
+
+        return df_data, df_metadata

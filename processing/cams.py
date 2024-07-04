@@ -8,7 +8,7 @@ cams_eac4_reference = 'Inness et al. (2019), http://www.atmos-chem-phys.net/19/3
 cams_attribution = 'Contains modified Copernicus Atmosphere Monitoring Service information [2003-2023]'
 
 def download_cams_monthly_ozone_data(product: str='cams-global-reanalysis-eac4-monthly',
-                       target: str='data/level3/cams',
+                       target: str='data/level3/copernicus/cams/eac4',
                        years: range=range(2003, 2024),
                        convert: bool=True) -> None:
 
@@ -37,7 +37,6 @@ def download_cams_monthly_ozone_data(product: str='cams-global-reanalysis-eac4-m
                 ],
                 'product_type': 'monthly_mean',
                 'area': [
-                    # -1.2, 36.66, -1.4, 36.86,
                     -1.3017, 36.7592, -1.3017, 36.7592,
                 ],
             },
@@ -56,11 +55,10 @@ def convert_cams_nc_to_parquet(filepath: str):
 
     print(f"Converting {filepath}.nc to {filepath}.parquet")
     try:
-        data = xr.open_dataset(f'{filepath}.nc')
-        df_pd = data['go3'].to_dataframe().reset_index()
+        df_pd = xr.open_dataset(f'{filepath}.nc').to_dataframe().reset_index()
         df_pl = pl.from_pandas(df_pd)
         df_pl = df_pl.with_columns(pl.col('time').dt.date().alias('dte'))
-        df_pl.drop_in_place('time')
+        df_pl = df_pl.drop(['longitude', 'latitude', 'time'])
 
         # Convert the Ozone mass mixing ratio to partial pressure (Pa) for each pressure level
         # [go3] = kg/kg; [level] = hPa = 100 Pa
@@ -69,5 +67,14 @@ def convert_cams_nc_to_parquet(filepath: str):
         return
     except Exception as err:
         print(err)
+
+
+def residual_ozone_cams(df: pl.DataFrame, start_level: int) -> float:
+    try:
+        print('todo')
+    except Exception as err:
+        print(err)
+
+
 
 
