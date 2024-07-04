@@ -1,1 +1,1 @@
-# level1 = compiled data, possibly flagged
+# level1 = compiled data, possibly flagged, with geophysical units, in their original temporal resolution
