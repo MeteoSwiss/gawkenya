@@ -9,29 +9,20 @@ import polars as pl
 import requests
 import matplotlib.colors as mcolors
 from matplotlib.cm import get_cmap
+from toolbox.numerical_analysis_1d import interpolate_logarithmic
+import datetime
+import zipfile
 from ipywidgets import interact, widgets
-<<<<<<< HEAD
 # from IPython.display import display
 
 # [TODO] always compare the ...T... (7 days prior to launch) file with the ...S... file (day of launch).
-=======
-from IPython.display import display
-import zipfile
-from datetime import datetime
-from toolbox.numerical_analysis_1d import interpolate_logarithmic
->>>>>>> ecc
 
 
 class ECC:
     def __init__(self):
         pass
 
-<<<<<<< HEAD
     def extract_ecc_asap(self, file: str) -> 'dict[str:str, str:str, str:str, str:pl.DataFrame]':
-=======
-
-    def extract_ecc_asap(self, file: str) -> 'dict[str:str, str:str, str:pl.DataFrame]':
->>>>>>> ecc
         """
         Reads an ozone sonde measurement text file and extracts its content into a dictionary.
 
@@ -181,10 +172,6 @@ class ECC:
                         except Exception as err:
                             print(f"Error concatenating data from file {filename}: {err}")
                             pass
-<<<<<<< HEAD
-=======
-
->>>>>>> ecc
         return {'metadata': metadata_df, 'data': data_df}
     
 
@@ -375,7 +362,7 @@ class SHADOZ:
         pass
 
     def download_and_extract_shadoz_zip(self, year: int, url: str='https://acd-ext.gsfc.nasa.gov/anonftp/acd/shadoz/V06', 
-                                        station: str='nairobi', target: str='data/level1/ecc/shadoz') -> tuple[pl.DataFrame, pl.DataFrame]:
+                                        station: str='nairobi', target: str='data/level1/ecc/shadoz') -> 'tuple[pl.DataFrame, pl.DataFrame]':
         """
         Downloads a .zip file containing SHADOZ data for a specific station and year, extracts the .dat files,
         and combines them into a single polars DataFrame. The resulting DataFrame is saved as a parquet file.
