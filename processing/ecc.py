@@ -261,6 +261,12 @@ class ECC:
     def total_column_ozone_from_pressure_profile(self, df: pl.DataFrame, pressure_col: str, ozone_col: str, other_cols: 'list[str]'=[]) -> pl.DataFrame:
         """
         Calculate total column ozone from ozone partial pressure data in a Polars DataFrame.
+        The calculation is based on the ideal gas law (1), the density of air (2) and the hydrostatic formula (3).
+            (1) p V = N k_B T -> nu_O3 = N_O3 / V = P_O3 / k_B / T -> dN_O3 / A = P_O3 dz / k_B / T
+            (2) rho = m / V = M P / R T
+            (3) dP = - rho g dz = - M P g dz / R / T -> dz = R T g / M  dP / P
+            (3) into (1) dN_O3 / A = P_O3 (R T g / M) (dP / P) / k_B / T = (R g / k_B / M) P_O3 (dP / P) | integrate from P_0 to P_z
+            (4) total ozone column density (P_0 to P_z) = (R g / k_B / M) sum ((P_O3_i + P_O3_i+1) / 2) ln(P_i / P_i+1)
         
         Parameters:
             df (pl.DataFrame): Polars DataFrame containing the data.
