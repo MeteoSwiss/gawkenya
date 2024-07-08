@@ -1,7 +1,7 @@
 # %%
 import os
 import logging
-from asyncio.log import logger
+# from asyncio.log import logger
 import io
 import json
 import matplotlib.pyplot as plt
@@ -21,20 +21,20 @@ class G2401:
         try:
             if log != "g2401.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
-            logger = logging.getLogger(__name__)
+            self.logger = logging.getLogger(__name__)
             # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
             log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
             log_handler.setLevel(logging.DEBUG)
             log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
-            logger.addHandler(log_handler)
+            self.logger.addHandler(log_handler)
 
             self.dtypes = {'DataLog_User_Sync': [pl.Utf8]*2 + [pl.Float64]*4 + [pl.Int64]*2 + [pl.Float64]*14,
                            }
-            logger.info("Class 'G2401' initialized successfully.")
+            self.logger.info("Class 'G2401' initialized successfully.")
 
         except Exception as err:
-            logger = logging.getLogger(__name__)
-            logger.error("Error initializing class 'G2401'.", err)
+            self.logger = logging.getLogger(__name__)
+            self.logger.error("Error initializing class 'G2401'.", err)
 
 
     def extract_g2401_to_dataframe(self, file: str, dtm="dtm", log=True) -> tuple([pl.DataFrame, str]):
@@ -54,7 +54,7 @@ class G2401:
         """
         if bool(re.search("DataLog_User_Sync", file)):
             if log:
-                logger.info(f"Extracting file {file}.")
+                self.logger.info(f"Extracting file {file}.")
 
             try:
                 if bool(re.search('.zip', file)):
@@ -64,13 +64,17 @@ class G2401:
                     source = re.sub(" +", ",", open(file, "rb").read().decode('utf-8'))
 
                 source = re.sub(",\r\n", "\n", source)
-                df = pl.read_csv(io.StringIO(source), has_header=True, separator=",", dtypes=self.dtypes["DataLog_User_Sync"])
-                df = df.with_columns(pl.lit(file).alias('source'),
-                                     pl.format("{} {}", "DATE", "TIME").str.to_datetime(time_zone="UTC").alias(dtm))
-                return df, None
+                source = re.sub("\x00", "", source)
+                if len(source) > 0:
+                    df = pl.read_csv(io.StringIO(source), has_header=True, separator=",", dtypes=self.dtypes["DataLog_User_Sync"])
+                    df = df.with_columns(pl.lit(file).alias('source'),
+                                        pl.format("{} {}", "DATE", "TIME").str.to_datetime(time_zone="UTC").alias(dtm))
+                    return df, None
+                else:
+                    return pl.DataFrame(), str(ValueError(f"File is empty."))
 
             except Exception as err:
-                logger.error(err)
+                self.logger.error(err)
                 return pl.DataFrame(), str(err)
         else:
             return pl.DataFrame(), f"{file}: File type unknown."
@@ -116,7 +120,8 @@ class G2401:
                         dst = os.path.join(archive, relative_path)
                         os.makedirs(dst, exist_ok=True)
                         shutil.move(src=src, dst=os.path.join(dst, file))
-                    result = pl.concat([result, df], how='diagonal')
+                    if not err:
+                        result = pl.concat([result, df], how='diagonal')
 
                 # clean up if folder is empty
                 if not os.listdir(root):
@@ -146,7 +151,7 @@ class G2401:
 
             return None
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
             print(err)            
 
 
