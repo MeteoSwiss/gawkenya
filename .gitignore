@@ -180,3 +180,6 @@ analyses/output/*
 data/level3/cams/**
 #except some selected smaller cams files
 !data/level3/cams/cams_best_grid_merged_MKN.nc
+
+#only track zip-aerosol file, not the extracted one
+data/level2/L2_AEROSOL_data_bachelorthesis Mike Baumann
