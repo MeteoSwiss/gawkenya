@@ -60,3 +60,6 @@ If that does not work, try:
   - `[...]_compile_[...].ipynb`: jupyter notebooks to compile .... TODO 
   - `[...]_process_[...].ipynb`: jupyter notebooks to process .... TODO 
 
+# Google photo shares
+- MKN: https://photos.google.com/album/AF1QipM0QEoDmxWYYpxTy0ff8RD5GV2roXBM3UbtFfdE
+- NRB: https://photos.google.com/album/AF1QipPyu82cMMoNur0sgXkH9Vm_2rrK0R0Mtc2X2VnI
