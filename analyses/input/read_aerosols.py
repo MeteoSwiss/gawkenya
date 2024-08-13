@@ -177,6 +177,9 @@ def aerosols_to_full_dataset(ds_ae, ds_neph):
     AAE = -np.log(c_abs1 / c_abs2) / np.log(
         470 / 880
     )  # np.log is the natuarl logarithm ln()
+    # The division c_abs1/c_abs2 may contain zero-divisions, that lead to inf values
+    # Therefore, replace all inf values by nan:
+    AAE = AAE.where(np.isinf(AAE) == False)
 
     # Scattering Angstrom exponent:
     # Describes wavelenght dependence of scattered light
