@@ -7,17 +7,22 @@ Created on: 2024-07
 Modifications: date -> modified
 """
 
+import sys
+import os
+
+# add the parent directory to syspath to allow importing modules from the parent directory
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if not parent_dir in sys.path:
+    sys.path.append(parent_dir)
+
 # import
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import pyplot
-import os
 import matplotlib.ticker as ticker
 import numpy as np
 import xarray as xr
-import sys
 from utils.utilities import (
-    find_best_grid_point,
     get_station_coords,
     form_xdate,
     get_anomalies,
@@ -30,13 +35,9 @@ from pathlib import Path
 import zipfile
 import re
 
+
 from plotting import tol_colors  # color schemes from https://personal.sron.nl/~pault/
 from utils import process_data
-
-# add the parent directory to syspath to allow importing modules from the parent directory
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if not parent_dir in sys.path:
-    sys.path.append(parent_dir)
 
 ##
 # aerosol_data_dir = Path("..\data\level2\L2_AEROSOL_data_bachelorthesis Mike Baumann")
@@ -125,7 +126,7 @@ def aerosol_data_to_dataset(
                 unit = match.group(1)
             else:
                 unit = ""
-            ds_instr[var_name].attrs["units"] = unit
+            ds_instr[var_name].attrs["unit"] = unit
 
     return ds_ae, ds_neph
 
@@ -154,8 +155,17 @@ def aerosols_to_full_dataset(ds_ae, ds_neph):
     #   - s = scattering
     #   - G = Green channel (blue=450nm, green = 525nm, red = 635nm)
     #   - _S11 = same for all
-    Make wavelenghts as an additional data dimension to have a better overview.
+
+    Besides reading this variables, this function does the following:
+    - Make wavelenghts as an additional data dimension to have a better overview.
+    - Calculate absorption as the same wavelengths as scattering (using AAE)
+    - Calculate aerosol properites (SAE, SSA, AAE)
     """
+
+    # instrument wavelengths:
+    lambda_neph = [450, 525, 635]  # blue, green, red
+    lambda_ae = [370, 470, 521, 590, 660, 880, 950]
+
     ##--------------- calculate aerosol properties ---------------##
     # Absorption Angstrom exponent: gives indication about composition/chemistry
     # Wavelength dependence of aerosol absorption
@@ -180,30 +190,40 @@ def aerosols_to_full_dataset(ds_ae, ds_neph):
     # Purely scattering: SSA = 1
     # Strong absorption: SSA <= 0.3
     #
-    # Mike is doing the following, not sure why:
-    c_abs3 = ds_ae["Ba40_A11"]  # abs. at 590nm
-    abs_525 = c_abs3 * (525 / 590) ** (
-        -AAE
-    )  # why 525?? The AAE used 479/880, and c_abs3 is at 590nm ??
-    c_scat = ds_neph["BsG0_S11"]  # scattering at green light (525nm)
-    SSA = c_scat / (abs_525 + c_scat)
+    # Calculate the approximate absorption at 450, 525 and 635nm (to have the same wavelength as for scattering) by correcting with AAE
+    # c_abs3 = ds_ae["Ba40_A11"]  # abs. at 590nm
+    # abs_525 = c_abs3 * (525 / 590) ** (-AAE)
+    # c_scat = ds_neph["BsG0_S11"]  # scattering at green light (525nm)
+    # SSA = c_scat / (abs_525 + c_scat)
+
+    abs_interpolated = []
+    SSAs = []
+    for i, (l_neph, col) in enumerate(zip(lambda_neph, ["B", "G", "R"])):
+        c_abs3 = ds_ae["Ba40_A11"]  # abs. at 590nm
+        abs_i = c_abs3 * (l_neph / 590) ** (-AAE)
+        c_scat = ds_neph[f"Bs{col}0_S11"]  # scattering at blue, green or red light
+        SSA_i = c_scat / (abs_i + c_scat)
+
+        # give names
+        SSA_i = SSA_i.rename("SSA")
+        abs_i = abs_i.rename("abs_coeff_interp")
+
+        abs_interpolated.append(abs_i)
+        SSAs.append(SSA_i)
 
     ##--------------- Create a new dataset ---------------##
-    # # merge the variables of interest along a new wavelength-dimension
-    lambda_neph = [450, 525, 635]  # blue, green, red
-    lambda_ae = [370, 470, 521, 590, 660, 880, 950]
 
     # merge the absorption coefficients along the wavelenght dimension
-    vars_to_concat = [f"Ba{i}0_A11" for i in range(1, len(lambda_ae) + 1)]
+    vars_to_concat_abs = [f"Ba{i}0_A11" for i in range(1, len(lambda_ae) + 1)]
 
-    abs = xr.concat(
-        [da for varname, da in ds_ae[vars_to_concat].data_vars.items()],
+    abso = xr.concat(
+        [da for varname, da in ds_ae[vars_to_concat_abs].data_vars.items()],
         dim="lambda_abs",
     ).assign_coords(lambda_abs=lambda_ae)
-    abs.attrs["description"] = (
-        " ".join(abs.attrs["description"].split()[0:3])
+    abso.attrs["description"] = (
+        " ".join(abso.attrs["description"].split()[0:3])
         + " "
-        + abs.attrs["description"].split()[-1]
+        + abso.attrs["description"].split()[-1]
     )  # adapt attribute
 
     # merge the scattering coefficients along the wavelenght dimension
@@ -234,30 +254,44 @@ def aerosols_to_full_dataset(ds_ae, ds_neph):
         + bc.attrs["description"].split()[-1]
     )  # adapt attribute
 
+    # merge SSAs to a DataArray along the wavelenghts dimension
+    ssas = xr.concat(
+        SSAs,
+        dim="lambda_scat",
+    ).assign_coords(lambda_scat=lambda_neph)
+    ssas.attrs["description"] = "Single scattering albedo"
+    ssas.attrs["unit"] = " "
+
+    # merge the interpolated absorption (interpolated to scattering wavelenghts)
+    abs_interp = xr.concat(
+        abs_interpolated,
+        dim="lambda_scat",
+    ).assign_coords(lambda_scat=lambda_neph)
+    abs_interp.attrs["description"] = (
+        "Absorption coefficients, adapted to scattering wavelengths"
+    )
+    abs_interp.attrs["unit"] = abso.unit
+
     ##--------------- Add the calculated variables (SAE, AAE, SSA) ---------------##
     aerosol_exponents = xr.Dataset(
         data_vars=dict(
             AAE=(
                 ["time"],
                 AAE.values,
-                dict(description="Absorption Angstrom exponent", units=""),
+                dict(description="Absorption Angstrom exponent", unit=""),
             ),  # AAE
             SAE=(
                 ["time"],
                 SAE.values,
-                dict(description="Scattering Angstrom exponent", units=""),
-            ),  # AAE
-            SSA=(
-                ["time"],
-                AAE.values,
-                dict(description="Single scattering albedo", units=""),
-            ),  # AAE
+                dict(description="Scattering Angstrom exponent", unit=""),
+            ),  # SAE
         ),
         coords=dict(time=ds_ae["time"].values),
         attrs=dict(),
     )
-    # merge all three datasets:
-    ds_aerosols = xr.merge([abs, scat, bc, aerosol_exponents])
+
+    # merge all datasets:
+    ds_aerosols = xr.merge([abso, scat, bc, abs_interp, ssas, aerosol_exponents])
     ds_aerosols.attrs = {"description": "Aerosol measurements at MKN"}
 
     # rename the variables

@@ -9,6 +9,7 @@ def run_ccgfilter(
     dataset_str,
     t1,
     t2,
+    debug = False,
     **fit_properties
     # shortterm=80,
     # longterm=667,
@@ -42,7 +43,7 @@ def run_ccgfilter(
             numpolyterms=fit_properties['numpolyterms'],
             sampleinterval=fit_properties['sampleinterval'],
             numharmonics=fit_properties['numharmonics'],
-            # debug=True
+            debug=debug
         )
 
         ## save required data
