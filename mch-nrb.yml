@@ -1,0 +1,23 @@
+nrb-brewer:
+  root: /product_data/data/pay/ozone/arosa
+  logging: mch-nrb.log
+  branches:
+    incoming: incoming
+  folders:
+    - "071"
+  "071": 
+    pattern: B\d{5}.071
+    buckets: None
+    expected: 1
+nrb-dobson:
+  root: /product_data/data/pay/Kenya
+  logging: mch-nrb.log
+  branches:
+    uploads: uploads
+  file_name: file_coverage_D018.json
+  folders:
+    - "prod"
+  "prod": 
+    pattern: D\d{7}.018
+    buckets: yearly
+    expected: 260

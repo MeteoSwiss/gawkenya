@@ -1,8 +1,11 @@
+logging: gawkenya.log
+
 mkn:
   # file organization depends on <buckets>.
   # if buckets==daily: <root>/<middle>/<folders>/<yyyy>/<mm>/<dd>
   # if buckets==monthly: <root>/<middle>/<folders>/<yyyy>/<mm>
-  root: /product_data/data/pay/Kenya/MKN/   
+  root: /product_data/data/pay/Kenya/MKN/
+  logging: mkn.log
   branches:
     incoming: incoming
     archive: archive
