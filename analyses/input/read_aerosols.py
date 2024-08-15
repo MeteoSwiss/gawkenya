@@ -251,11 +251,14 @@ def aerosols_to_full_dataset(ds_ae, ds_neph):
         [da for varname, da in ds_ae[vars_to_concat].data_vars.items()],
         dim="lambda_abs",
     ).assign_coords(lambda_abs=lambda_ae)
+    with xr.set_options(keep_attrs=True): 
+        bc = bc*1000 # BC was given in ug, not in ng. Save it now in ng
     bc.attrs["description"] = (
         " ".join(bc.attrs["description"].split()[0:4])
         + " "
         + bc.attrs["description"].split()[-1]
     )  # adapt attribute
+    #bc.attrs["unit"] = "ug/m3" #ng/m3 in the data is wrong!
 
     # merge SSAs to a DataArray along the wavelenghts dimension
     ssas = xr.concat(
