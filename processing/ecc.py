@@ -423,7 +423,7 @@ class SHADOZ:
             ])
 
             # Add filename and datetime
-            dtm = datetime.strptime(re.search(r'\d{8}T\d{2}', filename).group(), '%Y%m%dT%H')
+            dtm = datetime.datetime.strptime(re.search(r'\d{8}T\d{2}', filename).group(), '%Y%m%dT%H')
             df = df.with_columns([
                 pl.lit(metadata['filename']).alias('filename'),
                 pl.lit(dtm).alias('dtm')
