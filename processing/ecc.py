@@ -465,3 +465,21 @@ class SHADOZ:
         df_metadata.write_parquet(os.path.join(target, f'ecc_sonde_metadata_{year}.parquet'))
 
         return df_data, df_metadata
+    
+
+    def compile_time_series_at_given_pressure(self, source: str, pressure_level: int, dp: int=5, pattern: str="ecc_sonde_data_") -> pl.DataFrame:
+        try:
+            df = pl.DataFrame()
+            pres = [pressure_level - dp, pressure_level + dp]
+            for root, dirs, files in os.walk(source):
+                for file in files:
+                    if re.search(pattern=pattern, string=file):
+                        df_tmp = pl.read_parquet(os.path.join(root, file))
+                        df_tmp = df_tmp.filter((pl.col("Press") > pres[0]) & (pl.col("Press") < pres[1]))
+                        if not df_tmp.is_empty():
+                            df = pl.concat([df, df_tmp], how='diagonal')
+            df = df.sort(by=pl.col('dtm'))
+            return df
+        except Exception as err:
+            print(err)
+
