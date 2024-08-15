@@ -187,3 +187,7 @@ class DData:
             return header, df_data       
         except Exception as err:
             print(err)
+
+
+    def plot_tco(file: str) -> None:
+        df = pl.read_parquet(file)
