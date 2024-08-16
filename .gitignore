@@ -170,7 +170,7 @@ secrets-kplc
 
 
 #private files
-LB_tests/
+analyses/LB_files/
 
 #output files
 analyses/output/*
