@@ -28,6 +28,10 @@ def get_station_coords(stat):
         lat = -0.062
         lon = 37.297
         alt = 3678
+    elif stat == 'NAIROBI':
+        lat = 1.3
+        lon = 36.8
+        alt = 1795
     else:
         print('Please define the coordinates for the station ' + stat)
     return lat,lon, alt
