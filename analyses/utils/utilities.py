@@ -29,9 +29,17 @@ def get_station_coords(stat):
         lon = 37.297
         alt = 3678
     elif stat == 'NAIROBI':
-        lat = 1.3
+        lat = -1.27
         lon = 36.8
         alt = 1795
+    elif stat == 'KAPITI':
+        lat = -1.61 
+        lon = 37.1327
+        alt = np.nan # which altitude?
+    elif stat == 'TAITA':
+        lat = -3.47 
+        lon = 38.20
+        alt = np.nan # which altitude?
     else:
         print('Please define the coordinates for the station ' + stat)
     return lat,lon, alt
