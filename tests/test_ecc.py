@@ -1,10 +1,10 @@
 import os
 import unittest
-from processing.ecc import ECCSONDE
+from processing.ecc import ECC
 
 class TestECCSONDE(unittest.TestCase):
     def test_extract_ecc_asap_file(self):
-        ecc_asap = ECCSONDE()
+        ecc_asap = ECC()
         source = "tests/data/ecc_asap/20220504C37105.TXT"
         res = ecc_asap.extract_ecc_asap(source)
 

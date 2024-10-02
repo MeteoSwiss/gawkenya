@@ -1,0 +1,172 @@
+﻿aurora_id,aurora_name,cpd2_id,cpd2_description,mkndaq_id
+1,Date & Time,dtm,Date String (YYYY-MM-DDThh:mm:ssZ),column_1
+4035,Current Operation,,,column_41
+5001,Sample Temperature (�C),T1_S11,Temperature inside nephelometer (C),column_33
+5002,Sample Pressure (mbar),P_S11,Pressure inside nephelometer (hPa),column_34
+5003,Sample Humidity (%),U_S11,Relative humidity (percent) inside nephelometer,column_35
+5004,Chassis Temperature (�C),T2_S11,Instrument cell external temperature (C),column_36
+5005,Chassis Pressure (mbar),,,column_37
+5006,Chassis Humidity (%),,,column_43
+5010,Flow (lpm),,,column_42
+5011,,,
+6007,Analog Input 24V Supply,,,column_47
+6008,Analog Input Fuse Current,,,column_48
+6001,Analog Input Led Voltage,,,column_38
+6002,Analog Input Cooler Voltage,,,column_39
+6003,Analog Input Cooler Temperature,,,column_40
+2635000,Sigma Kalman Filtered 635nm Fullscatter (Mm-1),,
+2525000,Sigma Kalman Filtered 525nm Fullscatter (Mm-1),,
+2450000,Sigma Kalman Filtered 450nm Fullscatter (Mm-1),,
+2635090,Sigma Kalman Filtered 635nm Backscatter (Mm-1),,
+2525090,Sigma Kalman Filtered 525nm Backscatter (Mm-1),,
+2450090,Sigma Kalman Filtered 450nm Backscatter (Mm-1),,
+3450000,Sigma 1 min Average 450nm Fullscatter (Mm-1),BsB_S11,Aerosol total light scattering coefficient (Mm-1) blue,column_4
+3450090,Sigma 1 min Average 450nm Backscatter (Mm-1),BbsB_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) blue,column_7
+3525000,Sigma 1 min Average 525nm Fullscatter (Mm-1),BsG_S11,Aerosol total light scattering coefficient (Mm-1) green,column_3
+3525090,Sigma 1 min Average 525nm Backscatter (Mm-1),BbsG_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) blue,column_6
+3635000,Sigma 1 min Average 635nm Fullscatter (Mm-1),BsR_S11,Aerosol total light scattering coefficient (Mm-1) red,column_2
+3635090,Sigma 1 min Average 635nm Backscatter (Mm-1),BbsR_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) blue,column_5
+26635000,Kalman Gain 635nm Fullscatter,,,column_44
+26525000,Kalman Gain 525nm Fullscatter,,,column_45
+26450000,Kalman Gain 450nm Fullscatter,,,column_46
+13525000,Dark Count 525nm Fullscatter (MHz),,
+15635000,Shutter Count 635nm Fullscatter (MHz),,
+15525000,Shutter Count 525nm Fullscatter (MHz),,
+15450000,Shutter Count 450nm Fullscatter (MHz),,
+11635000,Measure Count 635nm Fullscatter (MHz),,
+11525000,Measure Count 525nm Fullscatter (MHz),,
+11450000,Measure Count 450nm Fullscatter (MHz),,
+11635090,Measure Count 635nm Backscatter (MHz),,
+11525090,Measure Count 525nm Backscatter (MHz),,
+11450090,Measure Count 450nm Backscatter (MHz),,
+6635000,Measure Ratio 635nm Fullscatter,,
+6525000,Measure Ratio 525nm Fullscatter,,
+6450000,Measure Ratio 450nm Fullscatter,,
+6635090,Measure Ratio 635nm Backscatter,,
+6525090,Measure Ratio 525nm Backscatter,,
+6450090,Measure Ratio 450nm Backscatter,,
+3635090,,,
+3525090,,,
+3450090,,,
+2635000,,,
+2525000,,,
+2450000,,,
+2635090,,,
+2525090,,,
+2450090,,,
+8635000,Measure Ratio 1 min Average 635nm Fullscatter,,,column_8
+8525000,Measure Ratio 1 min Average 525nm Fullscatter,,,column_9
+8450000,Measure Ratio 1 min Average 450nm Fullscatter,,,column_10
+8635090,Measure Ratio 1 min Average 635nm Backscatter,,,column_11
+8525090,Measure Ratio 1 min Average 525nm Backscatter,,,column_12
+8450090,Measure Ratio 1 min Average 450nm Backscatter,,,column_13
+7635000,Measure Ratio Kalman Filtered 635nm Fullscatter,,,column_14
+7525000,Measure Ratio Kalman Filtered 525nm Fullscatter,,,column_15
+7450000,Measure Ratio Kalman Filtered 450nm Fullscatter,,,column_16
+7635090,Measure Ratio Kalman Filtered 635nm Backscatter,,,column_17
+7525090,Measure Ratio Kalman Filtered 525nm Backscatter,,,column_18
+7450090,Measure Ratio Kalman Filtered 450nm Backscatter,,,column_19
+13635000,Dark Count 635nm Fullscatter (MHz),,,column_20
+13525000,Dark Count 525nm Fullscatter (MHz),,,column_22
+13450000,Dark Count 450nm Fullscatter (MHz),,,column_21
+15635000,,,,column_23
+15525000,,,,column_24
+15450000,,,,column_25
+11635000,,,,column_26
+11525000,,,,column_27
+11450000,,,,column_28
+11635090,,,,column_29
+11525090,,,,column_30
+11450090,,,,column_31
+period,Period,,
+operation,Operation,,
+cooler_duty_cycle,Cooler Duty Cycle (%),,,column_32
+heater_duty_cycle,Heater Duty Cycle (%),,
+pump_duty_cycle_current,Pump Duty Cycle Current (%),,
+,,BbswB_S11,Aerosol backwards-hemispheric light scattering coefficient background (Mm-1) blue
+,,BbswG_S11,Aerosol backwards-hemispheric light scattering coefficient background (Mm-1) blue
+,,BbswR_S11,Aerosol backwards-hemispheric light scattering coefficient background (Mm-1) blue
+,,BswB_S11,Aerosol total light scattering coefficient background (Mm-1) blue
+,,BswG_S11,Aerosol total light scattering coefficient background (Mm-1) green
+,,BswR_S11,Aerosol total light scattering coefficient background (Mm-1) red
+,,CbsnB_S11,Backscatter sensitivity factor (Hz) blue
+,,CbsnG_S11,Backscatter sensitivity factor (Hz) green
+,,CbsnR_S11,Backscatter sensitivity factor (Hz) red
+,,PCTbsB_S11,Backscattering percent error blue
+,,PCTbsG_S11,Backscattering percent error green
+,,PCTbsR_S11,Backscattering percent error red
+F2_S11,,F2_S11,Nephelometer flags
+,,PCTsB_S11,Scattering percent error blue
+,,PCTsG_S11,Scattering percent error green
+,,PCTsR_S11,Scattering percent error red
+,,CsnB_S11,Sensitivity factor (Hz) blue
+,,CsnG_S11,Sensitivity factor (Hz) green
+,,CsnR_S11,Sensitivity factor (Hz) red
+,,EPOCH,Epoch time: seconds from Jan 1 1970
+,,CrG_S11,Green reference (Hz)
+,,Bbs2B_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) CO2 blue
+,,Bbs2G_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) CO2 green
+,,Bbs2R_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) CO2 red
+,,Bbs1B_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) AIR blue
+,,Bbs1G_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) AIR green
+,,Bbs1R_S11,Aerosol backwards-hemispheric light scattering coefficient (Mm-1) AIR red
+,,Bs1B_S11,Aerosol total light scattering coefficient (Mm-1) AIR blue
+,,Bs1G_S11,Aerosol total light scattering coefficient (Mm-1) AIR green
+,,Bs1R_S11,Aerosol total light scattering coefficient (Mm-1) AIR red
+,,Bs2B_S11,Aerosol total light scattering coefficient (Mm-1) CO2 blue
+,,Bs2G_S11,Aerosol total light scattering coefficient (Mm-1) CO2 green
+,,Bs2R_S11,Aerosol total light scattering coefficient (Mm-1) CO2 red
+,,Cbsr1B_S11,Backscatter count frequency from calibrator on AIR run blue
+,,Cbsr1G_S11,Backscatter count frequency from calibrator on AIR run green
+,,Cbsr1R_S11,Backscatter count frequency from calibrator on AIR run red
+,,Cbsr2B_S11,Backscatter count frequency from calibrator on CO2 run blue
+,,Cbsr2G_S11,Backscatter count frequency from calibrator on CO2 run green
+,,Cbsr2R_S11,Backscatter count frequency from calibrator on CO2 run red
+,,Cbsd1B_S11,Backscatter dark count frequency from on AIR run blue
+,,Cbsd1G_S11,Backscatter dark count frequency from on AIR run green
+,,Cbsd1R_S11,Backscatter dark count frequency from on AIR run red
+,,Cbsd2B_S11,Backscatter dark count frequency from on CO2 run blue
+,,Cbsd2G_S11,Backscatter dark count frequency from on CO2 run green
+,,Cbsd2R_S11,Backscatter dark count frequency from on CO2 run red
+,,Cbsp1B_S11,Backscatter sample count frequency on AIR run blue
+,,Cbsp1G_S11,Backscatter sample count frequency on AIR run green
+,,Cbsp1R_S11,Backscatter sample count frequency on AIR run red
+,,Cbsp2B_S11,Backscatter sample count frequency on CO2 run blue
+,,Cbsp2G_S11,Backscatter sample count frequency on CO2 run green
+,,Cbsp2R_S11,Backscatter sample count frequency on CO2 run red
+,,Csr1B_S11,Calibrator count frequency on AIR run blue
+,,Csr1G_S11,Calibrator count frequency on AIR run green
+,,Csr1R_S11,Calibrator count frequency on AIR run red
+,,Csr2B_S11,Calibrator count frequency on CO2 run blue
+,,Csr2G_S11,Calibrator count frequency on CO2 run green
+,,Csr2R_S11,Calibrator count frequency on CO2 run red
+,,Bbs2gB_S11,CO2 Rayleigh backscattering at STP (Mm-1) blue
+,,Bbs2gG_S11,CO2 Rayleigh backscattering at STP (Mm-1) green
+,,Bbs2gR_S11,CO2 Rayleigh backscattering at STP (Mm-1) red
+,,Bs2gB_S11,CO2 Rayleigh scattering at STP (Mm-1) blue
+,,Bs2gG_S11,CO2 Rayleigh scattering at STP (Mm-1) green
+,,Bs2gR_S11,CO2 Rayleigh scattering at STP (Mm-1) red
+,,Csd1B_S11,Dark count frequency from on AIR run blue
+,,Csd1G_S11,Dark count frequency from on AIR run green
+,,Csd1R_S11,Dark count frequency from on AIR run red
+,,Csd2B_S11,Dark count frequency from on CO2 run blue
+,,Csd2G_S11,Dark count frequency from on CO2 run green
+,,Csd2R_S11,Dark count frequency from on CO2 run red
+,,DEN1_S11,Density on AIR run
+,,DEN2_S11,Density on CO2 run
+,,P1_S11,Pressure on AIR run (hPa)
+,,P2_S11,Pressure on CO2 run (hPa)
+,,U1_S11,RH on AIR run (percent)
+,,U2_S11,RH on CO2 run (percent)
+,,Csp1B_S11,Sample count frequency on AIR run blue
+,,Csp1G_S11,Sample count frequency on AIR run green
+,,Csp1R_S11,Sample count frequency on AIR run red
+,,Csp2B_S11,Sample count frequency on CO2 run blue
+,,Csp2G_S11,Sample count frequency on CO2 run green
+,,Csp2R_S11,Sample count frequency on CO2 run red
+,,STN,Station ID code
+F1_S11,,F1_S11,System flags
+,,T3_S11,Temperature on AIR run (C)
+,,T4_S11,Temperature on CO2 run (C)
+station,,STN,
+epoch,,EPOCH

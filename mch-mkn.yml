@@ -16,6 +16,7 @@ folders:
   - tei49i
   # - tei49i_2
   - g2401
+  # - ne300
 aerosol: 
   pattern: mkn_\d{8}T\d{6}Z.tar(|.gz)
   buckets: daily
@@ -44,3 +45,7 @@ g2401:
   pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
   buckets: daily
   expected: 24
+ne300:
+  pattern:
+  buckets:
+  expected:
