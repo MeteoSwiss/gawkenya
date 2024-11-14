@@ -16,6 +16,8 @@ class Thermo:
 
     def __init__(self, log: str='thermo.log'):
         try:
+
+
             if log != "thermo.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
             self.logger = logging.getLogger(__name__)
