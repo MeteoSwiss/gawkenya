@@ -281,11 +281,16 @@ def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon):
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
             "format": "netcdf",
             #"area": "{}/{}/{}/{}".format(lat + 20, lon - 20, lat - 10, lon + 10), #saved in GFAS_17_10SW_47_20NE
-            "area": "{}/{}/{}/{}".format(lat + 20, lon - 30, lat - 20, lon + 15),
+            #"area": "{}/{}/{}/{}".format(lat + 20, lon - 30, lat - 20, lon + 15), #saved in GFAS_7_20SW_52_20NE
+            "area": "{}/{}/{}/{}".format(20, 0, -35, 60), #saved in GFAS
             "variable": [
+                "wildfire_flux_of_carbon_dioxide",
                 "wildfire_flux_of_carbon_monoxide",
+                "wildfire_flux_of_methane",
+                "wildfire_flux_of_black_carbon",
                 "wildfire_flux_of_particulate_matter_d_2_5_µm",
-                "wildfire_radiative_power",
+                "wildfire_flux_of_total_particulate_matter",
+                "wildfire_radiative_power"
             ],
         },
         f"{dir_data}\GFAS\cams_gfas_{year}_{month}_{stat}.nc",

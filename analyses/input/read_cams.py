@@ -190,15 +190,18 @@ def read_cams_gfas(dir_data, dir_out="..\..\data\cams", yr1=2020, yr2=2023):
         if ds_combined is None:
             ds_combined = ds_temp
         else:
-            ds_combined = xr.concat([ds_combined, ds_temp], dim="time")
+            ds_combined = xr.concat([ds_combined, ds_temp], dim="valid_time")
+
+    # Data from new Atmospheric Data Store (ADS) is now sorted by valid_time. Rename to time. 
+    ds_combined = ds_combined.rename({'valid_time': 'time'})
 
     yr1 = ds_combined.time[0].dt.year.values
-    yr2 = ds_combined.time[-1].dt.year.values
+    yr2 = ds_combined.time[-2].dt.year.values # in the new data, the last time step of 31.12. is 01.01. 00:00 of the next year
 
     # rename variables:
     # ds_combined = ds_combined.rename({"co2": "CO2", "ch4": "CH4"})
 
-    fname = rf"{dir_out}\cams\cams_gfas_{yr1}_{yr2}.nc"
+    fname = rf"{dir_out}\cams_gfas_{yr1}_{yr2}.nc"
     if os.path.isfile(fname):
         os.remove(fname)
 
