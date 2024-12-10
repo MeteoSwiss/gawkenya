@@ -12,6 +12,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.colors as mc
 import colorsys 
+import datetime as dt
 
 #for tick format:
 from matplotlib.ticker import FormatStrFormatter,AutoMinorLocator, \
@@ -116,3 +117,17 @@ def adjust_lightness(color, amount=0.5):
         c = color
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     return colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+
+
+def to_datetime(date):
+    """
+    Converts a numpy datetime64 object to a python datetime object 
+    From https://gist.github.com/blaylockbk/1677b446bc741ee2db3e943ab7e4cabd?permalink_comment_id=3775327
+    Input:
+      date - a np.datetime64 object
+    Output:
+      DATE - a python datetime object
+    """
+    timestamp = ((date - np.datetime64('1970-01-01T00:00:00'))
+                 / np.timedelta64(1, 's'))
+    return dt.datetime.utcfromtimestamp(timestamp)
