@@ -1,10 +1,10 @@
 ﻿aurora_id,aurora_name,cpd2_id,cpd2_description,mkndaq_id
 1,Date & Time,dtm,Date String (YYYY-MM-DDThh:mm:ssZ),column_1
 4035,Current Operation,,,column_41
-5001,Sample Temperature (�C),T1_S11,Temperature inside nephelometer (C),column_33
+5001,Sample Temperature (°C),T1_S11,Temperature inside nephelometer (C),column_33
 5002,Sample Pressure (mbar),P_S11,Pressure inside nephelometer (hPa),column_34
 5003,Sample Humidity (%),U_S11,Relative humidity (percent) inside nephelometer,column_35
-5004,Chassis Temperature (�C),T2_S11,Instrument cell external temperature (C),column_36
+5004,Chassis Temperature (°C),T2_S11,Instrument cell external temperature (C),column_36
 5005,Chassis Pressure (mbar),,,column_37
 5006,Chassis Humidity (%),,,column_43
 5010,Flow (lpm),,,column_42

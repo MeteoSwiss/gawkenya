@@ -1,32 +1,25 @@
-# %%
-import os
-import io
-import logging
-# from asyncio.log import logger
 import glob
+import io
 import json
-import matplotlib as plt
-import polars as pl
-import re
+import logging
+import os
 import shutil
 import zipfile
 
-# %%
+import matplotlib as plt
+import polars as pl
+
+
 class Thermo:
-
-    def __init__(self, log: str='thermo.log'):
+    def __init__(self, config: dict):
         try:
+            # configure logging
+            # _logger = f"{os.path.basename(config['logging']['file'])}".split('.')[0]
+            _logger = f"{config['logging']}".split('.')[0]
+            self.logger = logging.getLogger(f"{_logger}.{__name__}")
 
-
-            if log != "thermo.log":
-                os.makedirs(os.path.dirname(log), exist_ok=True)
-            self.logger = logging.getLogger(__name__)
-            # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
-            log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
-            log_handler.setLevel(logging.DEBUG)
-            log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
-            self.logger.addHandler(log_handler)
-
+            self.headers = {'tei49c': config['tei49c']['header'].split(),
+                            'tei49i': config['tei49i']['header'].split(),}
             self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
                            'tei49i': [pl.Utf8]*5 + [pl.Float64]*2 + [pl.Int64]*2 + [pl.Float64]*6,}
             self.logger.info("Class 'Thermo' initialized successfully.")
@@ -54,6 +47,8 @@ class Thermo:
             raise ValueError('File not found.')
         
         file_type = 'tei49c' if 'tei49c' in file else 'tei49i' if 'tei49i' in file else 'unknown'
+        header = self.headers['tei49c'] if 'tei49c' in file else self.headers['tei49i'] if 'tei49i' in file else None
+        expected_number_of_items = None if file_type=='unknown' else len(header)
 
         if file_type in file:
             if log:
@@ -63,25 +58,77 @@ class Thermo:
                 if '.zip' in file:
                     with zipfile.ZipFile(file, 'r') as zf:
                         with zf.open(zf.namelist()[0]) as fh:
-                            content = fh.read().decode('utf-8')
+                            lines = fh.read().decode('utf-8')
+                    lines = lines.splitlines()
+
                 else:
                     with open(file, 'r') as fh:
-                        content = fh.read()
+                        lines = fh.readlines()
 
-                # Split the content into lines
-                lines = content.splitlines()
+                # # Split the content into lines
+                # lines = content.splitlines()
                 
-                # Process the header, replace multiple spaces with a single space
-                header = lines[0].replace('  ', ' ')
+                # # Process the header, replace multiple spaces with a single space
+                # header = lines[0].replace('  ', ' ')
                 
-                # Join the processed header with the rest of the lines
-                corrected_content = '\n'.join([header] + lines[1:])
+                # # Join the processed header with the rest of the lines
+                # corrected_content = '\n'.join([header] + lines[1:])
                 
-                # Read the corrected content into a Polars DataFrame
-                df = pl.read_csv(source=io.StringIO(corrected_content), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+                # # Read the corrected content into a Polars DataFrame
+                # df = pl.read_csv(source=io.StringIO(corrected_content), has_header=True, separator=" ", skip_rows=0, null_values='/', dtypes=self.dtypes[file_type])
+
+                # # Read the file into a list of lines
+                # with open(input_file, 'r') as f:
+                #     lines = f.readlines()
+                
+                # Check for the header and split lines into columns
+                for i, line in enumerate(lines):
+                    if line.strip().startswith("pcdate"):
+                        # header = line.strip().split()
+                        data_lines = lines[i+1:]
+                        break
+                
+                # if not header:
+                #     raise ValueError("Header starting with 'pcdate' not found in the file.")
+                
+                # Separate valid and invalid records
+                valid_records = []
+                for line in data_lines:
+                    fields = line.strip().split()
+                    if len(fields) == expected_number_of_items and (expected_number_of_items is not None):
+                        valid_records.append(fields)
+                    else:
+                        self.logger.warning(f"{file} contains invalid record: {line.strip()}")
+                               
+                # Process valid records into a DataFrame
+                if valid_records and (expected_number_of_items is not None):
+                    df = pl.DataFrame(valid_records, schema=header)
+                elif valid_records:
+                    df = pl.DataFrame(valid_records)
+                else:
+                    return df, None, file_type
+
+                # # Combine pcdate and pctime into a single datetime column
+                # df = df.with_columns(
+                #     pl.concat_str([pl.col("pcdate"), pl.col("pctime")], separator=" ")
+                #     .str.strptime(pl.Datetime, fmt="%Y-%m-%d %H:%M:%S")
+                #     .alias("dtm")
+                # )
+                
+                # # Convert numerical columns
+                # for col in header:
+                #     if col not in {"pcdate", "pctime"}:
+                #         df = df.with_columns(
+                #             pl.col(col)
+                #             .cast(pl.Float32, strict=False)
+                #             .cast(pl.Int32, strict=False)  # If cast fails, keep as float
+                #         )
+                
+                # return df
 
             except:
                 df = pl.DataFrame()
+                self.logger.warning(f"{file} could not be extracted.")
                 pass
 
             try:
@@ -112,25 +159,16 @@ class Thermo:
         Returns:
             Nothing
         """
-        # source = os.path.join(source, base)
-        # target = os.path.join(target, base)
-        os.makedirs(target, exist_ok=True)
-        if archive:
-            archive = os.path.join(archive)
-
         result = pl.DataFrame()
-        errors = dict()
-        
+        errors = dict()      
         try:
             # process files
-            if verbose:
-                print(f"Processing source {source} ...")
+            self.logger.info(f"processing source {source} ...")
             for root, dirs, files in os.walk(source):
                 n = (len(source) - len(root) + 1)
                 relative_path = root[n:] if n < 0 else ""
                 for file in files:
-                    if verbose:
-                        print(f"> Processing {file} ...")
+                    self.logger.info(f"processing {file} ...")
                     src = os.path.join(root, file)
                     tmp, err, file_type = self.extract_thermo_to_dataframe(src, log=log)
                     if err:
@@ -139,19 +177,20 @@ class Thermo:
                             dst = os.path.join(issues, relative_path)
                             os.makedirs(dst, exist_ok=True)
                             shutil.move(src=src, dst=os.path.join(dst, file))
-                            print(f"issue: {src} > {dst}")
+                            self.logger.warning(f"issue: {src} > {dst}")
                     elif archive:
                         dst = os.path.join(archive, relative_path)
                         os.makedirs(dst, exist_ok=True)
                         shutil.move(src=src, dst=os.path.join(dst, file))
-                        # print(f"archive: {src} > {dst}")
+                        self.logger.info(f"archive: {src} > {dst}")
                     result = pl.concat([result, tmp], how='diagonal')
 
-                # clean up iffolder is empty
+                # clean up if folder is empty
                 if not os.listdir(root):
                     os.rmdir(root)
 
             if not result.is_empty():
+                os.makedirs(target, exist_ok=True)
                 parquet = os.path.join(target, f"{file_type}.parquet")
                 if append_parquet:                    
                     # avoid over-writing an existing parquet file
@@ -176,7 +215,6 @@ class Thermo:
 
         except Exception as err:
             self.logger.error(err)
-            print(err)
 
 
     def remove_extremes(self, df: pl.DataFrame, variable: str, q=0.001) -> tuple([pl.DataFrame, dict]):

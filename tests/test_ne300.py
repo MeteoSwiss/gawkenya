@@ -11,19 +11,38 @@ class TestNE300(unittest.TestCase):
 
     def setUp(self):
         self.path = 'tests/data/ne300'
+        # self.file_mkndaq = os.path.join(self.path, 'ne300-202407161200.dat')
+        self.file_mkndaq = os.path.join(self.path, 'ne300-202411250040.zip')
         self.file_aurora = os.path.join(self.path, '00230690 2024_07_16 21_18_01 1 min.txt')
-        self.file_mkndaq = os.path.join(self.path, 'ne300-202407161200.dat')
+        self.file_zip = os.path.join(self.path, 'ne300-202410191910.zip')
+        self.file_empty = os.path.join(self.path, 'ne300-202411140400.zip')
 
-    def test_extract_file(self):
+    def test_extract_to_dataframe(self):
         ne300 = NE300(config=config)
 
-        df = ne300.extract_to_dataframe(file=self.file_aurora)
+        df = ne300.extract_to_dataframe(file_path=self.file_mkndaq)
         self.assertEqual(isinstance(df, pl.DataFrame), True)
         self.assertEqual(df.is_empty(), False)
 
-        df = ne300.extract_to_dataframe(file=self.file_mkndaq)
+        df = ne300.extract_to_dataframe(file_path=self.file_aurora)
         self.assertEqual(isinstance(df, pl.DataFrame), True)
         self.assertEqual(df.is_empty(), False)
+
+        df = ne300.extract_to_dataframe(file_path=self.file_zip)
+        self.assertEqual(isinstance(df, pl.DataFrame), True)
+        self.assertEqual(df.is_empty(), False)
+
+        df = ne300.extract_to_dataframe(file_path=self.file_empty)
+        self.assertEqual(isinstance(df, pl.DataFrame), True)
+        self.assertEqual(df.is_empty(), True)
+
+    def test_files_dataframes_to_parquet(self):
+        ne300 = NE300(config=config)
+
+        ne300.compile_files_to_parquet(source='tests/data/ne300', 
+                                       target='tests/data/ne300/target',
+                                       move_files_on_success=False,)        
+
 
 if __name__ == '__main__':
     unittest.main()

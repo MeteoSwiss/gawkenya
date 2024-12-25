@@ -31,10 +31,12 @@ meteo:
   expected: 144
 tei49c: 
   pattern: tei49c-\d{12}.(zip|dat)
+  header: pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   expected: 144
 tei49i: 
   pattern: tei49i-\d{12}.(zip|dat)
+  header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   expected: 144
 # tei49i_2: 

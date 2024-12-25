@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import time
+import zipfile
 from datetime import datetime
 
 
@@ -218,6 +219,42 @@ def find_empty_folders(source: str, verbose: bool=True, delete: bool=True) -> in
             print(f"Error executing find command: {err}")
     else:
         raise ValueError("OS currently not supported.")
+
+
+def remove_empty_files_and_folders(source: str=str()):
+    try:
+        if os.path.exists(source):
+            for root, dirs, files in os.walk(source):
+                if len(files)==0 and len(dirs)==0:
+                    os.removedirs(root)
+                    print(f"{root} removed.")
+                
+                for file in files:
+                    src = os.path.join(root, file)
+                    print(f"processing {src}")
+                    # If the file is a ZIP file, read it from the archive
+                    if zipfile.is_zipfile(src):
+                        with zipfile.ZipFile(src, 'r') as zip_file:
+                            # Get the first CSV file in the archive
+                            csv_files = [f for f in zip_file.namelist() if f.endswith(('.dat', '.csv'))]
+                            if not csv_files:
+                                raise ValueError("No CSV files found in the zip archive.")
+                            with zip_file.open(csv_files[0]) as fh:
+                                tmp = fh.readline()
+                                if len(tmp)==0  or tmp==b'\r\n' or tmp==b'':
+                                    os.remove(src)
+                                    print(f"{src} removed.")
+
+                    # If it's not a ZIP file, process it directly
+                    else:
+                        with open(src, 'r') as fh:
+                            tmp = fh.readline()
+                            if len(tmp)==0:
+                                os.remove(src)
+                                print(f"{src} removed.")
+    except Exception as err:
+        print(err)
+
 
 # %%
 if __name__ == "__main__":
