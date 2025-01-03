@@ -1,7 +1,8 @@
-import configparser
+# import configparser
 import logging
 import os
 
+import chardet
 import polars as pl
 import yaml
 
@@ -95,3 +96,25 @@ def pl_simplify_dtypes(df: pl.DataFrame) -> pl.DataFrame:
             df = df.with_columns(pl.col(column).cast(pl.Utf8))  # For example, cast others to string
     return df
 
+
+def convert_file_to_utf8(file: str) -> None:
+    """Open a file, determine the encoding of a file, and convert to utf-8.
+
+    Args:
+        file (str): full path to file.
+    """
+    try:
+        with open(file, 'rb') as f:
+            raw_data = f.read()
+            encoding = chardet.detect(raw_data)['encoding']
+            # print(encoding['encoding'])
+
+        if encoding != 'utf-8':
+            with open(file, 'r', encoding=encoding) as f:
+                data = f.read()
+
+            with open(file, 'w', encoding='utf-8') as f:
+                f.write(data)
+
+    except Exception as err:
+        print(f"{file} could not be encoded in utf-8.")

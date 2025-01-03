@@ -39,10 +39,9 @@ class TestNE300(unittest.TestCase):
     def test_files_dataframes_to_parquet(self):
         ne300 = NE300(config=config)
 
-        ne300.compile_files_to_parquet(source='tests/data/ne300', 
+        ne300.compile_files_to_parquet(source='tests/data/ne300',
                                        target='tests/data/ne300/target',
-                                       move_files_on_success=False,)        
-
+                                       move_files_on_success=False,)
 
 if __name__ == '__main__':
     unittest.main()
