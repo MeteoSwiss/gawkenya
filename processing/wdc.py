@@ -12,23 +12,26 @@ import itertools
 
 
 
-def compile_wdcgg_into_dataframe(data_path: str, sampling: str) -> pd.DataFrame:
+def compile_wdcgg_into_dataframe(data_path: str, sampling: str, file_name: str = None) -> pd.DataFrame:
     """read WDC GHG data and put into data frame
 
     Args:
         data_path (str):    Path to folder containing data
-        species (str):      Name of species (e.g. 'CO2', 'CO',...)
+        file_name(str):     Name of data file. If not given, the files will be listed and the first one will be
         sampling (str):     'hourly' or 'event' (for flask data) 
 
     Returns:
         pd.DataFrame: Pandas DataFrame with O3 data in ppbv
     """
     try:
-
-        tar = os.listdir(data_path)
-        if os.path.basename(data_path + tar[0]).endswith('tar'):
-            data_path = os.path.join(data_path, tar[0])
-        files = os.listdir(data_path)
+        if file_name:
+            files = [file_name]
+        else:
+            tar = os.listdir(data_path)
+            if os.path.basename(data_path + tar[0]).endswith('tar'):
+                data_path = os.path.join(data_path, tar[0])
+            files = os.listdir(data_path)
+        
 
         for file in files:
             if os.path.basename(file).endswith(f'{sampling}.txt'):
