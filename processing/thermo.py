@@ -8,7 +8,7 @@ import zipfile
 
 import matplotlib as plt
 import polars as pl
-
+from toolbox.utils import pl_simplify_dtypes
 
 class Thermo:
     def __init__(self, config: dict):
@@ -20,8 +20,8 @@ class Thermo:
 
             self.headers = {'tei49c': config['tei49c']['header'].split(),
                             'tei49i': config['tei49i']['header'].split(),}
-            self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float64]*1 + [pl.Utf8]*1 + [pl.Int64]*2 + [pl.Float64]*6,
-                           'tei49i': [pl.Utf8]*5 + [pl.Float64]*2 + [pl.Int64]*2 + [pl.Float64]*6,}
+            self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float32]*1 + [pl.Utf8]*1 + [pl.Int32]*2 + [pl.Float32]*6,
+                           'tei49i': [pl.Utf8]*5 + [pl.Float32]*2 + [pl.Int32]*2 + [pl.Float32]*6,}
             self.logger.info("Class 'Thermo' initialized successfully.")
 
         except Exception as err:
@@ -132,11 +132,20 @@ class Thermo:
                 pass
 
             try:
+                # drop hio3 if included in the dataframe
                 if "hio3" in df.columns:
                     df = df.drop("hio3")
                 
+                # create a proper dtm datetime stamp 
                 df = df.with_columns(pl.lit(file).alias('source'),
                                      pl.format("{} {}", "pcdate", "pctime").str.to_datetime(time_zone="UTC").dt.round("1m").alias(dtm))
+
+                # simplify all dtypes
+                df = pl_simplify_dtypes(df, digits=1)
+
+                # round data to 2 decimals
+                if 'o3' in df.columns:
+                    df = df.with_columns(pl.col('o3').round(2))
 
                 return df, None, file_type
 

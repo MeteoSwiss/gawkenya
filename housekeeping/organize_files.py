@@ -35,6 +35,7 @@ def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
         pattern = cfg[folder]["pattern"]
         n = 0
         src = os.path.join(cfg["root"], branch, folder)
+        os.makedirs(src, exist_ok=True)
         files = os.listdir(src)
         for file in files:
             name = re.search(pattern, file)

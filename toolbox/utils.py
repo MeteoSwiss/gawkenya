@@ -68,7 +68,7 @@ def setup_logging(file: str) -> logging:
         return logger
 
 
-def pl_simplify_dtypes(df: pl.DataFrame) -> pl.DataFrame:
+def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2) -> pl.DataFrame:
     """Simplify dtypes of polars Dataframe
 
     Args:
@@ -86,7 +86,17 @@ def pl_simplify_dtypes(df: pl.DataFrame) -> pl.DataFrame:
         elif dtype == pl.Int64 or dtype == pl.Int32:
             df = df.with_columns(pl.col(column).cast(pl.Int32))  # Convert integers to Int32 for efficiency
         elif dtype == pl.Utf8:
-            continue  # Keep strings as is
+            try:
+                # Try converting to Int32
+                df = df.with_columns(df[column].cast(pl.Int32))
+            except pl.ComputeError:
+                try:
+                    # If that fails, try Float32
+                    df = df.with_columns(df[column].cast(pl.Float32).round(digits))
+                except pl.ComputeError:
+                    pass  # Keep as string if neither works
+
+
         elif dtype == pl.Binary:
             # Optionally, cast binary columns to a simpler form, such as Integers or leave as Binary
             df = df.with_columns(pl.col(column).cast(pl.Int32))  # Example: cast binary to Int32 (adjust as needed)
