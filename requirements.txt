@@ -1,6 +1,6 @@
 matplotlib
 ipympl
-nappy
+#nappy needs special install from git
 numpy
 Pandas
 Polars
@@ -16,8 +16,4 @@ scipy
 dask
 scikit-learn
 flox
-<<<<<<< HEAD
-git+https://github.com/mathause/mplotutils/archive/refs/tags/v0.5.0.zip
-=======
-cdsapi
->>>>>>> ecc
+#git+https://github.com/mathause/mplotutils/archive/refs/tags/v0.5.0.zip
