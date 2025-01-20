@@ -16,7 +16,7 @@ import pandas as pd
 import zipfile
 
 ## Add parent directory to syspath
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if not parent_dir in sys.path:
     sys.path.append(parent_dir)
 from utils import utilities
@@ -60,12 +60,12 @@ def get_cams_eac4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
                 "total_column_methane",
                 "total_column_ozone",
                 "total_column_water_vapour",
-                'dust_aerosol_0.03-0.55um_mixing_ratio', 
-                'dust_aerosol_0.55-0.9um_mixing_ratio', 
-                'dust_aerosol_0.9-20um_mixing_ratio',
-                'hydrophilic_black_carbon_aerosol_mixing_ratio', 
-                'hydrophobic_black_carbon_aerosol_mixing_ratio', 
-                'sulphate_aerosol_mixing_ratio',
+                "dust_aerosol_0.03-0.55um_mixing_ratio",
+                "dust_aerosol_0.55-0.9um_mixing_ratio",
+                "dust_aerosol_0.9-20um_mixing_ratio",
+                "hydrophilic_black_carbon_aerosol_mixing_ratio",
+                "hydrophobic_black_carbon_aerosol_mixing_ratio",
+                "sulphate_aerosol_mixing_ratio",
             ],
             "time": [
                 "00:00",
@@ -92,14 +92,110 @@ def get_cams_eac4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
                 y=year, m=month, d1="01", d2=days_mon
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
         },
-        #f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
+        # f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
         f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
     )  # contains 2 files, one with plevels, one single-level file
+
+
+def get_cams_eac4_global(dir_data, year, month, days_mon):
+    """
+    Download CAMS reanalyses (EAC4) data globally for flexpart
+    """
+    print("Get data global EAC4 for: {}-{}".format(year, month))
+
+    c = cdsapi.Client()
+
+    dataset = "cams-global-reanalysis-eac4"
+    request = {
+        "variable": ["carbon_monoxide"],
+        "model_level": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "57",
+            "58",
+            "59",
+            "60",
+        ],
+        "date": "{y}-{m}-{d1}/{y}-{m}-{d2}".format(
+                y=year, m=month, d1="01", d2=days_mon
+            ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
+        "time": [
+            "00:00",
+            "03:00",
+            "06:00",
+            "09:00",
+            "12:00",
+            "15:00",
+            "18:00",
+            "21:00",
+        ],
+        "data_format": "netcdf_zip",
+    }
+
+    target_file = f"{dir_data}\EAC4_globasl\cams_eac4_{year}_{month}.zip"
+    
+    c.retrieve(dataset, request,target_file)
+
+
 
 def get_cams_eac4_aerosols(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
     """
     Download CAMS reanalyses (EAC4) data. Same as above, but here we only download aerosol multilevel data.
-    Normally, this can be done together with the other data, with get_cams_eac4(). 
+    Normally, this can be done together with the other data, with get_cams_eac4().
     lat, lon    Station latitude and longitude
     dxy         Model resolution. It selcts grids +-dxy around the station.
     """
@@ -112,12 +208,12 @@ def get_cams_eac4_aerosols(dir_data, year, month, days_mon, stat, lat, lon, dxy=
         {
             "format": "netcdf",
             "variable": [
-                'dust_aerosol_0.03-0.55um_mixing_ratio', 
-                'dust_aerosol_0.55-0.9um_mixing_ratio', 
-                'dust_aerosol_0.9-20um_mixing_ratio',
-                'hydrophilic_black_carbon_aerosol_mixing_ratio', 
-                'hydrophobic_black_carbon_aerosol_mixing_ratio', 
-                'sulphate_aerosol_mixing_ratio',
+                "dust_aerosol_0.03-0.55um_mixing_ratio",
+                "dust_aerosol_0.55-0.9um_mixing_ratio",
+                "dust_aerosol_0.9-20um_mixing_ratio",
+                "hydrophilic_black_carbon_aerosol_mixing_ratio",
+                "hydrophobic_black_carbon_aerosol_mixing_ratio",
+                "sulphate_aerosol_mixing_ratio",
             ],
             "time": [
                 "00:00",
@@ -144,7 +240,7 @@ def get_cams_eac4_aerosols(dir_data, year, month, days_mon, stat, lat, lon, dxy=
                 y=year, m=month, d1="01", d2=days_mon
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
         },
-        #f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
+        # f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
         f"{dir_data}\EAC4_aerosols\cams_eac4_{year}_{month}_{stat}.zip",
     )  # contains 2 files, one with plevels, one single-level file
 
@@ -280,9 +376,9 @@ def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon):
                 y=year, m=month, d1="01", d2=days_mon
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
             "format": "netcdf",
-            #"area": "{}/{}/{}/{}".format(lat + 20, lon - 20, lat - 10, lon + 10), #saved in GFAS_17_10SW_47_20NE
-            #"area": "{}/{}/{}/{}".format(lat + 20, lon - 30, lat - 20, lon + 15), #saved in GFAS_7_20SW_52_20NE
-            "area": "{}/{}/{}/{}".format(20, 0, -35, 60), #saved in GFAS
+            # "area": "{}/{}/{}/{}".format(lat + 20, lon - 20, lat - 10, lon + 10), #saved in GFAS_17_10SW_47_20NE
+            # "area": "{}/{}/{}/{}".format(lat + 20, lon - 30, lat - 20, lon + 15), #saved in GFAS_7_20SW_52_20NE
+            "area": "{}/{}/{}/{}".format(20, 0, -35, 60),  # saved in GFAS
             "variable": [
                 "wildfire_flux_of_carbon_dioxide",
                 "wildfire_flux_of_carbon_monoxide",
@@ -290,7 +386,7 @@ def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon):
                 "wildfire_flux_of_black_carbon",
                 "wildfire_flux_of_particulate_matter_d_2_5_µm",
                 "wildfire_flux_of_total_particulate_matter",
-                "wildfire_radiative_power"
+                "wildfire_radiative_power",
             ],
         },
         f"{dir_data}\GFAS\cams_gfas_{year}_{month}_{stat}.nc",
@@ -335,7 +431,7 @@ def is_leap_year(year):
 
 # %%
 def main(
-    dir_data=r"..\..\Data\CAMS", #local path to save the data
+    dir_data=r"..\..\Data\CAMS",  # local path to save the data
     yr1=2020,
     yr2=2023,
     which="cams_eac4",
@@ -366,11 +462,13 @@ def main(
 
                 if which == "cams_eac4":
                     get_cams_eac4(dir_data, year, month, str(days_mon), s, lat, lon)
-                
-                if which == "cams_eac4_aerosols":
-                    get_cams_eac4_aerosols(dir_data, year, month, str(days_mon), s, lat, lon)
 
-                if which == "cams_gfas": 
+                if which == "cams_eac4_aerosols":
+                    get_cams_eac4_aerosols(
+                        dir_data, year, month, str(days_mon), s, lat, lon
+                    )
+
+                if which == "cams_gfas":
                     get_cams_gfas(dir_data, year, month, str(days_mon), s, lat, lon)
 
                 else:
