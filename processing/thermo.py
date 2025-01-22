@@ -3,25 +3,35 @@ import io
 import json
 import logging
 import os
+import re
 import shutil
 import zipfile
 
 import matplotlib as plt
 import polars as pl
+
 from toolbox.utils import pl_simplify_dtypes
 
-class Thermo:
-    def __init__(self, config: dict):
-        try:
-            # configure logging
-            # _logger = f"{os.path.basename(config['logging']['file'])}".split('.')[0]
-            _logger = f"{config['logging']}".split('.')[0]
-            self.logger = logging.getLogger(f"{_logger}.{__name__}")
 
-            self.headers = {'tei49c': config['tei49c']['header'].split(),
-                            'tei49i': config['tei49i']['header'].split(),}
+class Thermo:
+    """
+    Class defining Thermo instruments as configured by a dictionary config. 
+    Presently, 'tei49c' (ozone) and 'tei49i' (ozone) are supported.
+    """
+    def __init__(self, config: dict=dict()):
+        try:
+            if config==dict():
+                self.logger = logging.getLogger(__name__)
+                self.headers = {'tei49c': 'pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres'.split('.')[0],
+                                'tei49i': 'pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres'.split('.')[0],}
+            else:
+                _logger = f"{config['logging']}".split('.')[0]
+                self.logger = logging.getLogger(f"{_logger}.{__name__}")
+
+                self.headers = {'tei49c': config['tei49c']['header'].split(),
+                                'tei49i': config['tei49i']['header'].split(),}
             self.dtypes = {'tei49c': [pl.Utf8]*4 + [pl.Float32]*1 + [pl.Utf8]*1 + [pl.Int32]*2 + [pl.Float32]*6,
-                           'tei49i': [pl.Utf8]*5 + [pl.Float32]*2 + [pl.Int32]*2 + [pl.Float32]*6,}
+                        'tei49i': [pl.Utf8]*5 + [pl.Float32]*2 + [pl.Int32]*2 + [pl.Float32]*6,}
             self.logger.info("Class 'Thermo' initialized successfully.")
 
         except Exception as err:
@@ -285,6 +295,24 @@ class Thermo:
             print(err)
 
 
+    def compile_time_series(self, source: str, pattern: str="tei49c.parquet", dtm: str="dtm", simplify_dtypes: bool=True) -> pl.DataFrame:
+        try:
+            df = pl.DataFrame()
+            for root, dirs, files in os.walk(source):
+                for file in files:
+                    if re.search(pattern=pattern, string=file):
+                        df_tmp = pl.read_parquet(os.path.join(root, file))
+                        if not df_tmp.is_empty():
+                            if simplify_dtypes:
+                                df_tmp = pl_simplify_dtypes(df_tmp)
+                            df = pl.concat([df, df_tmp], how='diagonal')
+            df = df.sort(by=pl.col(dtm))
+            return df
+        except Exception as err:
+            print(err)
+
+
+
     # def extract_file(self, file: str, log=True) -> pd.DataFrame:
     #     """
     #     Open a file, determine its type from the file name, then extract content into a Pandas dataframe.
@@ -402,8 +430,7 @@ class Thermo:
                 shutil.move(src=file, dst=dst)
         except Exception as err:
             self.logger.error(err)
-
-           
+   
 
 if __name__ == "__main__":
     pass

@@ -97,7 +97,6 @@ def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2) -> pl.DataFrame:
                 except pl.ComputeError:
                     pass  # Keep as string if neither works
 
-
         elif dtype == pl.Binary:
             # Optionally, cast binary columns to a simpler form, such as Integers or leave as Binary
             df = df.with_columns(pl.col(column).cast(pl.Int32))  # Example: cast binary to Int32 (adjust as needed)
@@ -128,3 +127,59 @@ def convert_file_to_utf8(file: str) -> None:
 
     except Exception as err:
         print(f"{file} could not be encoded in utf-8.")
+
+
+def aggregate_data(df: pl.DataFrame, dtm: str="dtm", interval: str='1h', how: str='median') -> pl.DataFrame:
+    """
+    Aggregates numeric columns in a Polars DataFrame to specified intervals.
+
+    Args:
+        df (pl.DataFrame): The input DataFrame.
+        dtm (str, optional): Name of the datetime column for grouping. Defaults to dtm.
+        interval (str): Time interval for grouping (default is '1h').
+        how (str, optional): Aggregation operation ('median', 'mean', 'sum'). Defaults to median.
+
+    Returns:
+        pl.DataFrame: A DataFrame with aggregated numeric columns.
+    """
+    try:
+        # Remove nulls in dtm
+        df = df.filter(pl.col("dtm").is_not_null())
+        
+        # Ensure the datetime column is of Datetime type
+        df = df.with_columns(pl.col(dtm).cast(pl.Datetime))
+        
+        # # Fill nulls in numeric columns (forward fill by default, can be customized)
+        # df = df.with_columns(
+        #     [
+        #         pl.col(dtm).fill_null(strategy="forward"),
+        #         pl.col(pl.Float32, pl.Float64, pl.Int32, pl.Int64).fill_null(strategy="forward")
+        #     ]
+        # )
+        
+        df = df.sort(by=dtm)
+
+        # Map the operation to the corresponding Polars method
+        how_map = {
+            "median": lambda col: col.median(),
+            "mean": lambda col: col.mean(),
+            "sum": lambda col: col.sum()
+        }
+        
+        # Validate the operation
+        if how not in how_map:
+            raise ValueError(f"Invalid operation: {how}. how must be one of 'median', 'mean', or 'sum'.")
+        
+        # Perform the aggregation
+        aggregated_df = (
+            df
+            .groupby_dynamic(dtm, every=interval, truncate=True)
+            .agg([
+                how_map[how](pl.col(pl.Float32, pl.Float64, pl.Int32, pl.Int64)).keep_name()
+            ])
+        )
+        
+        return aggregated_df
+
+    except Exception as err:
+        print(err)

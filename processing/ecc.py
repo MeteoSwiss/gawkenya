@@ -367,7 +367,7 @@ class SHADOZ:
     def __init__(self):
         pass
 
-    def download_and_extract_shadoz_zip(self, year: int, url: str='https://acd-ext.gsfc.nasa.gov/anonftp/acd/shadoz/V06', 
+    def download_and_extract_shadoz_zip_to_parquet(self, year: int, url: str='https://acd-ext.gsfc.nasa.gov/anonftp/acd/shadoz/V06', 
                                         station: str='nairobi', target: str='data/level1/ecc/shadoz') -> 'tuple[pl.DataFrame, pl.DataFrame]':
         """
         Downloads a .zip file containing SHADOZ data for a specific station and year, extracts the .dat files,
@@ -435,39 +435,62 @@ class SHADOZ:
         zip_url = f"{url}/{station}/shadoz_{station}_{year}_V06.zip"
         print(f"Downloading {zip_url} ...")
         response = requests.get(zip_url)
-        response.raise_for_status()  # Check if the request was successful
-        
-        # Extract the zip file contents into memory
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-            file_list = z.namelist()
-            dat_files = [file for file in file_list if file.endswith('.dat')]
+        if response.ok:
+            # Extract the zip file contents into memory
+            with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+                file_list = z.namelist()
+                dat_files = [file for file in file_list if file.endswith('.dat')]
 
-            # Combine all .dat files into one DataFrame
-            all_dataframes = []
-            all_metadata = {}
-            for dat_file in dat_files:
-                print(f"> Extracting {dat_file}")
-                with z.open(dat_file) as file:
-                    file_content = file.read()
-                    df, metadata = parse_dat_file(file_content, dat_file)
-                    if df is not None:
-                        all_dataframes.append(df)
-                        all_metadata[dat_file] = metadata
+                # Combine all .dat files into one DataFrame
+                all_dataframes = []
+                all_metadata = {}
+                for dat_file in dat_files:
+                    print(f"> Extracting {dat_file}")
+                    with z.open(dat_file) as file:
+                        file_content = file.read()
+                        df, metadata = parse_dat_file(file_content, dat_file)
+                        if df is not None:
+                            all_dataframes.append(df)
+                            all_metadata[dat_file] = metadata
 
-            df_data = pl.concat(all_dataframes)
-            df_metadata = pl.DataFrame([{**{"source": k}, **v} for k, v in all_metadata.items()])
+                df_data = pl.concat(all_dataframes)
+                df_metadata = pl.DataFrame([{**{"source": k}, **v} for k, v in all_metadata.items()])
 
-        # Store the resulting DataFrame as a parquet file
-        os.makedirs(target, exist_ok=True)
-        df_data_path = os.path.join(target, f'ecc_sonde_data_{year}.parquet')
-        print(f"Saving data to {df_data_path}")
-        df_data.write_parquet(df_data_path)
-        df_metadata.write_parquet(os.path.join(target, f'ecc_sonde_metadata_{year}.parquet'))
+            # Store the resulting DataFrame as a parquet file
+            os.makedirs(target, exist_ok=True)
+            df_data_path = os.path.join(target, f'ecc_sonde_data_{year}.parquet')
+            print(f"Saving data to {df_data_path}")
+            df_data.write_parquet(df_data_path)
+            df_metadata.write_parquet(os.path.join(target, f'ecc_sonde_metadata_{year}.parquet'))
 
-        return df_data, df_metadata
-    
+            return df_data, df_metadata
+        elif response.status_code==404:
+            print(f"Response status '404' received: {zip_url} doesn't seem to exist.")
+            pass
+            return pl.DataFrame(), pl.DataFrame()
 
-    def compile_time_series_at_given_pressure(self, source: str, pressure_level: int, dp: int=5, pattern: str="ecc_sonde_data_") -> pl.DataFrame:
+
+    def compile_time_series_at_given_pressure(self, source: str, pressure_level: int=660, dp: int=5, pattern: str="ecc_sonde_data_", dtm: str="dtm") -> pl.DataFrame:
+        """For a pressure range of pressure_level +/- dp, create a pl.Dataframe with the time series of ozone measured at this level.
+
+        Args:
+            source (str): path to root directory containing .parquet files of compiled ozone sonde profiles.
+            pressure_level (int, optional): desired pressure level in mbar. Defaults to 660 mbar, the actual pressure level of Mount Kenya GAW station.
+            dp (int, optional): wiggle room around given pressure level in mbar. Defaults to 5 mbar, corresponding to ca +/- 56 m at 700 mbar.
+            pattern (str, optional): file name pattern used to select files to be processed. Defaults to "ecc_sonde_data_".
+            dtm (str, optional): name of dateTime column. Defaults to 'dtm'.
+
+        Returns:
+            pl.DataFrame: time series of ozone values at given pressure level. Includes elements
+                - dtm (datetime[μs]): dateTime stamp of observation
+                - Press (Float32): pressure level [mbar]
+                - GeopAlt (Float32): geopotential height [km]
+                - O3_mPa (Float32): ozone partial pessure [mPa]
+                - O3_ppmv (Float32): ozone volume mixing ratio ppmv]
+                - O3_ppbv (Float32): ozone volume mixing ratio ppbv]
+                - O3_DU (Float32): ozone level [DU]
+                - ...: more columns
+        """
         try:
             df = pl.DataFrame()
             pres = [pressure_level - dp, pressure_level + dp]
@@ -479,6 +502,7 @@ class SHADOZ:
                         if not df_tmp.is_empty():
                             df = pl.concat([df, df_tmp], how='diagonal')
             df = df.sort(by=pl.col('dtm'))
+            df = df.with_columns((pl.col('O3_ppmv') * 1000).alias('O3_ppbv'))
             return df
         except Exception as err:
             print(err)

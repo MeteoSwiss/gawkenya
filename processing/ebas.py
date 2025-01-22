@@ -40,7 +40,7 @@ def compile_ebas_ozone_data_into_dataframe(data_path: str, o3_conversion_factor:
 
     Args:
         data_path (str): Path to folder containing data
-        o3_conversion_factor (float): Conversion factor to convert from µg/m3 to ppbv
+        o3_conversion_factor (float, optional): Conversion factor to convert from µg/m3 to ppbv
 
     Returns:
         pd.DataFrame: Pandas DataFrame with O3 data in ppbv
