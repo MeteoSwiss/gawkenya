@@ -97,9 +97,9 @@ def get_cams_eac4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
     )  # contains 2 files, one with plevels, one single-level file
 
 
-def get_cams_eac4_global(dir_data, year, month, days_mon):
+def get_cams_eac4_africa(dir_data, year, month, days_mon):
     """
-    Download CAMS reanalyses (EAC4) data globally for flexpart
+    Download CAMS reanalyses (EAC4) data for Africa and indian Ocean for flexpart
     """
     print("Get data global EAC4 for: {}-{}".format(year, month))
 
@@ -107,7 +107,13 @@ def get_cams_eac4_global(dir_data, year, month, days_mon):
 
     dataset = "cams-global-reanalysis-eac4"
     request = {
-        "variable": ["carbon_monoxide"],
+        "variable": [
+            "surface_geopotential",
+            "surface_pressure",
+            "carbon_monoxide",
+            "specific_humidity",
+            "temperature"
+        ],
         "model_level": [
             "1",
             "2",
@@ -184,9 +190,10 @@ def get_cams_eac4_global(dir_data, year, month, days_mon):
             "21:00",
         ],
         "data_format": "netcdf_zip",
+         "area": [51, -21, -41, 111]
     }
 
-    target_file = f"{dir_data}\EAC4_globasl\cams_eac4_{year}_{month}.zip"
+    target_file = f"{dir_data}/EAC4_africa/cams_eac4_africa_{year}_{month}.zip"
     
     c.retrieve(dataset, request,target_file)
 
@@ -431,10 +438,11 @@ def is_leap_year(year):
 
 # %%
 def main(
-    dir_data=r"..\..\Data\CAMS",  # local path to save the data
+    #dir_data=r"..\..\Data\CAMS",  # local path to save the data
+    dir_data="/input/ECMWF/CAMS",  # ddm path to save the data
     yr1=2020,
-    yr2=2023,
-    which="cams_eac4",
+    yr2=2024,
+    which="cams_eac4_africa",
     station=["MKN"],
 ):
     """
@@ -442,6 +450,7 @@ def main(
     """
     years = np.arange(yr1, yr2 + 1)
     months = np.arange(1, 13)
+    #months = np.arange(1, 2) # for testing
 
     for y in years:
         year = "{:04d}".format(int(y))
@@ -462,6 +471,9 @@ def main(
 
                 if which == "cams_eac4":
                     get_cams_eac4(dir_data, year, month, str(days_mon), s, lat, lon)
+                
+                if which == "cams_eac4_africa":
+                    get_cams_eac4_africa(dir_data, year, month, str(days_mon))
 
                 if which == "cams_eac4_aerosols":
                     get_cams_eac4_aerosols(
