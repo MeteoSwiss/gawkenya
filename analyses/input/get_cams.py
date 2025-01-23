@@ -93,7 +93,7 @@ def get_cams_eac4(dir_data, year, month, days_mon, stat, lat, lon, dxy=0.75):
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
         },
         # f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
-        f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
+        f"{dir_data}/EAC4/cams_eac4_{year}_{month}_{stat}.zip",
     )  # contains 2 files, one with plevels, one single-level file
 
 
@@ -248,7 +248,7 @@ def get_cams_eac4_aerosols(dir_data, year, month, days_mon, stat, lat, lon, dxy=
             ),  ##Normally it should ignore non-existing days (e.g. 31.February), so that I can just put 31, but for unknown reason it saves then the first days of the following month!!??
         },
         # f"{dir_data}\EAC4\cams_eac4_{year}_{month}_{stat}.zip",
-        f"{dir_data}\EAC4_aerosols\cams_eac4_{year}_{month}_{stat}.zip",
+        f"{dir_data}/EAC4_aerosols/cams_eac4_{year}_{month}_{stat}.zip",
     )  # contains 2 files, one with plevels, one single-level file
 
 
@@ -280,11 +280,11 @@ def get_cams_inv_co2(dir_data, year, month, days_mon, stat, lat, lon, dx=4, dy=2
             #'area':  '{}/{}/{}/{}'.format(lat+dy,lon-dx,lat-dy,lon+dx),  #not sure if it works here?
             "time_aggregation": "instantaneous",
         },
-        f"{dir_data}\invGG\cams_inv_co2_{year}_{month}.zip",
+        f"{dir_data}/invGG/cams_inv_co2_{year}_{month}.zip",
     )
 
 
-def get_cams_inv_ch4_all(dir_data, year, month, stat, lat, lon, dx=4, dy=2):
+def get_cams_inv_ch4(dir_data, year, month, stat, lat, lon, dx=4, dy=2):
     """
     Get CAMS global inversion-optimised greenhouse gas fluxes and concentrations (Not tried yet, so far: run in online form)
     = >finally I was running it in the online form!
@@ -311,7 +311,7 @@ def get_cams_inv_ch4_all(dir_data, year, month, stat, lat, lon, dx=4, dy=2):
             #'area':  '{}/{}/{}/{}'.format(lat+dy,lon-dx,lat-dy,lon+dx),  #not working?
             "time_aggregation": "instantaneous",
         },
-        f"{dir_data}\invGG\cams_inv_ch4_{year}_{stat}.zip",
+        f"{dir_data}/invGG/cams_inv_ch4_{year}_{month}.zip",
     )
 
 
@@ -396,7 +396,7 @@ def get_cams_gfas(dir_data, year, month, days_mon, stat, lat, lon):
                 "wildfire_radiative_power",
             ],
         },
-        f"{dir_data}\GFAS\cams_gfas_{year}_{month}_{stat}.nc",
+        f"{dir_data}/GFAS/cams_gfas_{year}_{month}_{stat}.nc",
     )
 
 
@@ -442,6 +442,7 @@ def main(
     dir_data="/input/ECMWF/CAMS",  # ddm path to save the data
     yr1=2020,
     yr2=2024,
+    months: list=None,
     which="cams_eac4_africa",
     station=["MKN"],
 ):
@@ -449,7 +450,8 @@ def main(
     Please adapt dir_data to a local folder to save the CAMS data.
     """
     years = np.arange(yr1, yr2 + 1)
-    months = np.arange(1, 13)
+    if months is None:
+        months = np.arange(1, 13)
     #months = np.arange(1, 2) # for testing
 
     for y in years:
@@ -467,7 +469,7 @@ def main(
                     get_cams_inv_co2(dir_data, year, month, str(days_mon), s, lat, lon)
 
                 if which == "cams_inv_ch4":
-                    get_cams_inv_ch4_all(dir_data, year, month, s, lat, lon)
+                    get_cams_inv_ch4(dir_data, year, month, s, lat, lon)
 
                 if which == "cams_eac4":
                     get_cams_eac4(dir_data, year, month, str(days_mon), s, lat, lon)
