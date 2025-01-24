@@ -25,6 +25,41 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if not parent_dir in sys.path:
     sys.path.append(parent_dir)
 from utils import utilities
+#%%
+def cams_unzip(dir_path="/input/ECMWF/CAMS/EAC4_africa"):
+    """
+    Some cams products (e.g. EAC4) are given as zip-files, containing one netcdf per level (e.g. pressure, surface or model level)
+    This function extracts the zip files, merges the containing netcdfs, and saves them as a new netcdf (with the same name as the initial zip-file)
+    """
+
+        
+    file_list = [os.path.join(dir_path, file) for file in os.listdir(dir_path) if file.endswith(".zip")]
+
+    # read data:
+    # loop through all zip-files and extract them
+
+    for file_name in file_list:
+        print(f"unzip {file_name}")
+        zip_path = os.path.join(dir_path, file_name)
+        zip_extract = os.path.join(dir_path, os.path.splitext(file_name)[0])
+        os.makedirs(zip_extract, exist_ok=True)
+
+        # read and extract the zip file
+        with zipfile.ZipFile(zip_path, "r") as zip_sel:
+            zip_sel.extractall(zip_extract)
+
+        extracted_files_list = os.listdir(zip_extract)
+        # open the netcdfs in the extracted folder and merge them to one dataset
+        cams_temps = []
+        for nc_file in extracted_files_list:
+            cams_temp = xr.open_dataset(os.path.join(zip_extract, nc_file))
+            cams_temps.append(cams_temp)
+        cams_combined = xr.merge(cams_temps)
+        cams_combined = cams_combined.rename(
+            {"valid_time": "time", "model_level": "level"}
+        )
+        cams_combined.to_netcdf(zip_extract + ".nc")
+        print(f"Merged file saved as {zip_extract}.nc")
 
 
 # %%
