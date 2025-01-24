@@ -65,8 +65,7 @@ def cams_unzip(dir_path="/input/ECMWF/CAMS/EAC4_africa"):
         )
         cams_combined.to_netcdf(new_file_name)
         print(f"Merged file saved as {new_file_name}")
-        # remove again the unzipped directory
-        shutil.rmtree(zip_extract)
+
 
 
 # %%
