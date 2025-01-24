@@ -39,9 +39,14 @@ def cams_unzip(dir_path="/input/ECMWF/CAMS/EAC4_africa"):
     # loop through all zip-files and extract them
 
     for file_name in file_list:
-        print(f"unzip {file_name}")
         zip_path = os.path.join(dir_path, file_name)
         zip_extract = os.path.join(dir_path, os.path.splitext(file_name)[0])
+        new_file_name = zip_extract + ".nc"
+        #skip if the merged nc file does already exist:
+        if os.path.isfile(new_file_name):
+            print(f"File {new_file_name} already exists. Skip.")
+            continue
+        print(f"unzip {file_name}")
         os.makedirs(zip_extract, exist_ok=True)
 
         # read and extract the zip file
@@ -58,8 +63,10 @@ def cams_unzip(dir_path="/input/ECMWF/CAMS/EAC4_africa"):
         cams_combined = cams_combined.rename(
             {"valid_time": "time", "model_level": "level"}
         )
-        cams_combined.to_netcdf(zip_extract + ".nc")
-        print(f"Merged file saved as {zip_extract}.nc")
+        cams_combined.to_netcdf(new_file_name)
+        print(f"Merged file saved as {new_file_name}")
+        # remove again the unzipped directory
+        shutil.rmtree(zip_extract)
 
 
 # %%
