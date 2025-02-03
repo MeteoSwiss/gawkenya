@@ -69,7 +69,7 @@ def setup_logging(file: str) -> logging:
         return logger
 
 
-def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2) -> pl.DataFrame:
+def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2, exclude: list=list()) -> pl.DataFrame:
     """Simplify dtypes of polars Dataframe
 
     Args:
@@ -78,7 +78,8 @@ def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2) -> pl.DataFrame:
     Returns:
         pl.DataFrame: polars Dataframe with most simple dtypes
     """
-    for column in df.columns:
+    # for column in df.columns:
+    for column in [x for x in df.columns if x not in set(exclude)]:
         dtype = df[column].dtype
         if dtype == pl.Datetime:
             continue  # Keep datetime columns as is
