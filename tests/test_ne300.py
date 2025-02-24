@@ -40,8 +40,10 @@ class TestNE300(unittest.TestCase):
         ne300 = NE300(config=config)
 
         ne300.compile_files_to_parquet(source='tests/data/ne300',
+                                       archive='tests/data/ne300/archive',
+                                       issues='tests/data/ne300/issues',
                                        target='tests/data/ne300/target',
-                                       move_files_on_success=False,)
-
+                                       move_processed_files=True,)
+       
 if __name__ == '__main__':
     unittest.main()
