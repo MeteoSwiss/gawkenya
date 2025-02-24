@@ -94,7 +94,7 @@ def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2, exclude: list=list()) ->
             except pl.ComputeError:
                 try:
                     # If that fails, try Float32
-                    df = df.with_columns(df[column].cast(pl.Float32).round(digits))
+                    df = df.with_columns(df[column].cast(pl.Float32))#.round(digits))
                 except pl.ComputeError:
                     pass  # Keep as string if neither works
 
