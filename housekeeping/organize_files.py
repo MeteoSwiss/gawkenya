@@ -1,5 +1,6 @@
 # %%
 # Author: joerg.klausen@meteoswiss.ch
+import datetime
 import os
 import platform
 import re
@@ -7,7 +8,11 @@ import shutil
 import subprocess
 import time
 import zipfile
-from datetime import datetime
+from collections import defaultdict
+# from datetime import datetime
+
+import matplotlib.pyplot as plt
+import polars as pl
 
 
 # %%
@@ -35,7 +40,7 @@ def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
         pattern = cfg[folder]["pattern"]
         n = 0
         src = os.path.join(cfg["root"], branch, folder)
-        os.makedirs(src, exist_ok=True)
+        # os.makedirs(src, exist_ok=True)
         files = os.listdir(src)
         for file in files:
             name = re.search(pattern, file)
@@ -63,6 +68,9 @@ def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
         if verbosity > 0:
             print(f"Finished organizing files under '{cfg['root']}{branch}/{folder}'. {n} files moved.")
         total += n
+        # files = os.listdir(src)
+        # if files==list():
+        #     os.removedirs(src)
     return total
 
 
@@ -256,6 +264,93 @@ def remove_empty_files_and_folders(source: str=str()):
     except Exception as err:
         print(err)
 
+
+def get_file_counts(base_path: str, base_name: str, base_folders: dict={'incoming':'incoming', 'archive':'archive', 'issues':'issues'}, n_days: int=7) -> pl.DataFrame:
+    """
+    Scan directories ('incoming', 'archive', 'issues'), count files for each <name> per day.
+    """
+    file_name_pattern = re.compile(rf'({base_name})-(\d{{8}})(\d{{4}})?(\d{{2}})?\.(\w+)$')
+    
+    # Get the last N days as datetime objects
+    today = datetime.datetime.now()#.strftime('%Y%m%d')
+    valid_dates = { (today - datetime.timedelta(days=i)).strftime('%Y%m%d'): (today - datetime.timedelta(days=i)).date() for i in range(n_days) }
+    
+    file_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # {date: {name: {folder: count}}}
+    
+    for folder_key, folder in base_folders.items():
+        folder_path = os.path.join(base_path, folder, base_name)
+        if not os.path.exists(folder_path):
+            continue
+        
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                match = re.match(file_name_pattern, file)
+                if match:
+                    name, date_str = match.group(1), match.group(2)
+                    if date_str in valid_dates:
+                        file_counts[date_str][name][folder_key] += 1
+    
+    # Convert to polars DataFrame
+    data = []
+    for date_str, names in file_counts.items():
+        for name, folders in names.items():
+            incoming_count = folders.get('incoming', 0)
+            archive_count = folders.get('archive', 0)
+            issues_count = folders.get('issues', 0)
+            total_count = incoming_count + archive_count + issues_count
+            data.append([
+                valid_dates[date_str], name,
+                incoming_count,
+                archive_count,
+                issues_count,
+                total_count
+            ])
+    
+    df = pl.DataFrame(data, schema=["date", "name", "incoming", "archive", "issues", "total"])
+    return df
+
+# def plot_file_counts(df: pl.DataFrame):
+#     """
+#     Create a stacked bar plot showing the number of files per day, categorized by folder type.
+#     """
+#     df = df.melt(id_vars=['date', 'name'], value_vars=['incoming', 'archive', 'issues'], variable_name='folder', value_name='count')
+    
+#     plt.figure(figsize=(12, 6))
+#     plt.bar(data=df.to_pandas(), x='date', y='count', hue='folder', estimator=sum)
+#     plt.xticks(rotation=45)
+#     plt.xlabel("Date")
+#     plt.ylabel("File Count")
+#     plt.title("File Counts Over the Last N Days")
+#     plt.legend(title="Folder")
+#     plt.show()
+def plot_file_counts(df: pl.DataFrame):
+    """
+    Create a stacked bar plot showing the number of files per day, categorized by folder type.
+    """
+    df = df.melt(id_vars=['date', 'name'], value_vars=['incoming', 'archive', 'issues'], variable_name='folder', value_name='count')
+    
+    plt.figure(figsize=(12, 6))
+    unique_dates = df['date'].unique().to_list()
+    bottom_values = {folder: [0] * len(unique_dates) for folder in ['incoming', 'archive', 'issues']}
+    
+    for folder in ['incoming', 'archive', 'issues']:
+        counts = [df.filter((df['date'] == date) & (df['folder'] == folder))['count'].sum() for date in unique_dates]
+        plt.bar(unique_dates, counts, label=folder, bottom=bottom_values[folder])
+        bottom_values[folder] = [b + c for b, c in zip(bottom_values[folder], counts)]
+    
+    plt.xticks(rotation=45)
+    plt.xlabel("Date")
+    plt.ylabel("File Count")
+    plt.title("File Counts Over the Last N Days")
+    plt.legend(title="Folder")
+    plt.show()
+    return
+
+# Example usage:
+# base_directory = "/path/to/root"  # Change this to the actual path
+# n_days = 30  # Adjust as needed
+# df = get_file_counts(base_directory, n_days)
+# plot_file_counts(df)
 
 # %%
 if __name__ == "__main__":
