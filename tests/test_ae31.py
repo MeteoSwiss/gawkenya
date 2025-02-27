@@ -15,12 +15,9 @@ class TestAE31(unittest.TestCase):
 
     def test_extract_to_dataframe(self): 
         ae31 = AE31(config=config)
-        path="tests/data/ae31/ae31-2025022008.zip"
-        if os.path.exists(path):
-            df = ae31.extract_to_dataframe(file_path=path)
-            # df.write_parquet(path.replace('zip', 'parquet'))
+        file_path="tests/data/ae31/ae31-2025022008.zip"
+        df = ae31.extract_to_dataframe(file_path=file_path)
         self.assertEqual(df.shape, (12, 62))
-        # self.assertEqual(df[1], None)
 
 
     def test_compile_data(self):
@@ -30,8 +27,9 @@ class TestAE31(unittest.TestCase):
         self.assertEqual(df.shape, (35, 62))
 
         # clean up
-        if os.path.exists(self.target):
+        try:
             os.remove(os.path.join(self.target, file_name))
+        except:
             os.remove(os.path.join(self.target, "2025", "02", file_name))
             os.removedirs(os.path.join(self.target, "2025", "02"))
 

@@ -89,7 +89,7 @@ class AE31:
             self.logger.error("_move_file: %s produced exception: %s", src, err)
             
 
-    def read_csv(self, file: str, dtm: str='dtm', has_header: bool=True) -> pl.DataFrame:
+    def read_csv(self, source, dtm: str='dtm', has_header: bool=True) -> pl.DataFrame:
         """Read an AE31 .csv file and return a pl.DataFrame
 
             14.9.3  Data File Format - Seven wavelength Instruments 
@@ -119,7 +119,7 @@ class AE31:
         Returns:
             pl.DataFrame: dataframe with header
         """
-        if re.search('AE31_', str(file)):
+        if re.search('AE31_', str(source)):
             has_header = False
         if not has_header:
             cols = [f"{dtm}","id","date","time","UV370","B470","G520","Y590","R660","IR880","IR950","flow",]# "bypass",]
@@ -133,10 +133,10 @@ class AE31:
         df = pl.DataFrame()
 
         try:
-            with open(file, "r") as fh:
-                content = fh.read().replace(" ", "").encode()
+            # with open(file, "r") as fh:
+            #     content = fh.read().replace(" ", "").encode()
 
-            df = pl.read_csv(content, has_header=has_header)
+            df = pl.read_csv(source, has_header=has_header)
             df = df.cast({pl.Int64: pl.Int32, pl.Float64: pl.Float32})
             if not has_header:
                 df.columns = cols
@@ -170,14 +170,23 @@ class AE31:
                     if len(data_files) > 1:
                         raise ValueError("More than 1 file found in the zip archive.")
 
-                    # Extract the single file to a temporary file
-                    temp_file = tempfile.NamedTemporaryFile(delete=False)
-                    with open(temp_file.name, 'wb') as fh:
-                        fh.write(zip_file.read(data_files[0]))
+                    # # Extract the single file to a temporary file
+                    # temp_file = tempfile.NamedTemporaryFile(delete=False)
+                    # with open(temp_file.name, 'wb') as fh:
+                    #     fh.write(zip_file.read(data_files[0]))
 
-                    df = self.read_csv(temp_file.name, dtm)
+                    # df = self.read_csv(temp_file.name, dtm)
 
-                    os.remove(temp_file.name)
+                    # os.remove(temp_file.name)
+
+                    with zip_file.open(name=data_files[0]) as fh:
+                        source = fh.read().decode('utf-8').replace(" ", "").encode()
+
+                    df = pl.read_csv(source)
+                    df = df.cast({pl.Int64: pl.Int32, pl.Float64: pl.Float32})
+                    df = df.with_columns(pl.col(dtm).str.to_datetime(time_unit='us', time_zone='UTC'), 
+                                        pl.col("date").str.to_date("%d-%b-%y").dt.combine(pl.col("time").str.to_time("%H:%M")).alias("date_time"))
+                self.logger.info(f"{file_path} successfully read.")    
 
                 return df
 
@@ -185,6 +194,7 @@ class AE31:
             # return self.read_csv(file=file_path)
             
             # ignore all other files for now
+            self.logger.info(f"{file_path} ignored (not a .zip file)")
             return pl.DataFrame()
         
         except Exception as err:
@@ -242,9 +252,52 @@ class AE31:
             return pl.DataFrame()
 
 
+    def split_and_save_parquet(self, df: pl.DataFrame, target: Path, file_name: str="ae31.parquet", split: str="1mo", dtm: str="dtm"):
+        try:
+            assert split in {"1y", "1mo", "1d"}, "split must be '1y', '1mo', or '1d'"
+
+            if dtm not in df.columns:
+                raise ValueError("DataFrame must contain a 'dtm' column.")
+            
+            df = df.sort(dtm)
+            df = df.with_columns(pl.col(dtm).dt.replace_time_zone(time_zone='UTC'))
+            
+            if split == "1y":
+                df = df.with_columns(df[dtm].dt.strftime("%Y").alias("folder"))
+            elif split == "1mo":
+                df = df.with_columns(df[dtm].dt.strftime("%Y/%m").alias("folder"))
+            elif split == "1d":
+                df = df.with_columns(df[dtm].dt.strftime("%Y/%m/%d").alias("folder"))
+            # else:
+            #     raise ValueError("Invalid split value. Choose from '1y', '1mo', or '1d'.")
+            
+            # target_path = Path(target)
+            partitions = df.partition_by("folder", maintain_order=True)
+            for i, sub_df in enumerate(partitions):
+                folder = sub_df["folder"].unique()[0]
+                folder_path = target / folder
+                folder_path.mkdir(parents=True, exist_ok=True)
+                parquet_path = folder_path / file_name
+                
+                sub_df = sub_df.drop("folder")  # Drop 'folder' before merging
+                
+                if parquet_path.exists():
+                    existing_df = pl.read_parquet(parquet_path)
+                    existing_df = existing_df.with_columns(pl.col(dtm).dt.replace_time_zone(time_zone='UTC'))
+                    existing_df = pl.concat([existing_df, sub_df], how='diagonal')
+                    existing_df = existing_df.unique().sort(by=dtm)
+                    existing_df.write_parquet(parquet_path)
+                else:
+                    sub_df.sort(by=dtm).write_parquet(parquet_path)
+
+        except Exception as err:
+            self.logger.error("split_and_save_parquet: %s produced exception: %s", target / file_name, err)
+            return pl.DataFrame()
+
+
     def compile_data(self, source: str=str(), target: str=str(), file_name: str=str(),
                                  move_processed_files: bool=True, archive: str=str(), issues: str=str(), 
-                                 split: str="month", dtm: str="dtm") -> Path:
+                                 split: str="1mo", dtm: str="dtm") -> Path:
         """
         Harvest a folder and its sub-folders, compile data into .parquet files, and organize them.
         
@@ -276,19 +329,25 @@ class AE31:
                     _df = self.extract_to_dataframe(file_path=src, dtm=dtm)
 
                     if not _df.is_empty():
-
-                        df = self.append_parquet(df=_df, target=target, dtm=dtm, split=split, file_name=file_name)
-                        if not df.is_empty():
-                            _dst = archive  # Success
-                        else:
-                            continue
+                        # df = self.append_parquet(df=_df, target=target, dtm=dtm, split=split, file_name=file_name)
+                        try:
+                            df = pl.concat([df, _df], how='diagonal')
+                            if not df.is_empty():
+                                _dst = archive  # Success
+                            else:
+                                continue
+                        except:
+                            self.logger.error(f"compile_files_to_parquet: {file} could not be added to parquet.")
+                            pass
                     if move_processed_files:
                         dst = self._move_file(src=src, dst=_dst, split=split)
                 
-                if not df.is_empty():
-                    df = df.unique()
-                    df.sort(by=['date_time'])
-                    df.write_parquet(os.path.join(target, f"{self.name}.parquet"))
+            if not df.is_empty():
+                # remove rows with all null entries and remove duplicates
+                df = df.filter(~pl.all_horizontal(pl.all().is_null())).unique()
+                df.sort(by=['date_time'])
+                self.split_and_save_parquet(df=df, target=target, split=split, file_name=file_name)
+                # df.write_parquet(os.path.join(target, f"{self.name}.parquet"))
 
             if Path(root) != source:
                 try:

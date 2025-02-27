@@ -9,6 +9,7 @@ nrb-brewer:
     pattern: B\d{5}.071
     buckets: None
     expected: 1
+
 nrb-dobson:
   root: /product_data/data/pay/Kenya
   logging: mch-nrb.log
@@ -21,3 +22,36 @@ nrb-dobson:
     pattern: D\d{7}.018
     buckets: yearly
     expected: 260
+
+nrb-aq:
+  root: /product_data/data/pay/Kenya/NRB
+  logging: mch-nrb.log
+  branches:
+    incoming: incoming
+    archive: archive
+    issues: incoming_with_issues
+    logs: logs    
+  file_name: file_coverage_nrb_aq.json
+  folders:
+    - "49i"
+    - ae31
+    - aurora3000
+    - avo
+  "49i": 
+    pattern: 49i-\d{12}.(zip|dat)
+    header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
+    buckets: daily
+    expected: 24
+  ae31:
+    pattern: (?i)ae31[_-]\d{10}\.(csv|zip)  # (ae31-\d{10}.(zip|csv))|(AE31_\d{10}\.csv)
+    buckets: daily
+    expected: 24
+  aurora3000:
+    pattern: aurora3000-\d{10}.(zip|csv)
+    buckets: daily
+    expected: 24
+  avo:
+    pattern: not-yet-impolemented
+    buckets: daily
+    expected: 24
+  
