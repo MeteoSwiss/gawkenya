@@ -49,7 +49,7 @@ class AE31:
             pass
 
     
-    def _move_file(self, src: str, dst: str, split: str = "month") -> Path:
+    def move_file(self, src: str, dst: str, split: str = "1mo") -> Path:
         """create destination path and move file.
 
         Args:
@@ -72,9 +72,9 @@ class AE31:
             year, month, day = match.group(1, 2, 3)
             dst = Path(dst) / year / month / day
             split_map = {
-                "year": dst.parents[2],
-                "month": dst.parent,
-                "day": dst,
+                "1y": dst.parents[2],
+                "1mo": dst.parent,
+                "1d": dst,
             }
             dst = split_map.get(split, dst)
             dst.mkdir(parents=True, exist_ok=True)
@@ -86,10 +86,10 @@ class AE31:
             return dst / src.name
         
         except Exception as err:
-            self.logger.error("_move_file: %s produced exception: %s", src, err)
+            self.logger.error("move_file: %s produced exception: %s", src, err)
             
 
-    def read_csv(self, source, dtm: str='dtm', has_header: bool=True) -> pl.DataFrame:
+    def read_csv_no_header(self, file_path: str, dtm: str='dtm') -> pl.DataFrame:
         """Read an AE31 .csv file and return a pl.DataFrame
 
             14.9.3  Data File Format - Seven wavelength Instruments 
@@ -119,30 +119,35 @@ class AE31:
         Returns:
             pl.DataFrame: dataframe with header
         """
-        if re.search('AE31_', str(source)):
-            has_header = False
-        if not has_header:
-            cols = [f"{dtm}","id","date","time","UV370","B470","G520","Y590","R660","IR880","IR950","flow",]# "bypass",]
-            cols += ["?370", "sens_zero_370","sens_beam_370","ref_zero_370","ref_beam_370","att_370", ]#"flow_370", "bypass_370",] 
-            cols += ["?470", "sens_zero_470","sens_beam_470","ref_zero_470","ref_beam_470","att_470", ]#"flow_470", "bypass_470",] 
-            cols += ["?520", "sens_zero_520","sens_beam_520","ref_zero_520","ref_beam_520","att_520", ]#"flow_520", "bypass_520",] 
-            cols += ["?590", "sens_zero_590","sens_beam_590","ref_zero_590","ref_beam_590","att_590", ]#"flow_590", "bypass_590",] 
-            cols += ["?660", "sens_zero_660","sens_beam_660","ref_zero_660","ref_beam_660","att_660", ]#"flow_660", "bypass_660",] 
-            cols += ["?880", "sens_zero_880","sens_beam_880","ref_zero_880","ref_beam_880","att_880", ]#"flow_880", "bypass_880",] 
-            cols += ["?950", "sens_zero_950","sens_beam_950","ref_zero_950","ref_beam_950","att_950", ]#"flow_950", "bypass_950",] 
+        cols = [f"{dtm}","id","date","time","UV370","B470","G520","Y590","R660","IR880","IR950","flow",]# "bypass",]
+        # cols += ["?370", "sens_zero_370","sens_beam_370","ref_zero_370","ref_beam_370","att_370", ]#"flow_370", "bypass_370",] 
+        # cols += ["?470", "sens_zero_470","sens_beam_470","ref_zero_470","ref_beam_470","att_470", ]#"flow_470", "bypass_470",] 
+        # cols += ["?520", "sens_zero_520","sens_beam_520","ref_zero_520","ref_beam_520","att_520", ]#"flow_520", "bypass_520",] 
+        # cols += ["?590", "sens_zero_590","sens_beam_590","ref_zero_590","ref_beam_590","att_590", ]#"flow_590", "bypass_590",] 
+        # cols += ["?660", "sens_zero_660","sens_beam_660","ref_zero_660","ref_beam_660","att_660", ]#"flow_660", "bypass_660",] 
+        # cols += ["?880", "sens_zero_880","sens_beam_880","ref_zero_880","ref_beam_880","att_880", ]#"flow_880", "bypass_880",] 
+        # cols += ["?950", "sens_zero_950","sens_beam_950","ref_zero_950","ref_beam_950","att_950", ]#"flow_950", "bypass_950",] 
+        cols += ['UV370_1','UV370_2','UV370_3','UV370_4','UV370_5','UV370_6',]
+        cols += ['B470_1','B470_2','B470_3','B470_4','B470_5','B470_6',]
+        cols += ['G520_1','G520_2','G520_3','G520_4','G520_5','G520_6',]
+        cols += ['Y590_1','Y590_2','Y590_3','Y590_4','Y590_5','Y590_6',]
+        cols += ['R660_1','R660_2','R660_3','R660_4','R660_5','R660_6',]
+        cols += ['IR880_1','IR880_2','IR880_3','IR880_4','IR880_5','IR880_6',]
+        cols += ['IR950_1','IR950_2','IR950_3','IR950_4','IR950_5','IR950_6',]
         df = pl.DataFrame()
 
         try:
             # with open(file, "r") as fh:
             #     content = fh.read().replace(" ", "").encode()
 
-            df = pl.read_csv(source, has_header=has_header)
+            df = pl.read_csv(file_path, has_header=False)
             df = df.cast({pl.Int64: pl.Int32, pl.Float64: pl.Float32})
-            if not has_header:
-                df.columns = cols
+            df.columns = cols
             df = df.with_columns(pl.col(dtm).str.to_datetime(time_unit='us', time_zone='UTC'), 
                                  pl.col("date").str.to_date("%d-%b-%y").dt.combine(pl.col("time").str.to_time("%H:%M")).alias("date_time"))
 
+            self.logger.info(f"{file_path} successfully read.")
+            
             return df
         except Exception as err:
             self.logger.error(err)
@@ -190,66 +195,63 @@ class AE31:
 
                 return df
 
-            # If it's not a ZIP file, process it directly
-            # return self.read_csv(file=file_path)
-            
-            # ignore all other files for now
-            self.logger.info(f"{file_path} ignored (not a .zip file)")
-            return pl.DataFrame()
+            else:
+                # If it's not a ZIP file, process it directly
+                return self.read_csv_no_header(file_path=file_path)
         
         except Exception as err:
             self.logger.error("%s: %s", file_path, err)
             return pl.DataFrame()
 
 
-    def append_parquet(self, df: pl.DataFrame, target: Path, dtm: str="dtm",
-                       split: str="month", file_name: str="ae31.parquet") -> pl.DataFrame:
-        try:
-            assert split in {"year", "month", "day"}, "split must be 'year', 'month', or 'day'"
+    # def append_parquet(self, df: pl.DataFrame, target: Path, dtm: str="dtm",
+    #                    split: str="month", file_name: str="ae31.parquet") -> pl.DataFrame:
+    #     try:
+    #         assert split in {"year", "month", "day"}, "split must be 'year', 'month', or 'day'"
 
-            df = df.with_columns(pl.col(dtm).cast(pl.Datetime))
-            start_date, end_date = df[dtm].min().date(), df[dtm].max().date()
-            date_ranges = pl.date_range(start_date, end_date, interval="1d", eager=True)
+    #         df = df.with_columns(pl.col(dtm).cast(pl.Datetime))
+    #         start_date, end_date = df[dtm].min().date(), df[dtm].max().date()
+    #         date_ranges = pl.date_range(start_date, end_date, interval="1d", eager=True)
 
-            for date in date_ranges:
-                year, month, day = str(date.year), f"{date.month:02d}", f"{date.day:02d}"
-                dst = target / year / month / day
-                split_map = {
-                    "year": dst.parents[2],
-                    "month": dst.parent,
-                    "day": dst,
-                }
-                dst = split_map.get(split, dst)
-                dst.mkdir(parents=True, exist_ok=True)
+    #         for date in date_ranges:
+    #             year, month, day = str(date.year), f"{date.month:02d}", f"{date.day:02d}"
+    #             dst = target / year / month / day
+    #             split_map = {
+    #                 "year": dst.parents[2],
+    #                 "month": dst.parent,
+    #                 "day": dst,
+    #             }
+    #             dst = split_map.get(split, dst)
+    #             dst.mkdir(parents=True, exist_ok=True)
 
-                # if split == "year":
-                #     folder_path = folder_path.parents[2]
-                # elif split == "month":
-                #     folder_path = folder_path.parent
+    #             # if split == "year":
+    #             #     folder_path = folder_path.parents[2]
+    #             # elif split == "month":
+    #             #     folder_path = folder_path.parent
 
-                df_filtered = df.filter(
-                    (pl.col(dtm).dt.year() == date.year)
-                    & (split != "year" or (pl.col(dtm).dt.month() == date.month))
-                    & (split != "month" or (pl.col(dtm).dt.date() == date))
-                )   # [TODO] handle case where df extends across split?
+    #             df_filtered = df.filter(
+    #                 (pl.col(dtm).dt.year() == date.year)
+    #                 & (split != "year" or (pl.col(dtm).dt.month() == date.month))
+    #                 & (split != "month" or (pl.col(dtm).dt.date() == date))
+    #             )   # [TODO] handle case where df extends across split?
 
-                file_path = dst / file_name
-                if file_path.exists():
-                    df_existing = pl.read_parquet(file_path)
-                    rows_existing = len(df_existing)
-                    df_combined = pl.concat([df_existing, df_filtered], how="diagonal").unique().sort(dtm)
-                else:
-                    rows_existing = 0
-                    df_combined = df_filtered.unique().sort(dtm)
-                rows_combined = len(df_combined)
+    #             file_path = dst / file_name
+    #             if file_path.exists():
+    #                 df_existing = pl.read_parquet(file_path)
+    #                 rows_existing = len(df_existing)
+    #                 df_combined = pl.concat([df_existing, df_filtered], how="diagonal").unique().sort(dtm)
+    #             else:
+    #                 rows_existing = 0
+    #                 df_combined = df_filtered.unique().sort(dtm)
+    #             rows_combined = len(df_combined)
 
-                df_combined.write_parquet(file_path)
+    #             df_combined.write_parquet(file_path)
             
-            self.logger.info(f"{file_path}: rows added: {rows_combined - rows_existing}")
-            return df_combined
-        except Exception as err:
-            self.logger.error("append_parquet: %s produced exception: %s", target / file_name, err)
-            return pl.DataFrame()
+    #         self.logger.info(f"{file_path}: rows added: {rows_combined - rows_existing}")
+    #         return df_combined
+    #     except Exception as err:
+    #         self.logger.error("append_parquet: %s produced exception: %s", target / file_name, err)
+    #         return pl.DataFrame()
 
 
     def split_and_save_parquet(self, df: pl.DataFrame, target: Path, file_name: str="ae31.parquet", split: str="1mo", dtm: str="dtm"):
@@ -340,7 +342,7 @@ class AE31:
                             self.logger.error(f"compile_files_to_parquet: {file} could not be added to parquet.")
                             pass
                     if move_processed_files:
-                        dst = self._move_file(src=src, dst=_dst, split=split)
+                        dst = self.move_file(src=src, dst=_dst, split=split)
                 
             if not df.is_empty():
                 # remove rows with all null entries and remove duplicates

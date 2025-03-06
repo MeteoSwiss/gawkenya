@@ -59,28 +59,13 @@ class AE33:
                 "RefCh1", "Sen1Ch1", "Sen2Ch1", "RefCh2", "Sen1Ch2", "Sen2Ch2", "RefCh3", "Sen1Ch3", "Sen2Ch3", "RefCh4", "Sen1Ch4", "Sen2Ch4", "RefCh5", "Sen1Ch5", "Sen2Ch5", "RefCh6", "Sen1Ch6", "Sen2Ch6", "RefCh7", "Sen1Ch7", "Sen2Ch7", 
                 "BC11", "BC12", "BC1", "BC21", "BC22", "BC2", "BC31", "BC32", "BC3", "BC41", "BC42", "BC4", "BC51", "BC52", "BC5", "BC61", "BC62", "BC6", "BC71", "BC72", "BC7", 
                 "K1", "K2", "K3", "K4", "K5", "K6", "K7", "unclear_2", "Pres", "Temp", "Flow1", "Flow2", "FlowC", "Temp_1", "Temp_2","Temp_3",
-                # "ContTemp", "SupplyTemp", "LedTemp",
                 "Stat_1", "Stat_2", "Stat_3", "Stat_4", "Stat_5", 
-                # "Status", "ContStatus", "DetectStatus", "LedStatus", "ValveStatus", 
                 "TapeAdvCount", "unclear_3", "unclear_4", "unclear_5", "unclear_6"
-                # "ID_com1", "ID_com2", "ID_com3", "fields_i"
         )
         dtypes = [pl.Utf8] + [pl.Int64] + [pl.Utf8]*4 + [pl.Int64]*42 + [pl.Float64]*10 + [pl.Int64]*3 + [pl.Float64]*3 + [pl.Int64]*10
 
         try:
             source = zipfile.ZipFile(path).read(os.path.basename(path).replace('.zip', '.dat'))
-            # df = pl.read_csv(source=source, 
-            #                 has_header=False, 
-            #                 separator=chr(0),
-            #                 comment_char="#",
-            #                 ).select(tmp=pl.col('column_1')
-            #                 .str.split(sep)
-            #                 # .list.to_struct(
-            #                 #     n_field_strategy='max_width',
-            #                 #     fields=lambda x:f"column_{x+1}")
-            #                 ).unnest('tmp').with_columns(
-            #                     pl.col('column_4')
-            #                     .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_zone='UTC'))
             df = pl.read_csv(source=source, 
                             has_header=False, 
                             separator=sep,
@@ -88,7 +73,7 @@ class AE33:
                             dtypes=dtypes
                             ).with_columns(
                                 pl.col('column_4')
-                                .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p')
+                                .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_unit='us', time_zone='UTC')
                                 )
             df.columns = cols
             # df = df.with_columns(pl.col(pl.Utf8).exclude(f"^(I|D|{dtm}).*$").cast(pl.Float32))
@@ -142,8 +127,8 @@ class AE33:
                     result = pl.concat([result, tmp], how='diagonal')
 
                 # clean up if folder is empty
-                if not os.listdir(root):
-                    os.rmdir(root)                                
+                # if not os.listdir(root):
+                #     os.rmdir(root)                                
 
             if not result.is_empty():
                 # create target directory if it doesn't yet exist

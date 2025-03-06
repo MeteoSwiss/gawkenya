@@ -19,6 +19,14 @@ class TestAE31(unittest.TestCase):
         df = ae31.extract_to_dataframe(file_path=file_path)
         self.assertEqual(df.shape, (12, 62))
 
+    def test_read_csv_no_header(self):
+        ae31 = AE31(config=config)
+        file_path="tests/data/ae31/AE31_2024091119.csv"
+        df = ae31.read_csv_no_header(file_path=file_path)
+        self.assertEqual(df.shape, (12, 55))
+        file_path="tests/data/ae31/AE31_20240829.csv"
+        df = ae31.read_csv_no_header(file_path=file_path)
+        self.assertEqual(df.shape, (276, 55))
 
     def test_compile_data(self):
         ae31 = AE31(config=config)

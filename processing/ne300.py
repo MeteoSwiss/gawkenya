@@ -276,7 +276,7 @@ class NE300:
                     df = self.extract_to_dataframe(file_path=src, dtm=dtm)
 
                     if not df.is_empty():
-                        file_name = f"{self.name}_mkndaq.parquet" if self.name in src.name else f"{self.name}_native.parquet"
+                        file_name = f"{self.name}.parquet" if self.name in src.name else f"{self.name}_native.parquet"
                         parquet = self.append_parquet(df=df, target=target, dtm=dtm, split=split, file_name=file_name)
                         if parquet:
                             _dst = archive  # Success
