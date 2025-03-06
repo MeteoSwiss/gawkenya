@@ -27,7 +27,7 @@ nrb-aq:
   root: /product_data/data/pay/Kenya/NRB
   logging: mch-nrb.log
   branches:
-    incoming: incoming
+    incoming: incoming_with_issues
     archive: archive
     issues: incoming_with_issues
     logs: logs    
