@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import zipfile
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 
 import chardet
@@ -132,22 +133,35 @@ class NE300:
         try:
             # If the file is a ZIP file, extract it to a temporary file and process it
             if zipfile.is_zipfile(file_path):
-                with zipfile.ZipFile(file_path, 'r') as zip_file:
-                    data_files = [f for f in zip_file.namelist() if f.endswith(('.dat', '.csv', '.txt'))]
-                    if not data_files:
+                with zipfile.ZipFile(file_path, 'r') as zf:
+                    data_file = [f for f in zf.namelist() if f.endswith(('.dat', '.csv', '.txt'))]
+                    if not data_file:
                         raise ValueError("No data files found in the zip archive.")
-                    if len(data_files) > 1:
+                    if len(data_file) > 1:
                         raise ValueError("More than 1 file found in the zip archive.")
 
                     # Extract the single file to a temporary file
-                    temp_file = tempfile.NamedTemporaryFile(delete=False)
-                    with open(temp_file.name, 'wb') as fh:
-                        fh.write(zip_file.read(data_files[0]))
+                    # temp_file = tempfile.NamedTemporaryFile(delete=False)
+                    # with open(temp_file.name, 'wb') as fh:
+                    #     fh.write(zip_file.read(data_files[0]))
+                    with zf.open(data_file[0]) as fh:
+                        file_bytes = fh.read()
+                        file_buffer = BytesIO(file_bytes)
+                        first_line = file_buffer.readline().decode('utf-8').strip()
+                        file_buffer.seek(0)  # Reset pointer to read the file again
+                        
+                        # Check if the first field is '37'
+                        if first_line.split(',')[0] == '37':
+                            has_header = False
+                            skip_rows = 1
+                            new_columns = first_line.replace('37', dtm).split(',') + ['operation', 'interval']
+                        
+                        # Read the file into a polars DataFrame
+                        df = pl.read_csv(file_buffer, has_header=has_header, skip_rows=skip_rows, new_columns=new_columns)
 
-                    df = read_csv(temp_file.name, dtm)
-
-                    os.remove(temp_file.name)
-
+                # Convert the first column to datetime
+                df = df.with_columns(pl.col(df.columns[0]).str.to_datetime("%Y-%m-%d %H:%M:%S%.f", time_unit='us').alias(df.columns[0]))
+                
                 return df
 
             # If it's not a ZIP file, process it directly
