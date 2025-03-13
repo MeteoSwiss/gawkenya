@@ -153,9 +153,9 @@ class Thermo:
                 # simplify all dtypes
                 df = pl_simplify_dtypes(df, digits=1)
 
-                # round data to 2 decimals
-                if 'o3' in df.columns:
-                    df = df.with_columns(pl.col('o3').round(2))
+                # # round data to 2 decimals
+                # if 'o3' in df.columns:
+                #     df = df.with_columns(pl.col('o3').round(2))
 
                 return df, None, file_type
 
@@ -311,6 +311,74 @@ class Thermo:
         except Exception as err:
             print(err)
 
+
+    def extract_lrec_from_file(self, file_path: str) -> pl.DataFrame:
+        """
+        Reads the given data file and transforms it into a polars DataFrame.
+        
+        - The first two columns (time and date) are retained.
+        - A 'dtm' column is created by combining time and date with UTC timezone.
+        - The 'hio3' column is dropped if present.
+        - Repeated column labels in data rows are removed.
+        - A new 'source' column is added with the file path.
+        - New columns 'pcdate' and 'pctime' are added with Null values.
+        
+        :param file_path: Path to the data file.
+        :return: A polars DataFrame.
+        """
+        try:
+            # Read the raw lines
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            # Extract column headers from the first data row (every second word after time/date)
+            first_row_parts = lines[0].strip().split()
+            headers = ['time', 'date'] + [first_row_parts[i] for i in range(2, len(first_row_parts), 2)]
+            
+            # Read the file as a structured table
+            df = pl.read_csv(file_path, separator=" ", has_header=False)
+            
+            # Drop columns containing header names
+            drop_cols = [f"column_{i}" for i in range(3, 24, 2)]
+            df = df.drop(drop_cols)
+
+            # # Ensure column count matches expectation
+            # expected_cols = 2 + len(headers)
+            # if df.width < expected_cols * 2:
+            #     raise ValueError("Unexpected column structure in the file.")
+            
+            # # Keep only the first occurrence of each column (dropping repeated headers)
+            # df = df[:, :expected_cols]
+                        
+            # Rename columns
+            df = df.rename(dict(zip(df.columns, headers)))
+            
+            # Create 'dtm' column
+            df = df.with_columns(
+                (pl.col("date") + " " + pl.col("time")).str.to_datetime("%m-%d-%y %H:%M", time_unit="us").alias("dtm")
+            )
+            
+            # Drop the 'hio3' column if it exists
+            if "hio3" in df.columns:
+                df = df.drop("hio3")
+            
+            # Add 'source' column with the file path
+            df = df.with_columns(pl.lit(file_path).alias("source"))
+            
+            # Add 'pcdate' and 'pctime' columns with Null values
+            df = df.with_columns(
+                pl.lit('').cast(pl.Utf8).alias("pcdate"),
+                pl.lit('').cast(pl.Utf8).alias("pctime")
+            )
+
+            # simplify all dtypes
+            df = pl_simplify_dtypes(df, digits=1)
+
+            return df
+
+        except Exception as err:
+            self.logger.error(err)
+            return pl.DataFrame()
 
 
     # def extract_file(self, file: str, log=True) -> pd.DataFrame:
