@@ -93,12 +93,12 @@ class CPD2:
                         print(f"  > Processing {member.name} ...")
 
                         # read the contents of the file
-                        file_content = tar.extractfile(member).read()
-
-                        # convert the file content to a polars DataFrame
-                        # read in file w/o separator to allow for lines of different lengths, then split.
-                        # using this approach, try_parse_dates cannot work, thus convert after parsing.
                         try:
+                            file_content = tar.extractfile(member).read()
+
+                            # convert the file content to a polars DataFrame
+                            # read in file w/o separator to allow for lines of different lengths, then split.
+                            # using this approach, try_parse_dates cannot work, thus convert after parsing.
                             df = pl.read_csv(BytesIO(file_content), 
                                         has_header=False, 
                                         separator=chr(0),
@@ -147,7 +147,7 @@ class CPD2:
 
         except Exception as err:
             logger.error(err)
-            print(err)         
+            return cpd2, errors         
 
 
     def tarballs_to_parquet(self, source: str, target: str, dtm="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, verbose: bool=True) -> dict:
