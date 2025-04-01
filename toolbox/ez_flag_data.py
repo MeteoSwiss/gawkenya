@@ -8,11 +8,12 @@ from ipyfilechooser import FileChooser
 from ipywidgets.widgets import Dropdown
 from ipywidgets import Button, Text, VBox, HBox, Output, Layout
 from IPython.display import display
+from toolbox.utils import pl_simplify_dtypes
 
 # file related configurations
 root_dir = os.path.join(os.getcwd(), 'data')
-source_dir = 'level1'
-target_dir = 'level1'   # folder for compiled and/or flagged data. 
+source_dir = ''
+target_dir = ''   # folder for compiled and/or flagged data. 
 
 # dataframe column label configurations
 dtm = 'dtm'
@@ -59,6 +60,7 @@ def on_file_chooser_read_file():
     if os.path.exists(target_file):
         infobox.value = f"target file: {target_file}"
         df = pl.read_parquet(source=target_file).unique()
+        df = pl_simplify_dtypes(df)
         df.write_parquet(file=target_file)
         # df.write_parquet("temp-1.parquet")
 
@@ -197,6 +199,7 @@ def on_clicked_save_data(event):
             target_file += f"-{datetime.now().strftime('%Y%m%d%H%M%S')}"
     os.makedirs(os.path.dirname(target_file), exist_ok=True)
     infobox.value = f"Saving to '{target_file}'."
+    df = pl_simplify_dtypes(df)
     df.write_parquet(target_file)
     ax.cla()
     return
