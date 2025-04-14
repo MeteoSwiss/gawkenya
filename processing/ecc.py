@@ -331,6 +331,7 @@ class ECC:
                 label_ecc = 'ECC'
 
             if not df_model.is_empty():
+                df_model = df_model.sort('Press')
                 if 'filename' in df_model.columns:
                     label_model = df_model['filename']
                 elif model:
