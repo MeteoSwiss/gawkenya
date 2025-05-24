@@ -1,16 +1,20 @@
 # from asyncio.log import logger
-import os
-import logging
-from logging.handlers import TimedRotatingFileHandler
-import pandas as pd
-import polars as pl
 import glob
 import json
+import logging
+import os
 import re
 import shutil
 import zipfile
+from collections import defaultdict
+from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pandas as pd
+import polars as pl
 from matplotlib import cm
+
 
 class Meteo:
 
@@ -91,82 +95,196 @@ class Meteo:
                 return pl.DataFrame(), str(err)
 
 
-    def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, 
-                                  append_parquet: bool=True, verbose: bool=True, log: bool=True) -> tuple([pl.DataFrame, str]):
-        """Extract and compile VRXA00 bulletins found in source and its sub-folders to a single polars DataFrame, save as parquet file in target.
-
-        Args:
-            source (str): Root path to directory to process. <year> will be appended to path. Sub-directories will also be considered.
-            target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
-            archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
-            issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
-            append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
-            verbose (bool, optional): Should information on process be written to console? Defaults to True.
-            log (bool, optional): Should activities be logged? Defaults to True.
-        Returns:
-            tuple[pl.DataFrame, str]: polars DataFrame of compiled bulletins, and errors if any
+    def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str = None, issues: str = None,
+                                append_parquet: bool = True, verbose: bool = True, log: bool = True,
+                                flush_limit: int = 50) -> tuple[pl.DataFrame, dict]:
         """
-        os.makedirs(target, exist_ok=True)
+        Compile VRXA00 bulletins from files like VRXA00.yyyymmddHHMM[.001], strip `.001`, organize by year in target/<year>/vrxa00.parquet.
+        """
+        source = Path(source)
+        target = Path(target)
+        target.mkdir(parents=True, exist_ok=True)
+        archive = Path(archive) if archive else None
+        issues = Path(issues) if issues else None
         if archive:
-            os.makedirs(archive, exist_ok=True)
+            archive.mkdir(parents=True, exist_ok=True)
 
-        result = pl.DataFrame()
-        errors = dict()
-        
+        errors = {}
+        buffers: dict[int, list[pl.DataFrame]] = defaultdict(list)
+        total_records = []
+
+        def flush(year: int):
+            df_year = pl.concat(buffers[year], how="diagonal").unique().sort("dtm")
+            year_folder = target / str(year)
+            year_folder.mkdir(parents=True, exist_ok=True)
+            parquet_path = year_folder / "vrxa00.parquet"
+
+            if append_parquet and parquet_path.exists():
+                existing = pl.read_parquet(parquet_path)
+                df_year = pl.concat([existing, df_year], how="diagonal").unique().sort("dtm")
+
+            df_year.write_parquet(parquet_path)
+            buffers[year] = []
+
         try:
-            # process files
-            if verbose:
-                print(f"Processing source {source} ...")
             for root, dirs, files in os.walk(source):
-                n = (len(source) - len(root) + 1)
-                relative_path = root[n:] if n < 0 else ""
+                root_path = Path(root)
+                relative_path = root_path.relative_to(source)
+
                 for file in files:
+                    if not file.startswith("VRXA00."):
+                        continue
+
+                    src = root_path / file
+                    # Remove .001 suffix if present
+                    if file.endswith(".001"):
+                        try:
+                            src.rename(root_path / file[:-4])
+                        # stripped_name = file[:-4]
+                        except:
+                            pass
+                    # else:
+                    #     stripped_name = file
+                    # stripped_path = root_path / stripped_name
+
+                    # # If filename was modified, try to rename it in-place
+                    # if stripped_path != src:
+                    #     try:
+                    #         src.rename(stripped_path)
+                    #         src = stripped_path  # Continue using stripped version
+                    #     except:
+                    #         src = root_path / file
+
                     if verbose:
-                        print(f"> Processing {file} ...")
-                    src = os.path.join(root, file)
-                    tmp, err = self.extract_vrxa00_to_dataframe(src, log=log)
+                        print(f"> Processing {src.name}")
+
+                    tmp, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
+
                     if err:
-                        errors.update({file: err})
+                        # errors[stripped_path.name] = err
+                        errors[src.name] = err
                         if issues:
-                            dst = os.path.join(issues, relative_path)
-                            os.makedirs(dst, exist_ok=True)
-                            shutil.move(src=src, dst=os.path.join(dst, file))
-                            print(f"issue: {src} > {dst}")
-                    elif archive:
-                        dst = os.path.join(archive, relative_path)
-                        os.makedirs(dst, exist_ok=True)
-                        shutil.move(src=src, dst=os.path.join(dst, file))
-                    result = pl.concat([result, tmp], how='diagonal')
-                
-                # clean up if folder is empty
-                if not os.listdir(root):
-                    os.rmdir(root)
+                            issue_dst = issues / relative_path
+                            issue_dst.mkdir(parents=True, exist_ok=True)
+                            # shutil.move(str(src), str(issue_dst / stripped_path.name))
+                            shutil.move(str(src), str(issue_dst / src.name))
+                        continue
 
-            if not result.is_empty():
-                # if append_parquet==True, check if parquet already exists and append
-                parquet = os.path.join(target, 'vrxa00.parquet')
-                if append_parquet:
-                    if os.path.exists(parquet):
-                        df = pl.read_parquet(parquet)
-                        result = pl.concat([df, result], how='diagonal')
-                    
-                # remove duplicates, sort data
-                result = result.unique()
-                result = result.sort("dtm")
+                    if "dtm" not in tmp.columns:
+                        # errors[stripped_path.name] = "Missing 'dtm' column"
+                        errors[src.name] = "Missing 'dtm' column"
+                        continue
 
-                # store result as parquet file
-                result.write_parquet(parquet)
+                    tmp = tmp.with_columns(pl.col("dtm").cast(pl.Datetime("us", "UTC")))
+                    total_records.append(tmp)
 
-            # write errors to json file
+                    years = tmp.select(pl.col("dtm").dt.year().unique().sort()).to_series()
+                    for year in years:
+                        df_year = tmp.filter(pl.col("dtm").dt.year() == year)
+                        buffers[year].append(df_year)
+                        if len(buffers[year]) >= flush_limit:
+                            flush(year)
+
+                    if archive:
+                        archive_dst = archive / relative_path
+                        archive_dst.mkdir(parents=True, exist_ok=True)
+                        # shutil.move(str(src), str(archive_dst / stripped_path.name))
+                        try:
+                            shutil.move(str(src), str(archive_dst / src.name))
+                        except:
+                            pass
+                        
+            for year in buffers:
+                if buffers[year]:
+                    flush(year)
+
             if errors:
-                with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
-                    json.dump(errors, fh)
+                with open(target / 'vrxa00.errors.json', 'w') as f:
+                    json.dump(errors, f, indent=2)
 
-            return result, errors
+            full_df = pl.concat(total_records, how="diagonal") if total_records else pl.DataFrame()
+            return full_df, errors
 
         except Exception as err:
-            self.logger.error(err)
-            print(err)
+            self.logger.error(f"Fatal error during processing: {err}")
+            return pl.DataFrame(), {"fatal": str(err)}
+
+
+    # def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, 
+    #                               append_parquet: bool=True, verbose: bool=True, log: bool=True) -> tuple([pl.DataFrame, str]):
+    #     """Extract and compile VRXA00 bulletins found in source and its sub-folders to a single polars DataFrame, save as parquet file in target.
+
+    #     Args:
+    #         source (str): Root path to directory to process. <year> will be appended to path. Sub-directories will also be considered.
+    #         target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
+    #         archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
+    #         issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+    #         append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
+    #         verbose (bool, optional): Should information on process be written to console? Defaults to True.
+    #         log (bool, optional): Should activities be logged? Defaults to True.
+    #     Returns:
+    #         tuple[pl.DataFrame, str]: polars DataFrame of compiled bulletins, and errors if any
+    #     """
+    #     os.makedirs(target, exist_ok=True)
+    #     if archive:
+    #         os.makedirs(archive, exist_ok=True)
+
+    #     result = pl.DataFrame()
+    #     errors = dict()
+        
+    #     try:
+    #         # process files
+    #         if verbose:
+    #             print(f"Processing source {source} ...")
+    #         for root, dirs, files in os.walk(source):
+    #             n = (len(source) - len(root) + 1)
+    #             relative_path = root[n:] if n < 0 else ""
+    #             for file in files:
+    #                 if verbose:
+    #                     print(f"> Processing {file} ...")
+    #                 src = os.path.join(root, file)
+    #                 tmp, err = self.extract_vrxa00_to_dataframe(src, log=log)
+    #                 if err:
+    #                     errors.update({file: err})
+    #                     if issues:
+    #                         dst = os.path.join(issues, relative_path)
+    #                         os.makedirs(dst, exist_ok=True)
+    #                         shutil.move(src=src, dst=os.path.join(dst, file))
+    #                         print(f"issue: {src} > {dst}")
+    #                 elif archive:
+    #                     dst = os.path.join(archive, relative_path)
+    #                     os.makedirs(dst, exist_ok=True)
+    #                     shutil.move(src=src, dst=os.path.join(dst, file))
+    #                 result = pl.concat([result, tmp], how='diagonal')
+                
+    #             # clean up if folder is empty
+    #             if not os.listdir(root):
+    #                 os.rmdir(root)
+
+    #         if not result.is_empty():
+    #             # if append_parquet==True, check if parquet already exists and append
+    #             parquet = os.path.join(target, 'vrxa00.parquet')
+    #             if append_parquet:
+    #                 if os.path.exists(parquet):
+    #                     df = pl.read_parquet(parquet)
+    #                     result = pl.concat([df, result], how='diagonal')
+                    
+    #             # remove duplicates, sort data
+    #             result = result.unique()
+    #             result = result.sort("dtm")
+
+    #             # store result as parquet file
+    #             result.write_parquet(parquet)
+
+    #         # write errors to json file
+    #         if errors:
+    #             with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
+    #                 json.dump(errors, fh)
+
+    #         return result, errors
+
+    #     except Exception as err:
+    #         self.logger.error(err)
 
 
     def remove_extremes(self, df: pl.DataFrame, variable: str, q=0.001) -> tuple([pl.DataFrame, dict]):

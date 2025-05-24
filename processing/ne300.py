@@ -217,7 +217,7 @@ class NE300:
         try:
             assert split in {"year", "month", "day"}, "split must be 'year', 'month', or 'day'"
 
-            df = df.with_columns(pl.col(dtm).cast(pl.Datetime))
+            df = pl_simplify_dtypes(df)#.with_columns(pl.col(dtm).cast(pl.Datetime('us', 'UTC'))))
             start_date, end_date = df[dtm].min().date(), df[dtm].max().date()
             date_ranges = pl.date_range(start_date, end_date, interval="1d", eager=True)
 
@@ -246,6 +246,7 @@ class NE300:
                 file_path = dst / file_name
                 if file_path.exists():
                     df_existing = pl.read_parquet(file_path)
+                    # df_existing = df_existing.with_columns(pl.col('dtm').str.to_datetime())
                     rows_existing = len(df_existing)
                     df_combined = pl.concat([df_existing, df_filtered], how="diagonal").unique().sort(dtm)
                 else:

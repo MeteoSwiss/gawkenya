@@ -82,7 +82,8 @@ def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2, exclude: list=list()) ->
     for column in [x for x in df.columns if x not in set(exclude)]:
         dtype = df[column].dtype
         if dtype == pl.Datetime:
-            continue  # Keep datetime columns as is
+            df = df.with_columns(pl.col(column).cast(pl.Datetime('us', 'UTC')))
+            # continue  # Keep datetime columns as is
         elif dtype == pl.Float64 or dtype == pl.Float32:
             df = df.with_columns(pl.col(column).cast(pl.Float32))  # Convert floats to Float32 for efficiency
         elif dtype == pl.Int64 or dtype == pl.Int32:
