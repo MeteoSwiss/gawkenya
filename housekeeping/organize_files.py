@@ -1,6 +1,7 @@
 # %%
 # Author: joerg.klausen@meteoswiss.ch
 import datetime
+
 import os
 import platform
 import re
@@ -9,6 +10,7 @@ import subprocess
 import time
 import zipfile
 from collections import defaultdict
+from pathlib import Path
 # from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -43,28 +45,64 @@ def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
         # os.makedirs(src, exist_ok=True)
         files = os.listdir(src)
         for file in files:
-            name = re.search(pattern, file)
-            if name: 
-                if re.search(r"d\{7\}\.", pattern):
-                    dtm = time.strptime(re.search(r"\d{7}", name.group()).group(), "%j%Y")
-                else:
-                    dtm = time.strptime(re.search(r"\d{8}", name.group()).group(), "%Y%m%d")
-                if cfg[folder]["buckets"] in "daily":
-                    dst = os.path.join(src, 
-                                       str(dtm.tm_year), "{:02d}".format(dtm.tm_mon), "{:02d}".format(dtm.tm_mday))
-                elif cfg[folder]["buckets"] in "monthly":
-                    dst = os.path.join(src, 
-                                       str(dtm.tm_year), "{:02d}".format(dtm.tm_mon))
-                elif cfg[folder]["buckets"] in "yearly":
-                    dst = os.path.join(src, str(dtm.tm_year))
-                else:
-                    raise ValueError("'buckets' unknown.")
-                os.makedirs(dst, exist_ok=True)
+            # name = re.search(pattern, file)
+            # if name: 
+            #     if re.search(r"d\{7\}\.", pattern):
+            #         dtm = time.strptime(re.search(r"\d{7}", name.group()).group(), "%j%Y")
+            #     else:
+            #         dtm = time.strptime(re.search(r"\d{8}", name.group()).group(), "%Y%m%d")
+            #     if cfg[folder]["buckets"] in "daily":
+            #         dst = os.path.join(src, 
+            #                            str(dtm.tm_year), "{:02d}".format(dtm.tm_mon), "{:02d}".format(dtm.tm_mday))
+            #     elif cfg[folder]["buckets"] in "monthly":
+            #         dst = os.path.join(src, 
+            #                            str(dtm.tm_year), "{:02d}".format(dtm.tm_mon))
+            #     elif cfg[folder]["buckets"] in "yearly":
+            #         dst = os.path.join(src, str(dtm.tm_year))
+            #     else:
+            #         raise ValueError("'buckets' unknown.")
+            # match = re.search(pattern, file)
+            # if match:
+            #     date_str = re.search(r"\d{7}|\d{8}", match.group()).group()
+            #     dtm = datetime.strptime(date_str, "%j%Y" if len(date_str) == 7 else "%Y%m%d")
+
+            #     bucket = cfg[folder]["buckets"]
+            #     if bucket == "daily":
+            #         dst = os.path.join(src, f"{dtm.year}", f"{dtm.month:02d}", f"{dtm.day:02d}")
+            #     elif bucket == "monthly":
+            #         dst = os.path.join(src, f"{dtm.year}", f"{dtm.month:02d}")
+            #     elif bucket == "yearly":
+            #         dst = os.path.join(src, f"{dtm.year}")
+            #     else:
+            #         raise ValueError(f"Unknown bucket type: {bucket}")
+            match_obj = re.search(pattern, file)
+            if match_obj:
+                date_str = re.search(r"\d{8}|\d{7}", match_obj.group()).group()
+                dtm = datetime.datetime.strptime(date_str, "%j%Y" if len(date_str) == 7 else "%Y%m%d")
+
+                bucket = cfg[folder]["buckets"]
+                match bucket:
+                    case "daily":
+                        dst = Path(src) / f"{dtm.year}" / f"{dtm.month:02d}" / f"{dtm.day:02d}"
+                    case "monthly":
+                        dst = Path(src) / f"{dtm.year}" / f"{dtm.month:02d}"
+                    case "yearly":
+                        dst = Path(src) / f"{dtm.year}"
+                    case _:
+                        raise ValueError(f"Unknown bucket type: {bucket}")
+
+                dst_path = Path(dst)
+                dst_path.mkdir(parents=True, exist_ok=True)
+
+                src_file = Path(src) / file
+                dst_file = dst_path / file
+
                 if verbosity > 1:
-                    print(f"{os.path.join(src, file)} > {os.path.join(dst, file)}")
-                shutil.move(src=os.path.join(src, file),
-                            dst=os.path.join(dst, file))
+                    print(f"{src_file} > {dst_file}")
+
+                shutil.move(str(src_file), str(dst_file))
                 n += 1
+
         if verbosity > 0:
             print(f"Finished organizing files under '{cfg['root']}{branch}/{folder}'. {n} files moved.")
         total += n

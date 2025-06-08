@@ -9,22 +9,21 @@ branches:
   issues: incoming_with_issues
   logs: logs
 folders:
-  # - aerosol
   - ae33/data
+  - fidas
   - meteo
   - tei49c
   - tei49i
-  # - tei49i_2
   - g2401
   - ne300
-aerosol: 
-  pattern: mkn_\d{8}T\d{6}Z.tar(|.gz)
-  buckets: daily
-  expected: 24
 ae33/data: 
   pattern: ae33-\d{12}.(zip|dat)
   buckets: daily
   expected: 144
+fidas: 
+  pattern: fidas-\d{10}.parquet
+  buckets: daily
+  expected: 24
 meteo: 
   pattern: VRXA00.\d{12}
   buckets: daily

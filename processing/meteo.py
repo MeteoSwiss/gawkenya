@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import polars as pl
 from matplotlib import cm
-
+from toolbox.utils import pl_simplify_dtypes
 
 class Meteo:
 
@@ -85,7 +85,9 @@ class Meteo:
                     df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=3, null_values='/', dtypes=self.dtypes['VRXA00'])
 
                 df = df.with_columns(pl.lit(file).alias('source'),
-                                    pl.col('zzzztttt').str.to_datetime(format='%Y%m%d%H%M').alias('dtm'))
+                                    pl.col('zzzztttt').str.to_datetime(format='%Y%m%d%H%M', 
+                                                                       time_unit='us',
+                                                                       time_zone='UTC').alias('dtm'))
                 return df, None
 
             except Exception as err:
@@ -106,8 +108,6 @@ class Meteo:
         target.mkdir(parents=True, exist_ok=True)
         archive = Path(archive) if archive else None
         issues = Path(issues) if issues else None
-        if archive:
-            archive.mkdir(parents=True, exist_ok=True)
 
         errors = {}
         buffers: dict[int, list[pl.DataFrame]] = defaultdict(list)
@@ -115,13 +115,15 @@ class Meteo:
 
         def flush(year: int):
             df_year = pl.concat(buffers[year], how="diagonal").unique().sort("dtm")
+            df_year = pl_simplify_dtypes(df_year)
             year_folder = target / str(year)
             year_folder.mkdir(parents=True, exist_ok=True)
             parquet_path = year_folder / "vrxa00.parquet"
 
             if append_parquet and parquet_path.exists():
-                existing = pl.read_parquet(parquet_path)
-                df_year = pl.concat([existing, df_year], how="diagonal").unique().sort("dtm")
+                df_existing = pl.read_parquet(parquet_path)
+                df_existing = pl_simplify_dtypes(df_existing)
+                df_year = pl.concat([df_existing, df_year], how="diagonal").unique().sort("dtm")
 
             df_year.write_parquet(parquet_path)
             buffers[year] = []
@@ -136,6 +138,7 @@ class Meteo:
                         continue
 
                     src = root_path / file
+
                     # Remove .001 suffix if present
                     if file.endswith(".001"):
                         try:
@@ -143,17 +146,6 @@ class Meteo:
                         # stripped_name = file[:-4]
                         except:
                             pass
-                    # else:
-                    #     stripped_name = file
-                    # stripped_path = root_path / stripped_name
-
-                    # # If filename was modified, try to rename it in-place
-                    # if stripped_path != src:
-                    #     try:
-                    #         src.rename(stripped_path)
-                    #         src = stripped_path  # Continue using stripped version
-                    #     except:
-                    #         src = root_path / file
 
                     if verbose:
                         print(f"> Processing {src.name}")
@@ -161,21 +153,21 @@ class Meteo:
                     tmp, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
 
                     if err:
-                        # errors[stripped_path.name] = err
                         errors[src.name] = err
                         if issues:
                             issue_dst = issues / relative_path
                             issue_dst.mkdir(parents=True, exist_ok=True)
-                            # shutil.move(str(src), str(issue_dst / stripped_path.name))
-                            shutil.move(str(src), str(issue_dst / src.name))
+                            try:
+                                shutil.move(str(src), str(issue_dst / src.name))
+                            except:
+                                pass
                         continue
 
                     if "dtm" not in tmp.columns:
-                        # errors[stripped_path.name] = "Missing 'dtm' column"
                         errors[src.name] = "Missing 'dtm' column"
                         continue
 
-                    tmp = tmp.with_columns(pl.col("dtm").cast(pl.Datetime("us", "UTC")))
+                    # tmp = tmp.with_columns(pl.col("dtm").cast(pl.Datetime("us", "UTC")))
                     total_records.append(tmp)
 
                     years = tmp.select(pl.col("dtm").dt.year().unique().sort()).to_series()
@@ -188,7 +180,6 @@ class Meteo:
                     if archive:
                         archive_dst = archive / relative_path
                         archive_dst.mkdir(parents=True, exist_ok=True)
-                        # shutil.move(str(src), str(archive_dst / stripped_path.name))
                         try:
                             shutil.move(str(src), str(archive_dst / src.name))
                         except:
@@ -219,7 +210,7 @@ class Meteo:
     #         target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
     #         archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
     #         issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
-    #         append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
+    #         append_parquet (bool, optional): If True, append new data to an df_existing .parquet file. Defaults to True.
     #         verbose (bool, optional): Should information on process be written to console? Defaults to True.
     #         log (bool, optional): Should activities be logged? Defaults to True.
     #     Returns:
