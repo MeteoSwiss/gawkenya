@@ -140,19 +140,18 @@ class NE300:
                     if len(data_file) > 1:
                         raise ValueError("More than 1 file found in the zip archive.")
 
-                    # Extract the single file to a temporary file
-                    # temp_file = tempfile.NamedTemporaryFile(delete=False)
-                    # with open(temp_file.name, 'wb') as fh:
-                    #     fh.write(zip_file.read(data_files[0]))
+                    has_header = False
+                    skip_rows = 0
+                    new_columns = list()
                     with zf.open(data_file[0]) as fh:
                         file_bytes = fh.read()
                         file_buffer = BytesIO(file_bytes)
                         first_line = file_buffer.readline().decode('utf-8').strip()
                         file_buffer.seek(0)  # Reset pointer to read the file again
                         
-                        # Check if the first field is '37'
+                        # Check if the first field is '37', indicating a header
                         if first_line.split(',')[0] == '37':
-                            has_header = False
+                            # has_header = False
                             skip_rows = 1
                             new_columns = first_line.replace('37', dtm).split(',') + ['operation', 'interval']
                         
@@ -284,7 +283,7 @@ class NE300:
                 return
 
             src = Path()
-            for root, dirs, files in os.walk(source):
+            for root, dirs, files in os.walk(source, topdown=False):
                 for file in files:
                     _dst = issues  # Default destination
                     src = Path(root) / file
@@ -300,9 +299,9 @@ class NE300:
                     if move_processed_files:
                         dst = self._move_file(src=src, dst=_dst, split=split)
 
-                if Path(root) != source:
+                if (root_path:=Path(root)) != source:
                     try:
-                        Path(root).rmdir()
+                        root_path.rmdir()
                     except OSError:
                         pass
 
