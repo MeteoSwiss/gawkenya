@@ -246,6 +246,7 @@ class NE300:
                 if file_path.exists():
                     df_existing = pl.read_parquet(file_path)
                     # df_existing = df_existing.with_columns(pl.col('dtm').str.to_datetime())
+                    df_existing = pl_simplify_dtypes(df = df_existing)
                     rows_existing = len(df_existing)
                     df_combined = pl.concat([df_existing, df_filtered], how="diagonal").unique().sort(dtm)
                 else:

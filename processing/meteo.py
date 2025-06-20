@@ -97,39 +97,35 @@ class Meteo:
                 return pl.DataFrame(), str(err)
 
 
-    def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str = None, issues: str = None,
-                                append_parquet: bool = True, verbose: bool = True, log: bool = True,
-                                flush_limit: int = 50) -> tuple[pl.DataFrame, dict]:
+    def compile_vrxa00_to_parquet(
+        self,
+        source: str,
+        target: str,
+        archive: str = None,
+        issues: str = None,
+        append_parquet: bool = True,
+        verbose: bool = True,
+        log: bool = True,
+    ) -> tuple[pl.DataFrame, dict]:
         """
-        Compile VRXA00 bulletins from files like VRXA00.yyyymmddHHMM[.001], strip `.001`, organize by year in target/<year>/vrxa00.parquet.
+        Compile VRXA00 bulletins from files like VRXA00.yyyymmddHHMM[.001],
+        strip `.001`, and organize output by year in target/<year>/vrxa00.parquet.
         """
         source = Path(source)
         target = Path(target)
-        target.mkdir(parents=True, exist_ok=True)
         archive = Path(archive) if archive else None
         issues = Path(issues) if issues else None
+        target.mkdir(parents=True, exist_ok=True)
 
         errors = {}
-        buffers: dict[int, list[pl.DataFrame]] = defaultdict(list)
-        total_records = []
+        dataframes = []
+        files_processed = 0
 
-        def flush(year: int):
-            df_year = pl.concat(buffers[year], how="diagonal").unique().sort("dtm")
-            df_year = pl_simplify_dtypes(df_year)
-            year_folder = target / str(year)
-            year_folder.mkdir(parents=True, exist_ok=True)
-            parquet_path = year_folder / "vrxa00.parquet"
-
-            if append_parquet and parquet_path.exists():
-                df_existing = pl.read_parquet(parquet_path)
-                df_existing = pl_simplify_dtypes(df_existing)
-                df_year = pl.concat([df_existing, df_year], how="diagonal").unique().sort("dtm")
-
-            df_year.write_parquet(parquet_path)
-            buffers[year] = []
+        if log:
+            self.logger.info(f"Processing: {source}")
 
         try:
-            for root, dirs, files in os.walk(source):
+            for root, _, files in os.walk(source):
                 root_path = Path(root)
                 relative_path = root_path.relative_to(source)
 
@@ -137,68 +133,200 @@ class Meteo:
                     if not file.startswith("VRXA00."):
                         continue
 
+                    files_processed += 1
                     src = root_path / file
 
-                    # Remove .001 suffix if present
-                    if file.endswith(".001"):
+                    # Strip `.001` if needed
+                    if src.suffix == ".001":
                         try:
-                            src.rename(root_path / file[:-4])
-                        # stripped_name = file[:-4]
-                        except:
-                            pass
+                            stripped = src.with_suffix("")
+                            if not stripped.exists():
+                                src.rename(stripped)
+                                src = stripped
+                        except Exception as e:
+                            errors[src.name] = f"Rename error: {e}"
+                            continue
 
-                    if verbose:
-                        print(f"> Processing {src.name}")
+                    if verbose or log:
+                        msg = f"→ {src.name}"
+                        (self.logger.info if log else print)(msg)
 
-                    tmp, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
-
+                    df, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
                     if err:
                         errors[src.name] = err
                         if issues:
-                            issue_dst = issues / relative_path
-                            issue_dst.mkdir(parents=True, exist_ok=True)
+                            dst = issues / relative_path
+                            dst.mkdir(parents=True, exist_ok=True)
                             try:
-                                shutil.move(str(src), str(issue_dst / src.name))
-                            except:
-                                pass
+                                shutil.move(str(src), dst / src.name)
+                            except Exception as e:
+                                errors[src.name] += f" | move-to-issues failed: {e}"
                         continue
 
-                    if "dtm" not in tmp.columns:
+                    if "dtm" not in df.columns:
                         errors[src.name] = "Missing 'dtm' column"
                         continue
 
-                    # tmp = tmp.with_columns(pl.col("dtm").cast(pl.Datetime("us", "UTC")))
-                    total_records.append(tmp)
-
-                    years = tmp.select(pl.col("dtm").dt.year().unique().sort()).to_series()
-                    for year in years:
-                        df_year = tmp.filter(pl.col("dtm").dt.year() == year)
-                        buffers[year].append(df_year)
-                        if len(buffers[year]) >= flush_limit:
-                            flush(year)
+                    dataframes.append(df)
 
                     if archive:
-                        archive_dst = archive / relative_path
-                        archive_dst.mkdir(parents=True, exist_ok=True)
+                        dst = archive / relative_path
+                        dst.mkdir(parents=True, exist_ok=True)
                         try:
-                            shutil.move(str(src), str(archive_dst / src.name))
-                        except:
-                            pass
-                        
-            for year in buffers:
-                if buffers[year]:
-                    flush(year)
+                            shutil.move(str(src), dst / src.name)
+                        except Exception as e:
+                            errors[src.name] = f"Archive move failed: {e}"
+
+            # Write output
+            if dataframes:
+                full_df = pl.concat(dataframes, how="diagonal").unique().sort("dtm")
+                full_df = pl_simplify_dtypes(full_df)
+
+                full_df = full_df.with_columns([
+                    pl.col("dtm").dt.year().alias("year")
+                ])
+
+                for year, group_df in full_df.group_by("year"):
+                    year_path = target / str(year)
+                    year_path.mkdir(parents=True, exist_ok=True)
+                    parquet_path = year_path / "vrxa00.parquet"
+
+                    if append_parquet and parquet_path.exists():
+                        existing = pl.read_parquet(parquet_path)
+                        group_df = pl.concat([existing, group_df], how="diagonal").unique().sort("dtm")
+
+                    group_df.write_parquet(parquet_path)
+
+            else:
+                self.logger.info("⚠ No valid data found to write.")
 
             if errors:
-                with open(target / 'vrxa00.errors.json', 'w') as f:
+                with open(target / "vrxa00.errors.json", "w") as f:
                     json.dump(errors, f, indent=2)
 
-            full_df = pl.concat(total_records, how="diagonal") if total_records else pl.DataFrame()
-            return full_df, errors
+            if files_processed:
+                self.logger.info(f"✔ Finished: {files_processed} files processed.")
+            else:
+                self.logger.info("⚠ No files matched pattern.")
+
+            return (
+                pl.concat(dataframes, how="diagonal").unique().sort("dtm") if dataframes else pl.DataFrame(),
+                errors
+            )
 
         except Exception as err:
-            self.logger.error(f"Fatal error during processing: {err}")
+            self.logger.error(f"Fatal error: {err}")
             return pl.DataFrame(), {"fatal": str(err)}
+    # def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str = None, issues: str = None,
+    #                             append_parquet: bool = True, verbose: bool = True, log: bool = True,
+    #                             flush_limit: int = 50) -> tuple[pl.DataFrame, dict]:
+    #     """
+    #     Compile VRXA00 bulletins from files like VRXA00.yyyymmddHHMM[.001], strip `.001`, organize by year in target/<year>/vrxa00.parquet.
+    #     """
+    #     source = Path(source)
+    #     target = Path(target)
+    #     target.mkdir(parents=True, exist_ok=True)
+    #     archive = Path(archive) if archive else None
+    #     issues = Path(issues) if issues else None
+
+    #     errors = {}
+    #     buffers: dict[int, list[pl.DataFrame]] = defaultdict(list)
+    #     total_records = []
+
+    #     def flush(year: int):
+    #         df_year = pl.concat(buffers[year], how="diagonal").unique().sort("dtm")
+    #         df_year = pl_simplify_dtypes(df_year)
+    #         year_folder = target / str(year)
+    #         year_folder.mkdir(parents=True, exist_ok=True)
+    #         parquet_path = year_folder / "vrxa00.parquet"
+
+    #         if append_parquet and parquet_path.exists():
+    #             df_existing = pl.read_parquet(parquet_path)
+    #             df_existing = pl_simplify_dtypes(df_existing)
+    #             df_year = pl.concat([df_existing, df_year], how="diagonal").unique().sort("dtm")
+
+    #         df_year.write_parquet(parquet_path)
+    #         buffers[year] = []
+
+    #     try:
+    #         self.logger.info(f"Processing {source} ...")
+    #         files_processed = int()
+    #         for root, dirs, files in os.walk(source):
+    #             root_path = Path(root)
+    #             relative_path = root_path.relative_to(source)
+
+    #             for file in files:
+    #                 if not file.startswith("VRXA00."):
+    #                     continue
+
+    #                 files_processed += 1
+    #                 src = root_path / file
+
+    #                 # Remove .001 suffix if present
+    #                 if file.endswith(".001"):
+    #                     try:
+    #                         src = src.rename(src[:-4])
+    #                     except:
+    #                         pass
+
+    #                 if verbose:
+    #                     self.logger.info(f"Processing {src.name}")
+
+    #                 tmp, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
+
+    #                 if err:
+    #                     errors[src.name] = err
+    #                     if issues:
+    #                         issue_dst = issues / relative_path
+    #                         issue_dst.mkdir(parents=True, exist_ok=True)
+    #                         try:
+    #                             shutil.move(str(src), str(issue_dst / src.name))
+    #                         except:
+    #                             pass
+    #                     continue
+
+    #                 if "dtm" not in tmp.columns:
+    #                     errors[src.name] = "Missing 'dtm' column"
+    #                     continue
+
+    #                 # tmp = tmp.with_columns(pl.col("dtm").cast(pl.Datetime("us", "UTC")))
+    #                 total_records.append(tmp)
+
+    #                 years = tmp.select(pl.col("dtm").dt.year().unique().sort()).to_series()
+    #                 for year in years:
+    #                     df_year = tmp.filter(pl.col("dtm").dt.year() == year)
+    #                     buffers[year].append(df_year)
+    #                     if len(buffers[year]) >= flush_limit:
+    #                         flush(year)
+
+    #                 if archive:
+    #                     archive_dst = archive / relative_path
+    #                     archive_dst.mkdir(parents=True, exist_ok=True)
+    #                     try:
+    #                         shutil.move(str(src), str(archive_dst / src.name))
+    #                     except:
+    #                         pass
+                        
+    #         for year in buffers:
+    #             if buffers[year]:
+    #                 flush(year)
+
+    #         if errors:
+    #             with open(target / 'vrxa00.errors.json', 'w') as f:
+    #                 json.dump(errors, f, indent=2)
+
+    #         full_df = pl.concat(total_records, how="diagonal") if total_records else pl.DataFrame()
+
+    #         if files_processed:
+    #             self.logger.info(f"Finished: {files_processed} files processed.")
+    #         else:
+    #             self.logger.info("No files found to process.")
+
+    #         return full_df, errors
+
+    #     except Exception as err:
+    #         self.logger.error(f"Fatal error during processing: {err}")
+    #         return pl.DataFrame(), {"fatal": str(err)}
 
 
     # def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, 

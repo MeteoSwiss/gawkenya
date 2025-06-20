@@ -19,97 +19,177 @@ import polars as pl
 
 # %%
 def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
-    """Move files found in <root>/<branch>/<folders to subfolders organized by year, month(, day)
+    """
+    Organize files under <root>/<branch>/<folder> into year/month(/day) subfolders.
+    After organizing, remove any empty subfolders.
 
     Args:
-        cfg (dict): must contain elements 
-            "root" (str): path to parent of folders; 
-            "branches" (str): folders between root and folders
-            "folders" (list): list of folders where files are expected; 
-            for each element in "folders", an entry 
-                "name of folder" (dict): 
-                    "pattern" (str): a regular expression matching the files to be moved:
-                    "buckets" ("daily"|"monthly"): determines if subfolders are generated for days or only for months.
-        branch (str, optional): specifies the branch below root to be processed. Defaults to "incoming".  
-    Raises:
-        ValueError: raised if value for buckets is not recognized.
+        cfg (dict): Configuration dictionary:
+            - "root" (str): root directory path
+            - "folders" (list[str]): list of folder names
+            - for each folder:
+                - "pattern" (str): regex pattern to extract date
+                - "buckets" (str): "yearly", "monthly", or "daily"
+        branch (str): subfolder under root (default: "incoming")
+        verbosity (int): 0 = silent, 1 = per folder, 2 = per file
 
     Returns:
-        int: total number of files moved.
+        int: number of files moved
     """
-    total = 0
+    total_moved = 0
+    root = Path(cfg["root"])
+
     for folder in cfg["folders"]:
+        base_path = root / branch / folder
         pattern = cfg[folder]["pattern"]
-        n = 0
-        src = os.path.join(cfg["root"], branch, folder)
-        # os.makedirs(src, exist_ok=True)
-        files = os.listdir(src)
-        for file in files:
-            # name = re.search(pattern, file)
-            # if name: 
-            #     if re.search(r"d\{7\}\.", pattern):
-            #         dtm = time.strptime(re.search(r"\d{7}", name.group()).group(), "%j%Y")
-            #     else:
-            #         dtm = time.strptime(re.search(r"\d{8}", name.group()).group(), "%Y%m%d")
-            #     if cfg[folder]["buckets"] in "daily":
-            #         dst = os.path.join(src, 
-            #                            str(dtm.tm_year), "{:02d}".format(dtm.tm_mon), "{:02d}".format(dtm.tm_mday))
-            #     elif cfg[folder]["buckets"] in "monthly":
-            #         dst = os.path.join(src, 
-            #                            str(dtm.tm_year), "{:02d}".format(dtm.tm_mon))
-            #     elif cfg[folder]["buckets"] in "yearly":
-            #         dst = os.path.join(src, str(dtm.tm_year))
-            #     else:
-            #         raise ValueError("'buckets' unknown.")
-            # match = re.search(pattern, file)
-            # if match:
-            #     date_str = re.search(r"\d{7}|\d{8}", match.group()).group()
-            #     dtm = datetime.strptime(date_str, "%j%Y" if len(date_str) == 7 else "%Y%m%d")
+        bucket = cfg[folder]["buckets"]
 
-            #     bucket = cfg[folder]["buckets"]
-            #     if bucket == "daily":
-            #         dst = os.path.join(src, f"{dtm.year}", f"{dtm.month:02d}", f"{dtm.day:02d}")
-            #     elif bucket == "monthly":
-            #         dst = os.path.join(src, f"{dtm.year}", f"{dtm.month:02d}")
-            #     elif bucket == "yearly":
-            #         dst = os.path.join(src, f"{dtm.year}")
-            #     else:
-            #         raise ValueError(f"Unknown bucket type: {bucket}")
-            match_obj = re.search(pattern, file)
-            if match_obj:
-                date_str = re.search(r"\d{8}|\d{7}", match_obj.group()).group()
-                dtm = datetime.datetime.strptime(date_str, "%j%Y" if len(date_str) == 7 else "%Y%m%d")
+        if verbosity >= 0:
+            print(f"Processing: {base_path}")
 
-                bucket = cfg[folder]["buckets"]
-                match bucket:
-                    case "daily":
-                        dst = Path(src) / f"{dtm.year}" / f"{dtm.month:02d}" / f"{dtm.day:02d}"
-                    case "monthly":
-                        dst = Path(src) / f"{dtm.year}" / f"{dtm.month:02d}"
-                    case "yearly":
-                        dst = Path(src) / f"{dtm.year}"
-                    case _:
-                        raise ValueError(f"Unknown bucket type: {bucket}")
+        if not base_path.exists():
+            if verbosity > 0:
+                print(f"  Skipping (folder not found): {base_path}")
+            continue
 
-                dst_path = Path(dst)
-                dst_path.mkdir(parents=True, exist_ok=True)
+        moved = 0
 
-                src_file = Path(src) / file
-                dst_file = dst_path / file
+        # --- Pass 1: Move files ---
+        for dirpath, _, filenames in os.walk(base_path):
+            dir_path = Path(dirpath)
+            for filename in filenames:
+                file_path = dir_path / filename
 
+                try:
+                    match_obj = re.search(pattern, filename)
+                    if not match_obj:
+                        continue
+
+                    date_match = re.search(r"\d{8}|\d{7}", match_obj.group())
+                    if not date_match:
+                        continue
+
+                    date_str = date_match.group()
+                    dtm = datetime.datetime.strptime(
+                        date_str, "%j%Y" if len(date_str) == 7 else "%Y%m%d"
+                    )
+
+                    match bucket:
+                        case "daily":
+                            subfolder = Path(f"{dtm.year}", f"{dtm.month:02d}", f"{dtm.day:02d}")
+                        case "monthly":
+                            subfolder = Path(f"{dtm.year}", f"{dtm.month:02d}")
+                        case "yearly":
+                            subfolder = Path(f"{dtm.year}")
+                        case _:
+                            raise ValueError(f"Unknown bucket type: {bucket}")
+
+                    target_dir = base_path / subfolder
+                    target_dir.mkdir(parents=True, exist_ok=True)
+                    dst = target_dir / filename
+
+                    if file_path.resolve() == dst.resolve():
+                        continue  # already in correct location
+
+                    shutil.move(str(file_path), str(dst))
+                    moved += 1
+
+                    if verbosity > 1:
+                        print(f"  Moved: {file_path} → {dst}")
+
+                except PermissionError:
+                    if verbosity > 1:
+                        print(f"  Permission denied: {file_path}")
+                    continue
+                except Exception as e:
+                    if verbosity > 1:
+                        print(f"  Error processing {file_path}: {e}")
+                    continue
+
+        # --- Pass 2: Remove empty directories (bottom-up) ---
+        for dirpath, _, _ in os.walk(base_path, topdown=False):
+            path = Path(dirpath)
+            if path == base_path:
+                continue
+            try:
+                if not any(path.iterdir()):
+                    path.rmdir()
+                    if verbosity > 1:
+                        print(f"  Removed empty folder: {path}")
+            except PermissionError:
                 if verbosity > 1:
-                    print(f"{src_file} > {dst_file}")
-
-                shutil.move(str(src_file), str(dst_file))
-                n += 1
+                    print(f"  Permission denied (rmdir): {path}")
+            except Exception:
+                pass  # silently skip any other issue
 
         if verbosity > 0:
-            print(f"Finished organizing files under '{cfg['root']}{branch}/{folder}'. {n} files moved.")
-        total += n
-        # files = os.listdir(src)
-        # if files==list():
-        #     os.removedirs(src)
-    return total
+            print(f"  Done: {moved} files moved.")
+
+        total_moved += moved
+
+    return total_moved
+# def organize_files(cfg: dict, branch="incoming", verbosity=0) -> int:
+#     """Move files found in <root>/<branch>/<folders to subfolders organized by year, month(, day)
+
+#     Args:
+#         cfg (dict): must contain elements 
+#             "root" (str): path to parent of folders; 
+#             "branches" (str): folders between root and folders
+#             "folders" (list): list of folders where files are expected; 
+#             for each element in "folders", an entry 
+#                 "name of folder" (dict): 
+#                     "pattern" (str): a regular expression matching the files to be moved:
+#                     "buckets" ("daily"|"monthly"): determines if subfolders are generated for days or only for months.
+#         branch (str, optional): specifies the branch below root to be processed. Defaults to "incoming".  
+#     Raises:
+#         ValueError: raised if value for buckets is not recognized.
+
+#     Returns:
+#         int: total number of files moved.
+#     """
+#     total = 0
+#     for folder in cfg["folders"]:
+#         pattern = cfg[folder]["pattern"]
+#         n = 0
+#         src = os.path.join(cfg["root"], branch, folder)
+#         # os.makedirs(src, exist_ok=True)
+#         files = os.listdir(src)
+#         for file in files:
+#             match_obj = re.search(pattern, file)
+#             if match_obj:
+#                 date_str = re.search(r"\d{8}|\d{7}", match_obj.group()).group()
+#                 dtm = datetime.datetime.strptime(date_str, "%j%Y" if len(date_str) == 7 else "%Y%m%d")
+
+#                 bucket = cfg[folder]["buckets"]
+#                 match bucket:
+#                     case "daily":
+#                         dst = Path(src) / f"{dtm.year}" / f"{dtm.month:02d}" / f"{dtm.day:02d}"
+#                     case "monthly":
+#                         dst = Path(src) / f"{dtm.year}" / f"{dtm.month:02d}"
+#                     case "yearly":
+#                         dst = Path(src) / f"{dtm.year}"
+#                     case _:
+#                         raise ValueError(f"Unknown bucket type: {bucket}")
+
+#                 dst_path = Path(dst)
+#                 dst_path.mkdir(parents=True, exist_ok=True)
+
+#                 src_file = Path(src) / file
+#                 dst_file = dst_path / file
+
+#                 if verbosity > 1:
+#                     print(f"{src_file} > {dst_file}")
+
+#                 shutil.move(str(src_file), str(dst_file))
+#                 n += 1
+
+#         if verbosity > 0:
+#             print(f"Finished organizing files under '{cfg['root']}{branch}/{folder}'. {n} files moved.")
+#         total += n
+#         # files = os.listdir(src)
+#         # if files==list():
+#         #     os.removedirs(src)
+#     return total
 
 
 def move_files(source: str, target: str, pattern: str=None, verbose: bool=True) -> int:

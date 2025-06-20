@@ -1,12 +1,15 @@
-import os
-import logging
-from asyncio.log import logger
-import polars as pl
-import matplotlib.pyplot as plt
+
 # from io import BytesIO
 import json
+import logging
+import os
 import shutil
 import zipfile
+from collections import defaultdict
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import polars as pl
 
 
 class AE33:
@@ -23,146 +26,276 @@ class AE33:
         try:
             if log != "ae33.log":
                 os.makedirs(os.path.dirname(log), exist_ok=True)
-            logger = logging.getLogger(__name__)
+            self.logger = logging.getLogger(__name__)
             # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
             log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
             log_handler.setLevel(logging.DEBUG)
             log_handler.setFormatter("%(asctime)s %(levelname)s %(message)s")
-            logger.addHandler(log_handler)
-            logger.info("Class 'AE33' initialized successfully.")
+            self.logger.addHandler(log_handler)
+            self.logger.info("Class 'AE33' initialized successfully.")
 
         except Exception as err:
-            logger = logging.getLogger(__name__)
-            logger.error("Error initializing class 'AE33'.", err)
+            self.logger = logging.getLogger(__name__)
+            self.logger.error("Error initializing class 'AE33'.", err)
 
 
-    def extract_zipfile_to_dataframe(self, path: str, dtm="dtm", sep="|") -> tuple([pl.DataFrame, str]):
-        """Read AE33 data file into a polars dataframe
+    def extract_datafile_to_dataframe(self, path: str, dtm="dtm", sep="|") -> tuple[pl.DataFrame, str]:
+        """
+        Read AE33 .dat file directly or from inside a .zip archive.
 
         Args:
-            path (str): full path to file
-            dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
-            sep (str, optional): field separator used in file. Defaults to "|".
+            path (str): Full path to .dat or .zip file
+            dtm (str): Name of datetime column
+            sep (str): Field separator in file
 
         Returns:
-            pl.DataFrame: DataFrame with DateTime and source columns added to data
-            str: Errors encountered
-
-        Usage:
-        >>> path = "tests/data/ae33/ae33-202310190000.zip"
-        >>> ae33 = AE33()
-        >>> df = ae33.extract_zipfile_to_dataframe(path=path)
-        >>> len(df)
+            Tuple of (Polars DataFrame, error string if any)
         """
         df = pl.DataFrame()
-        cols = ("Inst_SN", "row_id", "DateTime_1", f"{dtm}", "unclear", "DateTime_2", 
-                "RefCh1", "Sen1Ch1", "Sen2Ch1", "RefCh2", "Sen1Ch2", "Sen2Ch2", "RefCh3", "Sen1Ch3", "Sen2Ch3", "RefCh4", "Sen1Ch4", "Sen2Ch4", "RefCh5", "Sen1Ch5", "Sen2Ch5", "RefCh6", "Sen1Ch6", "Sen2Ch6", "RefCh7", "Sen1Ch7", "Sen2Ch7", 
-                "BC11", "BC12", "BC1", "BC21", "BC22", "BC2", "BC31", "BC32", "BC3", "BC41", "BC42", "BC4", "BC51", "BC52", "BC5", "BC61", "BC62", "BC6", "BC71", "BC72", "BC7", 
-                "K1", "K2", "K3", "K4", "K5", "K6", "K7", "unclear_2", "Pres", "Temp", "Flow1", "Flow2", "FlowC", "Temp_1", "Temp_2","Temp_3",
-                "Stat_1", "Stat_2", "Stat_3", "Stat_4", "Stat_5", 
-                "TapeAdvCount", "unclear_3", "unclear_4", "unclear_5", "unclear_6"
+        cols = (
+            "Inst_SN", "row_id", "DateTime_1", dtm, "unclear", "DateTime_2",
+            "RefCh1", "Sen1Ch1", "Sen2Ch1", "RefCh2", "Sen1Ch2", "Sen2Ch2", "RefCh3", "Sen1Ch3", "Sen2Ch3", "RefCh4", "Sen1Ch4", "Sen2Ch4", "RefCh5", "Sen1Ch5", "Sen2Ch5", "RefCh6", "Sen1Ch6", "Sen2Ch6", "RefCh7", "Sen1Ch7", "Sen2Ch7",
+            "BC11", "BC12", "BC1", "BC21", "BC22", "BC2", "BC31", "BC32", "BC3", "BC41", "BC42", "BC4", "BC51", "BC52", "BC5", "BC61", "BC62", "BC6", "BC71", "BC72", "BC7",
+            "K1", "K2", "K3", "K4", "K5", "K6", "K7", "unclear_2", "Pres", "Temp", "Flow1", "Flow2", "FlowC", "Temp_1", "Temp_2", "Temp_3",
+            "Stat_1", "Stat_2", "Stat_3", "Stat_4", "Stat_5",
+            "TapeAdvCount", "unclear_3", "unclear_4", "unclear_5", "unclear_6"
         )
         dtypes = [pl.Utf8] + [pl.Int64] + [pl.Utf8]*4 + [pl.Int64]*42 + [pl.Float64]*10 + [pl.Int64]*3 + [pl.Float64]*3 + [pl.Int64]*10
 
         try:
-            source = zipfile.ZipFile(path).read(os.path.basename(path).replace('.zip', '.dat'))
-            df = pl.read_csv(source=source, 
-                            has_header=False, 
-                            separator=sep,
-                            comment_char="#",
-                            dtypes=dtypes
-                            ).with_columns(
-                                pl.col('column_4')
-                                .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_unit='us', time_zone='UTC')
-                                )
+            if path.endswith(".zip"):
+                with zipfile.ZipFile(path) as z:
+                    inner_name = os.path.basename(path).replace(".zip", ".dat")
+                    content = z.read(inner_name)
+            else:
+                with open(path, "rb") as f:
+                    content = f.read()
+
+            df = pl.read_csv(
+                source=content,
+                has_header=False,
+                separator=sep,
+                comment_char="#",
+                dtypes=dtypes,
+            ).with_columns(
+                pl.col("column_4")
+                .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_unit='us', time_zone='UTC')
+                .alias(dtm)
+            )
             df.columns = cols
-            # df = df.with_columns(pl.col(pl.Utf8).exclude(f"^(I|D|{dtm}).*$").cast(pl.Float32))
-
             return df, None
+
         except Exception as err:
-            logger.error(err)
+            self.logger.error(f"Error reading {path}: {err}")
             return df, str(err)
+    # def extract_zipfile_to_dataframe(self, path: str, dtm="dtm", sep="|") -> tuple([pl.DataFrame, str]):
+    #     """Read AE33 data file into a polars dataframe
+
+    #     Args:
+    #         path (str): full path to file
+    #         dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
+    #         sep (str, optional): field separator used in file. Defaults to "|".
+
+    #     Returns:
+    #         pl.DataFrame: DataFrame with DateTime and source columns added to data
+    #         str: Errors encountered
+
+    #     Usage:
+    #     >>> path = "tests/data/ae33/ae33-202310190000.zip"
+    #     >>> ae33 = AE33()
+    #     >>> df = ae33.extract_zipfile_to_dataframe(path=path)
+    #     >>> len(df)
+    #     """
+    #     df = pl.DataFrame()
+    #     cols = ("Inst_SN", "row_id", "DateTime_1", f"{dtm}", "unclear", "DateTime_2", 
+    #             "RefCh1", "Sen1Ch1", "Sen2Ch1", "RefCh2", "Sen1Ch2", "Sen2Ch2", "RefCh3", "Sen1Ch3", "Sen2Ch3", "RefCh4", "Sen1Ch4", "Sen2Ch4", "RefCh5", "Sen1Ch5", "Sen2Ch5", "RefCh6", "Sen1Ch6", "Sen2Ch6", "RefCh7", "Sen1Ch7", "Sen2Ch7", 
+    #             "BC11", "BC12", "BC1", "BC21", "BC22", "BC2", "BC31", "BC32", "BC3", "BC41", "BC42", "BC4", "BC51", "BC52", "BC5", "BC61", "BC62", "BC6", "BC71", "BC72", "BC7", 
+    #             "K1", "K2", "K3", "K4", "K5", "K6", "K7", "unclear_2", "Pres", "Temp", "Flow1", "Flow2", "FlowC", "Temp_1", "Temp_2","Temp_3",
+    #             "Stat_1", "Stat_2", "Stat_3", "Stat_4", "Stat_5", 
+    #             "TapeAdvCount", "unclear_3", "unclear_4", "unclear_5", "unclear_6"
+    #     )
+    #     dtypes = [pl.Utf8] + [pl.Int64] + [pl.Utf8]*4 + [pl.Int64]*42 + [pl.Float64]*10 + [pl.Int64]*3 + [pl.Float64]*3 + [pl.Int64]*10
+
+    #     try:
+    #         source = zipfile.ZipFile(path).read(os.path.basename(path).replace('.zip', '.dat'))
+    #         df = pl.read_csv(source=source, 
+    #                         has_header=False, 
+    #                         separator=sep,
+    #                         comment_char="#",
+    #                         dtypes=dtypes
+    #                         ).with_columns(
+    #                             pl.col('column_4')
+    #                             .str.to_datetime(format='%m/%d/%Y %I:%M:%S %p', time_unit='us', time_zone='UTC')
+    #                             )
+    #         df.columns = cols
+    #         # df = df.with_columns(pl.col(pl.Utf8).exclude(f"^(I|D|{dtm}).*$").cast(pl.Float32))
+
+    #         return df, None
+    #     except Exception as err:
+    #         self.logger.error(err)
+    #         return df, str(err)
 
 
-    def zipfiles_to_parquet(self, source: str, target: str, dtm: str="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
-        """Extract and compile AE33 zipfiles found in source and its sub-folders to polars DataFrame, save as parquet files in target. Optionally plot the data.
-
-        Args:
-            source (str): Path to directory to process. Sub-directories will also be considered.
-            target (str): Path to directory where .parquet files will be stored.
-            dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
-            archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
-            issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
-            append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
-            plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
-            verbose (bool, optional): Should information on process be written to console? Defaults to True.
-        Returns:
-            dict: name of files that could not be processed as well as errors encountered.
+    def datafiles_to_parquet(self, source: str, target: str, dtm: str = "dtm",
+                            archive: str = None, issues: str = None,
+                            append_parquet: bool = True, plot: bool = True,
+                            verbose: bool = True) -> tuple[pl.DataFrame, dict]:
+        """
+        Extract AE33 data files from any structure under 'source', compile to Polars DataFrame,
+        split and save .parquet files into 'target/<year>/<month>/ae33.parquet'.
         """
         result = pl.DataFrame()
-        errors = dict()
+        errors = {}
+        target_base = Path(target)
+        archive_base = Path(archive) if archive else None
+        issues_base = Path(issues) if issues else None
+
         try:
-            # process files
             if verbose:
-                print(f"Processing source {source} ...")
-            for root, dirs, files in os.walk(source):
-                n = (len(source) - len(root) + 1)
-                relative_path = root[n:] if n < 0 else ""
+                print(f"Scanning source directory: {source}")
+
+            for root, _, files in os.walk(source):
                 for file in files:
-                    if verbose:
-                        print(f"> Processing {file} ...")
                     src = os.path.join(root, file)
-                    tmp, err = self.extract_zipfile_to_dataframe(os.path.join(root, file))
+                    if verbose:
+                        print(f"> Processing {src} ...")
+
+                    tmp, err = self.extract_datafile_to_dataframe(src)
+
                     if err:
-                        errors.update({file: err})
-                        if issues:
-                            os.makedirs(issues, exist_ok=True)
-                            dst = os.path.join(issues, file)
-                            shutil.move(src=src, dst=dst)
-                            # print(f"issue: {src} > {dst}")
-                    elif archive:
-                        dst = os.path.join(archive, relative_path)
-                        os.makedirs(dst, exist_ok=True)
-                        shutil.move(src=src, dst=os.path.join(dst, file))
-                    result = pl.concat([result, tmp], how='diagonal')
+                        errors[file] = err
+                        if issues_base:
+                            issues_base.mkdir(parents=True, exist_ok=True)
+                            shutil.move(src, issues_base / file)
+                    else:
+                        result = pl.concat([result, tmp], how="diagonal")
+                        if archive_base:
+                            rel_root = os.path.relpath(root, source)
+                            archive_dst = archive_base / rel_root
+                            archive_dst.mkdir(parents=True, exist_ok=True)
+                            shutil.move(src, archive_dst / file)
 
-                # clean up if folder is empty
-                # if not os.listdir(root):
-                #     os.rmdir(root)                                
+            if result.is_empty():
+                if verbose:
+                    self.logger.info("No valid data extracted.")
+                return result, errors
 
-            if not result.is_empty():
-                # create target directory if it doesn't yet exist
-                os.makedirs(target, exist_ok=True)
-                parquet = os.path.join(target, "ae33.parquet")
+            # Convert and group by year and month
+            result = result.unique().sort(dtm)
+            result = result.with_columns([
+                pl.col(dtm).dt.year().alias("year"),
+                pl.col(dtm).dt.month().alias("month")
+            ])
 
-                if append_parquet:
-                    if os.path.exists(parquet):
-                        df = pl.read_parquet(parquet)
-                        result = pl.concat([df, result], how='diagonal')
+            for (year, month), group_df in result.group_by(["year", "month"], maintain_order=True):
+                parquet_path = target_base / str(year) / f"{month:02d}" / "ae33.parquet"
+                parquet_path.parent.mkdir(parents=True, exist_ok=True)
 
-                # remove duplicates, sort data
-                result = result.unique()
-                result = result.sort(dtm)
-    
-                # store result as parquet file
-                result.write_parquet(parquet)
+                if append_parquet and parquet_path.exists():
+                    existing_df = pl.read_parquet(parquet_path)
+                    group_df = pl.concat([existing_df, group_df], how="diagonal").unique().sort(dtm)
 
-                # plot data
+                group_df.write_parquet(parquet_path)
+
+                if verbose:
+                    self.logger.info(f"  ✔ Saved {len(group_df)} records to {parquet_path}")
+
                 if plot:
-                    self.plot_aethalometer_data(df=result)
+                    self.plot_aethalometer_data(df=group_df)
 
+            # Write errors if needed
             if errors:
-                # create target directoriy if it doesn't yet exist
-                os.makedirs(target, exist_ok=True)
-                # write errors to json file (append if it exists already)
-                with open(os.path.join(target, "ae33.errors.json"), "a") as fh:
+                target_base.mkdir(parents=True, exist_ok=True)
+                error_file = target_base / "ae33.errors.json"
+                with open(error_file, "a") as fh:
                     json.dump(errors, fh)
 
-            return result, errors
+            return result.drop(["year", "month"]), errors
 
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
             print(err)
+            return result, {"fatal": str(err)}
+
+    # def zipfiles_to_parquet(self, source: str, target: str, dtm: str="dtm", archive: str=None, issues: str=None, append_parquet: bool=True, plot: bool=True, verbose: bool=True) -> tuple([pl.DataFrame, dict]):
+    #     """Extract and compile AE33 zipfiles found in source and its sub-folders to polars DataFrame, save as parquet files in target. Optionally plot the data.
+
+    #     Args:
+    #         source (str): Path to directory to process. Sub-directories will also be considered.
+    #         target (str): Path to directory where .parquet files will be stored.
+    #         dtm (str, optional): Name of dateTime column. Defaults to 'dtm'
+    #         archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
+    #         issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
+    #         append_parquet (bool, optional): If True, append new data to an existing .parquet file. Defaults to True.
+    #         plot (bool, optional): Should the resulting DataFrames be visualized? Defaults to True.
+    #         verbose (bool, optional): Should information on process be written to console? Defaults to True.
+    #     Returns:
+    #         dict: name of files that could not be processed as well as errors encountered.
+    #     """
+    #     result = pl.DataFrame()
+    #     errors = dict()
+    #     try:
+    #         # process files
+    #         if verbose:
+    #             print(f"Processing source {source} ...")
+    #         for root, dirs, files in os.walk(source):
+    #             n = (len(source) - len(root) + 1)
+    #             relative_path = root[n:] if n < 0 else ""
+    #             for file in files:
+    #                 if verbose:
+    #                     print(f"> Processing {file} ...")
+    #                 src = os.path.join(root, file)
+    #                 tmp, err = self.extract_zipfile_to_dataframe(os.path.join(root, file))
+    #                 if err:
+    #                     errors.update({file: err})
+    #                     if issues:
+    #                         os.makedirs(issues, exist_ok=True)
+    #                         dst = os.path.join(issues, file)
+    #                         shutil.move(src=src, dst=dst)
+    #                         # print(f"issue: {src} > {dst}")
+    #                 elif archive:
+    #                     dst = os.path.join(archive, relative_path)
+    #                     os.makedirs(dst, exist_ok=True)
+    #                     shutil.move(src=src, dst=os.path.join(dst, file))
+    #                 result = pl.concat([result, tmp], how='diagonal')
+
+    #             # clean up if folder is empty
+    #             # if not os.listdir(root):
+    #             #     os.rmdir(root)                                
+
+    #         if not result.is_empty():
+    #             # create target directory if it doesn't yet exist
+    #             os.makedirs(target, exist_ok=True)
+    #             parquet = os.path.join(target, "ae33.parquet")
+
+    #             if append_parquet:
+    #                 if os.path.exists(parquet):
+    #                     df = pl.read_parquet(parquet)
+    #                     result = pl.concat([df, result], how='diagonal')
+
+    #             # remove duplicates, sort data
+    #             result = result.unique()
+    #             result = result.sort(dtm)
+    
+    #             # store result as parquet file
+    #             result.write_parquet(parquet)
+
+    #             # plot data
+    #             if plot:
+    #                 self.plot_aethalometer_data(df=result)
+
+    #         if errors:
+    #             # create target directoriy if it doesn't yet exist
+    #             os.makedirs(target, exist_ok=True)
+    #             # write errors to json file (append if it exists already)
+    #             with open(os.path.join(target, "ae33.errors.json"), "a") as fh:
+    #                 json.dump(errors, fh)
+
+    #         return result, errors
+
+    #     except Exception as err:
+    #         logger.error(err)
+    #         print(err)
 
 
     def plot_aethalometer_data(self, df: pl.DataFrame, variable: str="eBC", dtm: str="dtm", start:str=None, end:str=None, title:str="Magee Scientific AE33", ylim=None) -> None:
@@ -210,7 +343,7 @@ class AE33:
             plt.ylabel(ylabel)
             plt.show()
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
             print(err)
 
 
@@ -238,7 +371,7 @@ class AE33:
             return df, cutoffs
 
         except Exception as err:
-            logger.error(err)
+            self.logger.error(err)
             print(err)
 
 

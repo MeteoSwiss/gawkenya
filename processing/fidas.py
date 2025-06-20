@@ -203,11 +203,14 @@ class FIDAS:
                 return
 
             src = Path()
+            self.logger.info(f"Processing {source} ...")
+            files_processed = int()
             for root, dirs, files in os.walk(source):
                 for file in files:
                     if not file.startswith("fidas-"):
                         continue
 
+                    files_processed += 1
                     _dst = issues  # Default destination
 
                     src = Path(root) / file
@@ -225,6 +228,11 @@ class FIDAS:
                     except OSError:
                         pass
 
+                if files_processed:
+                    self.logger.info(f"Finished: {files_processed} files processed.")
+                else:
+                    self.logger.info("No files found to process.")
+                    
         except Exception as err:
             self.logger.error(f"[compile_files_to_parquet] file: {src} produced error: {err}")
 
