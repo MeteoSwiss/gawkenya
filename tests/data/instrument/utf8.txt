@@ -1,0 +1,2 @@
+Hello, this is UTF-8 encoded.
+Line 2: More UTF-8 content.
