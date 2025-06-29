@@ -1,3 +1,32 @@
+import pytest
+import polars as pl
+from pathlib import Path
+from processing.meteo import METEO
+
+TEST_DATA_DIR = Path("tests/data/meteo")
+
+FILES = [
+    ("VRXA00.202310190700", True),
+    ("VRXA00.202310190530", True),
+    ("VRXA00.202310190550.zip", True),
+    ("VRXA00.202310190630", True),
+]
+
+@pytest.mark.parametrize("filename, is_valid", FILES)
+def test_meteo_files(filename: str, is_valid: bool):
+    path = TEST_DATA_DIR / filename
+    meteo = METEO()
+    df, err, ftype = meteo.extract_to_dataframe(path)
+
+    if is_valid:
+        assert err is None, f"Unexpected error for {filename}: {err}"
+        assert isinstance(df, pl.DataFrame), f"No DataFrame returned for {filename}"
+        assert not df.is_empty(), f"DataFrame is empty for {filename}"
+    else:
+        assert df.is_empty(), f"Expected empty DataFrame for invalid file {filename}"
+        assert err is not None, f"Expected error message for {filename}"
+
+
 # # %%
 # import unittest
 # import os

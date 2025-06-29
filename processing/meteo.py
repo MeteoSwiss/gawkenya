@@ -1,9 +1,11 @@
-from pathlib import Path
-import pandas as pd
 import polars as pl
-
-from toolbox.utils import pl_simplify_dtypes
+from pathlib import Path
+from io import BytesIO
+import zipfile
+import re
 from processing.instrument import Instrument
+from datetime import datetime
+from toolbox.utils import pl_simplify_dtypes
 
 
 class Meteo(Instrument):
@@ -12,463 +14,89 @@ class Meteo(Instrument):
     Parses fixed-width formatted records and constructs datetime.
     """
 
-    def __init__(self):
-        super().__init__(name="meteo")
+    def __init__(self, name: str="vrxa00"):
+        super().__init__(name=name)
 
-    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None, str]:
+        self.mappings = {'VRXA00': {
+                'iii': 'MeteoSwiss internal station identifier; MKN=187; NRB=',
+                'zzzztttt': 'dateTime as %Y%m%d%H%M%S',
+                'tre200s0': 'Temperature (°C, 10-min average) at 2m above ground (Lufft)',
+                'uor200s0': 'Humidity (%, 10-min average) at 2m above ground (Lufft)',
+                'prestas0': 'Pressure (hPa, 10-min average) at 2m above ground (Lufft)',
+                'fa1010z0': 'Wind speed (m/s, , 10-min average) at 2m above ground (Lufft)',
+                'da1010z0': 'Wind direction (°, 10-min average) at 2m above ground (Lufft)',
+                'rre150z0': 'Precipitation (mm, 10-min sum) at 2m above ground (Lufft, radar)',
+                'ta1200s0': 'Temperature (°C, 10-min average) at 10m above ground (Lufft)',
+                'ua1200s0': 'Humidity (%, 10-min average) at 10m above ground (Lufft)',
+                'pa1stas0': 'Pressure (hPa, 10-min average) at 10m above ground (Lufft)',
+                'fkl010z0': 'Wind speed (m/s, 10-min average) at 10m above ground (Lufft)',
+                'dkl010z0': 'Wind direction (°, 10-min average) at 10m above ground (Lufft)',
+                'ra1150z0': 'Precipitation (mm, 10-min sum) at 10m above ground (Lufft, radar)',
+                'fkl010z1': 'Wind speed (m/s, 10-min maximum) at 10m above ground (Lufft)',
+                'gor000z0': 'Global solar radiation (W, 10-min average) at 2m above ground (Lufft)',
+                'ta2200s0': 'Temperature (°C, 10-min average) at 2m above ground, parallel measurement (Rotronic)',
+                'ua2200s0': 'Pressure (hPa, 10-min average) at 2m above ground, parallel measurement (Rotronic)',
+                # 'itosurr0': 'Surface ozone (ppb, 5-min average)' --- will be needed for Nairobi
+            }
+        }
+
+        # self.dtypes = {'VRXA00': [pl.Utf8]*2 + [pl.Float64]*16,}
+        self.dtypes = {'VRXA00': [pl.Int32] + [pl.Utf8] + [pl.Float64]*16,}
+        # self.logger.info("Class 'Meteo' initialized successfully.")
+
+
+    def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:
         """
-        Extracts data from a VRXA00 file into a Polars DataFrame.
+        Extract data from a METEO file (.txt or .zip) to a Polars DataFrame.
 
         Args:
-            path (Path): Path to the input fixed-width format file.
+            path (Path): Full path to data file.
+            dtm (str): Name of datetime column.
 
         Returns:
-            tuple: (DataFrame, error string or None, file type 'vrxa00')
+            tuple: (DataFrame, error string if any, file type string)
         """
-        df = pl.DataFrame()
         file_type = "vrxa00"
-        dtm = self.dtm
 
         try:
-            widths = [15, 6, 7, 5, 6, 6, 6]
-            col_names = [
-                "station", "year", "doy", "hour", "wind_dir", "wind_speed", "temperature"
-            ]
+            if ".zip" in path.name:
+                with zipfile.ZipFile(path, "r") as z:
+                    data_files = [f for f in z.namelist() if f.endswith(".txt") or f.startswith("VRXA")]
+                    if not data_files:
+                        raise ValueError("No valid data file found in ZIP archive.")
+                    if len(data_files) > 1:
+                        raise ValueError("Multiple data files found in ZIP archive.")
+                    content = z.read(data_files[0])
+                    df = pl.read_csv(
+                        source=content,
+                        has_header=True,
+                        separator=" ",
+                        skip_rows=3,
+                        null_values="/",
+                        dtypes=self.dtypes["VRXA00"]
+                    )
+            else:
+                df = pl.read_csv(
+                    source=path,
+                    has_header=True,
+                    separator=" ",
+                    skip_rows=3,
+                    null_values="/",
+                    dtypes=self.dtypes["VRXA00"]
+                )
 
-            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
-            data_lines = [line for line in lines if not line.startswith("! ")]
-
-            df_pd = pd.read_fwf(
-                pd.compat.StringIO("\n".join(data_lines)),
-                widths=widths,
-                names=col_names
-            )
-
-            df_pd["year"] = df_pd["year"].astype(int)
-            df_pd["doy"] = df_pd["doy"].astype(int)
-            df_pd["hour"] = df_pd["hour"].astype(int)
-
-            df_pd[dtm] = pd.to_datetime(
-                df_pd["year"] * 1000 + df_pd["doy"], format="%Y%j", errors="coerce"
-            ) + pd.to_timedelta(df_pd["hour"], unit="h")
-
-            df_pd = df_pd.dropna(subset=[dtm])
-
-            df = pl.from_pandas(df_pd)
+            df = df.with_columns([
+                pl.col("zzzztttt").str.to_datetime("%Y%m%d%H%M", time_unit="us", time_zone="UTC").alias(dtm),
+                pl.lit(str(path)).alias("source"),
+            ])
+            # df = df.rename({"zzzztttt": "timestamp"})
             df = pl_simplify_dtypes(df)
 
             return df, None, file_type
 
         except Exception as e:
             self.logger.error(f"Failed to extract {path.name}: {e}")
-            return df, str(e), file_type
-
-# # from asyncio.log import logger
-# import glob
-# import json
-# import logging
-# import os
-# import re
-# import shutil
-# import zipfile
-# from collections import defaultdict
-# from logging.handlers import TimedRotatingFileHandler
-# from pathlib import Path
-
-# import matplotlib.pyplot as plt
-# import pandas as pd
-# import polars as pl
-# from matplotlib import cm
-# from toolbox.utils import pl_simplify_dtypes
-
-# class Meteo:
-
-#     def __init__(self, log: str="meteo.log"):
-#         try:
-#             if log != "meteo.log":
-#                 os.makedirs(os.path.dirname(log), exist_ok=True)
-#             # logging.basicConfig(filename=log, filemode="a", format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
-#             self.logger = logging.getLogger(__name__)
-#             log_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-#             log_handler = logging.FileHandler(filename=log, mode="a", encoding="utf8")
-#             log_handler.setLevel(logging.INFO)
-#             log_handler.setFormatter(log_formatter)
-#             self.logger.addHandler(log_handler)
-
-#             self.mappings = {'VRXA00': {
-#                     'iii': 'MeteoSwiss internal station identifier; MKN=187; NRB=',
-#                     'zzzztttt': 'dateTime as %Y%m%d%H%M%S',
-#                     'tre200s0': 'Temperature (°C, 10-min average) at 2m above ground (Lufft)',
-#                     'uor200s0': 'Humidity (%, 10-min average) at 2m above ground (Lufft)',
-#                     'prestas0': 'Pressure (hPa, 10-min average) at 2m above ground (Lufft)',
-#                     'fa1010z0': 'Wind speed (m/s, , 10-min average) at 2m above ground (Lufft)',
-#                     'da1010z0': 'Wind direction (°, 10-min average) at 2m above ground (Lufft)',
-#                     'rre150z0': 'Precipitation (mm, 10-min sum) at 2m above ground (Lufft, radar)',
-#                     'ta1200s0': 'Temperature (°C, 10-min average) at 10m above ground (Lufft)',
-#                     'ua1200s0': 'Humidity (%, 10-min average) at 10m above ground (Lufft)',
-#                     'pa1stas0': 'Pressure (hPa, 10-min average) at 10m above ground (Lufft)',
-#                     'fkl010z0': 'Wind speed (m/s, 10-min average) at 10m above ground (Lufft)',
-#                     'dkl010z0': 'Wind direction (°, 10-min average) at 10m above ground (Lufft)',
-#                     'ra1150z0': 'Precipitation (mm, 10-min sum) at 10m above ground (Lufft, radar)',
-#                     'fkl010z1': 'Wind speed (m/s, 10-min maximum) at 10m above ground (Lufft)',
-#                     'gor000z0': 'Global solar radiation (W, 10-min average) at 2m above ground (Lufft)',
-#                     'ta2200s0': 'Temperature (°C, 10-min average) at 2m above ground, parallel measurement (Rotronic)',
-#                     'ua2200s0': 'Pressure (hPa, 10-min average) at 2m above ground, parallel measurement (Rotronic)',
-#                     # 'itosurr0': 'Surface ozone (ppb, 5-min average)' --- will be needed for Nairobi
-#                 }
-#             }
-
-#             self.dtypes = {'VRXA00': [pl.Utf8]*2 + [pl.Float64]*16,}
-#             self.logger.info("Class 'Meteo' initialized successfully.")
-
-#         except Exception as err:
-#             logger = logging.getLogger(__name__)
-#             logger.exception("Error initializing class 'Meteo'.", err)
-
-
-#     def extract_vrxa00_to_dataframe(self, file: str, log=True, verbose: bool=True) -> tuple([pl.DataFrame, str]):
-#         """
-#         Open a file, determine its type from the file name, then extract content into a Polars dataframe.
-
-#         Args:
-#             file (str): full path to file.
-#             log (bln): Should activities be logged to 'meteo.log'? Defaults to True.
-
-#         Returns:
-#             pl.DataFrame: DataFrame with DateTime and source columns added to data
-#             str: Errors encountered
-#         """
-#         if 'VRXA00' in file:
-#             if log:
-#                 self.logger.info(f"Extracting file {file}.")
-
-#             try:
-#                 if '.zip' in file:
-#                     zf = zipfile.ZipFile(file)
-#                     df = pl.read_csv(source=zf.open(zf.namelist()[0]).read(), has_header=True, separator=" ", skip_rows=3, null_values='/', dtypes=self.dtypes['VRXA00'])
-#                 else:
-#                     df = pl.read_csv(source=file, has_header=True, separator=" ", skip_rows=3, null_values='/', dtypes=self.dtypes['VRXA00'])
-
-#                 df = df.with_columns(pl.lit(file).alias('source'),
-#                                     pl.col('zzzztttt').str.to_datetime(format='%Y%m%d%H%M', 
-#                                                                        time_unit='us',
-#                                                                        time_zone='UTC').alias('dtm'))
-#                 return df, None
-
-#             except Exception as err:
-#                 if verbose:
-#                     print(f"Error extracting {file}: {err}.")                
-#                 self.logger.error(err)
-#                 return pl.DataFrame(), str(err)
-
-
-#     def compile_vrxa00_to_parquet(
-#         self,
-#         source: str,
-#         target: str,
-#         archive: str = None,
-#         issues: str = None,
-#         append_parquet: bool = True,
-#         verbose: bool = True,
-#         log: bool = True,
-#     ) -> tuple[pl.DataFrame, dict]:
-#         """
-#         Compile VRXA00 bulletins from files like VRXA00.yyyymmddHHMM[.001],
-#         strip `.001`, and organize output by year in target/<year>/vrxa00.parquet.
-#         """
-#         source = Path(source)
-#         target = Path(target)
-#         archive = Path(archive) if archive else None
-#         issues = Path(issues) if issues else None
-#         target.mkdir(parents=True, exist_ok=True)
-
-#         errors = {}
-#         dataframes = []
-#         files_processed = 0
-
-#         if log:
-#             self.logger.info(f"Processing: {source}")
-
-#         try:
-#             for root, _, files in os.walk(source):
-#                 root_path = Path(root)
-#                 relative_path = root_path.relative_to(source)
-
-#                 for file in files:
-#                     if not file.startswith("VRXA00."):
-#                         continue
-
-#                     files_processed += 1
-#                     src = root_path / file
-
-#                     # Strip `.001` if needed
-#                     if src.suffix == ".001":
-#                         try:
-#                             stripped = src.with_suffix("")
-#                             if not stripped.exists():
-#                                 src.rename(stripped)
-#                                 src = stripped
-#                         except Exception as e:
-#                             errors[src.name] = f"Rename error: {e}"
-#                             continue
-
-#                     if verbose or log:
-#                         msg = f"→ {src.name}"
-#                         (self.logger.info if log else print)(msg)
-
-#                     df, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
-#                     if err:
-#                         errors[src.name] = err
-#                         if issues:
-#                             dst = issues / relative_path
-#                             dst.mkdir(parents=True, exist_ok=True)
-#                             try:
-#                                 shutil.move(str(src), dst / src.name)
-#                             except Exception as e:
-#                                 errors[src.name] += f" | move-to-issues failed: {e}"
-#                         continue
-
-#                     if "dtm" not in df.columns:
-#                         errors[src.name] = "Missing 'dtm' column"
-#                         continue
-
-#                     dataframes.append(df)
-
-#                     if archive:
-#                         dst = archive / relative_path
-#                         dst.mkdir(parents=True, exist_ok=True)
-#                         try:
-#                             shutil.move(str(src), dst / src.name)
-#                         except Exception as e:
-#                             errors[src.name] = f"Archive move failed: {e}"
-
-#             # Write output
-#             if dataframes:
-#                 full_df = pl.concat(dataframes, how="diagonal").unique().sort("dtm")
-#                 full_df = pl_simplify_dtypes(full_df)
-
-#                 full_df = full_df.with_columns([
-#                     pl.col("dtm").dt.year().alias("year")
-#                 ])
-
-#                 for year, group_df in full_df.group_by("year"):
-#                     year_path = target / str(year)
-#                     year_path.mkdir(parents=True, exist_ok=True)
-#                     parquet_path = year_path / "vrxa00.parquet"
-
-#                     if append_parquet and parquet_path.exists():
-#                         existing = pl.read_parquet(parquet_path)
-#                         group_df = pl.concat([existing, group_df], how="diagonal").unique().sort("dtm")
-
-#                     group_df.write_parquet(parquet_path)
-
-#             else:
-#                 self.logger.info("⚠ No valid data found to write.")
-
-#             if errors:
-#                 with open(target / "vrxa00.errors.json", "w") as f:
-#                     json.dump(errors, f, indent=2)
-
-#             if files_processed:
-#                 self.logger.info(f"✔ Finished: {files_processed} files processed.")
-#             else:
-#                 self.logger.info("⚠ No files matched pattern.")
-
-#             return (
-#                 pl.concat(dataframes, how="diagonal").unique().sort("dtm") if dataframes else pl.DataFrame(),
-#                 errors
-#             )
-
-#         except Exception as err:
-#             self.logger.error(f"Fatal error: {err}")
-#             return pl.DataFrame(), {"fatal": str(err)}
-#     # def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str = None, issues: str = None,
-#     #                             append_parquet: bool = True, verbose: bool = True, log: bool = True,
-#     #                             flush_limit: int = 50) -> tuple[pl.DataFrame, dict]:
-#     #     """
-#     #     Compile VRXA00 bulletins from files like VRXA00.yyyymmddHHMM[.001], strip `.001`, organize by year in target/<year>/vrxa00.parquet.
-#     #     """
-#     #     source = Path(source)
-#     #     target = Path(target)
-#     #     target.mkdir(parents=True, exist_ok=True)
-#     #     archive = Path(archive) if archive else None
-#     #     issues = Path(issues) if issues else None
-
-#     #     errors = {}
-#     #     buffers: dict[int, list[pl.DataFrame]] = defaultdict(list)
-#     #     total_records = []
-
-#     #     def flush(year: int):
-#     #         df_year = pl.concat(buffers[year], how="diagonal").unique().sort("dtm")
-#     #         df_year = pl_simplify_dtypes(df_year)
-#     #         year_folder = target / str(year)
-#     #         year_folder.mkdir(parents=True, exist_ok=True)
-#     #         parquet_path = year_folder / "vrxa00.parquet"
-
-#     #         if append_parquet and parquet_path.exists():
-#     #             df_existing = pl.read_parquet(parquet_path)
-#     #             df_existing = pl_simplify_dtypes(df_existing)
-#     #             df_year = pl.concat([df_existing, df_year], how="diagonal").unique().sort("dtm")
-
-#     #         df_year.write_parquet(parquet_path)
-#     #         buffers[year] = []
-
-#     #     try:
-#     #         self.logger.info(f"Processing {source} ...")
-#     #         files_processed = int()
-#     #         for root, dirs, files in os.walk(source):
-#     #             root_path = Path(root)
-#     #             relative_path = root_path.relative_to(source)
-
-#     #             for file in files:
-#     #                 if not file.startswith("VRXA00."):
-#     #                     continue
-
-#     #                 files_processed += 1
-#     #                 src = root_path / file
-
-#     #                 # Remove .001 suffix if present
-#     #                 if file.endswith(".001"):
-#     #                     try:
-#     #                         src = src.rename(src[:-4])
-#     #                     except:
-#     #                         pass
-
-#     #                 if verbose:
-#     #                     self.logger.info(f"Processing {src.name}")
-
-#     #                 tmp, err = self.extract_vrxa00_to_dataframe(str(src), log=log)
-
-#     #                 if err:
-#     #                     errors[src.name] = err
-#     #                     if issues:
-#     #                         issue_dst = issues / relative_path
-#     #                         issue_dst.mkdir(parents=True, exist_ok=True)
-#     #                         try:
-#     #                             shutil.move(str(src), str(issue_dst / src.name))
-#     #                         except:
-#     #                             pass
-#     #                     continue
-
-#     #                 if "dtm" not in tmp.columns:
-#     #                     errors[src.name] = "Missing 'dtm' column"
-#     #                     continue
-
-#     #                 # tmp = tmp.with_columns(pl.col("dtm").cast(pl.Datetime("us", "UTC")))
-#     #                 total_records.append(tmp)
-
-#     #                 years = tmp.select(pl.col("dtm").dt.year().unique().sort()).to_series()
-#     #                 for year in years:
-#     #                     df_year = tmp.filter(pl.col("dtm").dt.year() == year)
-#     #                     buffers[year].append(df_year)
-#     #                     if len(buffers[year]) >= flush_limit:
-#     #                         flush(year)
-
-#     #                 if archive:
-#     #                     archive_dst = archive / relative_path
-#     #                     archive_dst.mkdir(parents=True, exist_ok=True)
-#     #                     try:
-#     #                         shutil.move(str(src), str(archive_dst / src.name))
-#     #                     except:
-#     #                         pass
-                        
-#     #         for year in buffers:
-#     #             if buffers[year]:
-#     #                 flush(year)
-
-#     #         if errors:
-#     #             with open(target / 'vrxa00.errors.json', 'w') as f:
-#     #                 json.dump(errors, f, indent=2)
-
-#     #         full_df = pl.concat(total_records, how="diagonal") if total_records else pl.DataFrame()
-
-#     #         if files_processed:
-#     #             self.logger.info(f"Finished: {files_processed} files processed.")
-#     #         else:
-#     #             self.logger.info("No files found to process.")
-
-#     #         return full_df, errors
-
-#     #     except Exception as err:
-#     #         self.logger.error(f"Fatal error during processing: {err}")
-#     #         return pl.DataFrame(), {"fatal": str(err)}
-
-
-#     # def compile_vrxa00_to_parquet(self, source: str, target: str, archive: str=None, issues: str=None, 
-#     #                               append_parquet: bool=True, verbose: bool=True, log: bool=True) -> tuple([pl.DataFrame, str]):
-#     #     """Extract and compile VRXA00 bulletins found in source and its sub-folders to a single polars DataFrame, save as parquet file in target.
-
-#     #     Args:
-#     #         source (str): Root path to directory to process. <year> will be appended to path. Sub-directories will also be considered.
-#     #         target (str): Root path to directory where .parquet files will be stored.  <year> will be appended to path.
-#     #         archive (str, optional): Root path to directory where files will be archived. Sub-folders will be created corresponding to source. Defaults to None.
-#     #         issues (str, optional): Root path to directory where file that could not be processed are moved to. Defaults to None.
-#     #         append_parquet (bool, optional): If True, append new data to an df_existing .parquet file. Defaults to True.
-#     #         verbose (bool, optional): Should information on process be written to console? Defaults to True.
-#     #         log (bool, optional): Should activities be logged? Defaults to True.
-#     #     Returns:
-#     #         tuple[pl.DataFrame, str]: polars DataFrame of compiled bulletins, and errors if any
-#     #     """
-#     #     os.makedirs(target, exist_ok=True)
-#     #     if archive:
-#     #         os.makedirs(archive, exist_ok=True)
-
-#     #     result = pl.DataFrame()
-#     #     errors = dict()
-        
-#     #     try:
-#     #         # process files
-#     #         if verbose:
-#     #             print(f"Processing source {source} ...")
-#     #         for root, dirs, files in os.walk(source):
-#     #             n = (len(source) - len(root) + 1)
-#     #             relative_path = root[n:] if n < 0 else ""
-#     #             for file in files:
-#     #                 if verbose:
-#     #                     print(f"> Processing {file} ...")
-#     #                 src = os.path.join(root, file)
-#     #                 tmp, err = self.extract_vrxa00_to_dataframe(src, log=log)
-#     #                 if err:
-#     #                     errors.update({file: err})
-#     #                     if issues:
-#     #                         dst = os.path.join(issues, relative_path)
-#     #                         os.makedirs(dst, exist_ok=True)
-#     #                         shutil.move(src=src, dst=os.path.join(dst, file))
-#     #                         print(f"issue: {src} > {dst}")
-#     #                 elif archive:
-#     #                     dst = os.path.join(archive, relative_path)
-#     #                     os.makedirs(dst, exist_ok=True)
-#     #                     shutil.move(src=src, dst=os.path.join(dst, file))
-#     #                 result = pl.concat([result, tmp], how='diagonal')
-                
-#     #             # clean up if folder is empty
-#     #             if not os.listdir(root):
-#     #                 os.rmdir(root)
-
-#     #         if not result.is_empty():
-#     #             # if append_parquet==True, check if parquet already exists and append
-#     #             parquet = os.path.join(target, 'vrxa00.parquet')
-#     #             if append_parquet:
-#     #                 if os.path.exists(parquet):
-#     #                     df = pl.read_parquet(parquet)
-#     #                     result = pl.concat([df, result], how='diagonal')
-                    
-#     #             # remove duplicates, sort data
-#     #             result = result.unique()
-#     #             result = result.sort("dtm")
-
-#     #             # store result as parquet file
-#     #             result.write_parquet(parquet)
-
-#     #         # write errors to json file
-#     #         if errors:
-#     #             with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
-#     #                 json.dump(errors, fh)
-
-#     #         return result, errors
-
-#     #     except Exception as err:
-#     #         self.logger.error(err)
+            return pl.DataFrame(), str(e), file_type
 
 
 #     def remove_extremes(self, df: pl.DataFrame, variable: str, q=0.001) -> tuple([pl.DataFrame, dict]):

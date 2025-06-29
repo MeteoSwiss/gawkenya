@@ -15,7 +15,7 @@ class AE33(Instrument):
     def __init__(self):
         super().__init__(name="ae33")
 
-    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None]:
+    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None, str]:
         """
         Extracts AE33 data from a .zip or .dat file into a Polars DataFrame.
 
@@ -26,6 +26,7 @@ class AE33(Instrument):
             tuple: (DataFrame, error string or None)
         """
         df = pl.DataFrame()
+        file_type = "ae33"        
         dtm = self.dtm
         cols = (
             "Inst_SN", "row_id", "DateTime_1", f"{dtm}", "unclear", "DateTime_2",
@@ -42,7 +43,7 @@ class AE33(Instrument):
             "TapeAdvCount", "unclear_3", "unclear_4", "unclear_5", "unclear_6"
         )
 
-        dtypes = [pl.Utf8, pl.Int64, pl.Utf8, pl.Utf8, pl.Utf8, pl.Utf8] + [pl.Int64] * 42 + [pl.Float64] * 10 + [pl.Int64] * 3 + [pl.Float64] * 3 + [pl.Int64] * 10
+        dtypes = [pl.Utf8, pl.Int64, pl.Utf8, pl.Utf8, pl.Int32, pl.Utf8] + [pl.Int64] * 42 + [pl.Float64] * 10 + [pl.Int64] * 3 + [pl.Float64] * 3 + [pl.Int64] * 10
 
         try:
             if path.suffix == ".zip":
@@ -66,11 +67,11 @@ class AE33(Instrument):
             )
 
             df = pl_simplify_dtypes(df)
-            return df, None
+            return df, None, file_type
 
         except Exception as e:
             self.logger.error(f"Failed to extract {path.name}: {e}")
-            return df, str(e)
+            return df, str(e), file_type
 
 # # from io import BytesIO
 # import json

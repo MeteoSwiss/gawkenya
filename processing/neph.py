@@ -19,9 +19,10 @@ from processing.instrument import Instrument, pl_simplify_dtypes
 #         return False
 
 
-class NEPH(Instrument):
+class Neph(Instrument):
     def __init__(self, name: str = "neph") -> None:
         super().__init__(name=name)
+        self.name = name
 
     def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:
         """
@@ -35,7 +36,7 @@ class NEPH(Instrument):
             tuple: (DataFrame, error string if any, file type string)
         """
         df = pl.DataFrame()
-        file_type = "unknown"
+        file_type = "ne300"
 
         try:
             # Extract raw content
@@ -52,8 +53,9 @@ class NEPH(Instrument):
                 raw = path.read_bytes()
 
             # Detect encoding and decode
-            result = from_path(path).best()
-            encoding = result.encoding if result else "utf-8"
+            res = from_path(path).best()
+            encoding = res.encoding if res else "utf-8"
+            
             text = raw.decode(encoding)
 
             # Check if file is empty or only contains blanks or whitespace

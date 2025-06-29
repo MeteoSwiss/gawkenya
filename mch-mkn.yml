@@ -19,34 +19,37 @@ folders:
 ae33/data: 
   pattern: ae33-\d{12}.(zip|dat)
   buckets: daily
+  split_parquet: month
   expected: 144
 fidas: 
   pattern: fidas-\d{10}.parquet
   buckets: daily
+  split_parquet: month
   expected: 24
 meteo: 
   pattern: VRXA00.\d{12}
   buckets: daily
+  split_parquet: year
   expected: 144
 tei49c: 
   pattern: tei49c-\d{12}.(zip|dat)
   header: pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
+  split_parquet: year
   expected: 144
 tei49i: 
   pattern: tei49i-\d{12}.(zip|dat)
   header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
+  split_parquet: year
   expected: 144
-# tei49i_2: 
-#   pattern: tei49i_2-\d{12}.(zip|dat)
-#   buckets: daily
-#   expected: 144
 g2401: 
   pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
   buckets: daily
+  split_parquet: month
   expected: 24
 ne300:
   pattern: ne300-\d{12}.(zip|dat)
   buckets: daily
+  split_parquet: month
   expected: 144

@@ -11,8 +11,9 @@ class Thermo(Instrument):
     Automatically detects and parses files, supports .dat and .zip.
     """
 
-    def __init__(self):
+    def __init__(self, name: str = "thermo"):
         super().__init__(name="thermo")
+        self.name = name
         self.headers = {
             "tei49c": [
                 "pcdate", "pctime", "time", "date", "o3", "flags",
@@ -25,6 +26,11 @@ class Thermo(Instrument):
                 "flowa", "flowb", "pres"
             ]
         }
+        self.dtypes = {
+            'tei49c': [pl.Utf8]*4 + [pl.Float32]*1 + [pl.Utf8]*1 + [pl.Int32]*2 + [pl.Float32]*6,
+            'tei49i': [pl.Utf8]*5 + [pl.Float32]*2 + [pl.Int32]*2 + [pl.Float32]*6,
+        }
+
 
     def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None, str]:
         """
@@ -67,6 +73,9 @@ class Thermo(Instrument):
 
             df = pl.DataFrame(data_lines, schema=self.headers[file_type])
 
+            # Convert columns to correct types
+            df = df.cast(dict(zip(self.headers[file_type], self.dtypes[file_type])))
+
             # drop optional hio3 column if empty
             if "hio3" in df.columns and df["hio3"].null_count() == len(df):
                 df = df.drop("hio3")
@@ -75,8 +84,8 @@ class Thermo(Instrument):
                 pl.lit(str(path)).alias("source"),
                 pl.format("{} {}", "pcdate", "pctime")
                   .str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False)
-                  .dt.convert_time_zone("UTC")
-                  .dt.cast_time_unit("us")
+                  .dt.replace_time_zone("UTC")
+                  .dt.with_time_unit("us")
                   .alias(dtm)
             ])
             df = pl_simplify_dtypes(df)
