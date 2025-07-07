@@ -1,6 +1,7 @@
 # import configparser
 import logging
 import os
+import sys
 from pathlib import Path
 
 # import chardet
@@ -72,7 +73,7 @@ def setup_logging(
     )
 
     # Console handler
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(level_console)
     ch.setFormatter(formatter)
     logger.addHandler(ch)

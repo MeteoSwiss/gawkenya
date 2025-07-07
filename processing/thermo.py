@@ -24,11 +24,17 @@ class Thermo(Instrument):
                 "pcdate", "pctime", "time", "date", "flags", "o3",
                 "hio3", "cellai", "cellbi", "bncht", "lmpt", "o3lt",
                 "flowa", "flowb", "pres"
+            ],
+            "49i": [
+                "pcdate", "pctime", "time", "date", "flags", "o3",
+                "hio3", "cellai", "cellbi", "bncht", "lmpt", "o3lt",
+                "flowa", "flowb", "pres"
             ]
         }
         self.dtypes = {
             'tei49c': [pl.Utf8]*4 + [pl.Float32]*1 + [pl.Utf8]*1 + [pl.Int32]*2 + [pl.Float32]*6,
             'tei49i': [pl.Utf8]*5 + [pl.Float32]*2 + [pl.Int32]*2 + [pl.Float32]*6,
+            '49i': [pl.Utf8]*5 + [pl.Float32]*2 + [pl.Int32]*2 + [pl.Float32]*6,
         }
 
 
@@ -43,7 +49,7 @@ class Thermo(Instrument):
             tuple: (DataFrame, error message or None, file type ['tei49c' | 'tei49i'])
         """
         df = pl.DataFrame()
-        file_type = "tei49i" if "tei49i" in path.name.lower() else "tei49c"
+        file_type = "49i" if "49i-" in path.name.lower() else "tei49c"
         expected_fields = len(self.headers[file_type])
         dtm = self.dtm
 

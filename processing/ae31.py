@@ -8,16 +8,56 @@ from charset_normalizer import from_path
 from processing.instrument import Instrument, pl_simplify_dtypes
 from datetime import datetime
 
-AE31_HEADER = [
-    'B470', 'B470_1', 'B470_2', 'B470_3', 'B470_4', 'B470_5', 'B470_6',
-    'G520', 'G520_1', 'G520_2', 'G520_3', 'G520_4', 'G520_5', 'G520_6',
-    'IR880', 'IR880_1', 'IR880_2', 'IR880_3', 'IR880_4', 'IR880_5', 'IR880_6',
-    'IR950', 'IR950_1', 'IR950_2', 'IR950_3', 'IR950_4', 'IR950_5', 'IR950_6',
-    'R660', 'R660_1', 'R660_2', 'R660_3', 'R660_4', 'R660_5', 'R660_6',
-    'UV370', 'UV370_1', 'UV370_2', 'UV370_3', 'UV370_4', 'UV370_5', 'UV370_6',
-    'Y590', 'Y590_1', 'Y590_2', 'Y590_3', 'Y590_4', 'Y590_5', 'Y590_6',
-    'date', 'dtm', 'flow', 'id', 'time'
-]
+"""AE-31 Manual
+Section 14.9.3 Expanded Data Format: 
+“date”, “time”, 
+UV [370 nm] result,Blue [470 nm] result, 
+Green [520 nm] result, 
+Yellow [590 nm]result, 
+Red [660 nm] result, 
+IR1 [880 nm, “standard BC”] result,
+IR2 [950 nm] result, 
+air flow (LPM), 
+bypass fraction,
+and then the following columns of data repeated for the seven
+measurement wavelengths:
+sensing zero signal, sensing beam signal, reference zero signal,
+reference beam signal, optical attenuation, air flow (LPM), bypass
+fraction.
+The ‘air flow’ and ‘bypass fraction’ columns are repeated to allow for
+easy visual identification of the separation between the seven sets of
+data columns.
+A typical line in the data file might look like:
+"24-jul-00","16:40", 610 , 604 , 605 , 612 , 617 , 611 , 641 , 3.131 ,-
+.9812 ,-.9814 , 1.1881 , 1.8384 , 1 , 6.4 , 2.704 ,-.9812 ,-.9814 , 4.2483
+, 2.7373 , 1 , 6.4 , 2.45 ,-.9812 ,-.9814 , 2.1716 , 1.9438 , 1 , 6.4 , 2.232
+,-.9812 ,-.9814 , 2.854 , 3.5259 , 1 , 6.4 , 1.957 ,-.9812 ,-.9814 , 3.3428
+, 2.596 , 1 , 6.4 , 1.452 ,-.9812 ,-.9814 , 4.6719 , 3.3935 , 1 , 6.4 , 1.396
+,-.9812 ,-.9814 , 2.705 , 2.438 , 1 , 6.4
+"""
+
+AE31_COLS: list[str] = ['id', 'date', 'time', 'UV370', 'B470', 'G520', 'Y590', 'R660', 'IR880', 'IR950', 'flow',] 
+AE31_COLS += ["_370", "sens_zero_370","sens_beam_370","ref_zero_370","ref_beam_370","att_370", ]
+AE31_COLS += ["_470", "sens_zero_470","sens_beam_470","ref_zero_470","ref_beam_470","att_470", ]
+AE31_COLS += ["_520", "sens_zero_520","sens_beam_520","ref_zero_520","ref_beam_520","att_520", ]
+AE31_COLS += ["_590", "sens_zero_590","sens_beam_590","ref_zero_590","ref_beam_590","att_590", ]
+AE31_COLS += ["_660", "sens_zero_660","sens_beam_660","ref_zero_660","ref_beam_660","att_660", ]
+AE31_COLS += ["_880", "sens_zero_880","sens_beam_880","ref_zero_880","ref_beam_880","att_880", ]
+AE31_COLS += ["_950", "sens_zero_950","sens_beam_950","ref_zero_950","ref_beam_950","att_950", ]
+
+"""
+'1144,"20-oct-24","16:05",  2087,  2246,  2261,  2317,  2373,  2447,  2456,  3.8, 
+0.0212, 1.1359, 0.0212, 3.5391,  .53, 65.961, 
+0.0212,  .8765, 0.0212, 2.5901,  .53, 49.016, 
+0.0212, 1.5084, 0.0212, 2.5596,  .53, 42.713, 
+0.0212, 1.2244, 0.0212, 1.1925,  .53, 37.749, 
+0.0212,  .9628, 0.0212, 1.7056,  .53, 33.773, 
+0.0212,  .8833, 0.0212,  .9363,  .53, 24.800, 
+0.0212, 1.6419, 0.0212, 2.0497,  .53, 22.892'
+"""
+AE31_DTYPES: dict[str, pl.DataType] = dict(zip(AE31_COLS,
+                                               [pl.Int32] + [pl.Utf8]*2 + [pl.Int32]*7 + [pl.Float32]*43))
+
 
 def is_datetime(string: str) -> bool:
     try:
@@ -42,8 +82,9 @@ class AE31(Instrument):
             tuple: (DataFrame, error string if any, file type string)
         """
         df = pl.DataFrame()
-        file_type = "unknown"
-
+        file_type = "ae31"
+        err = None
+        
         try:
             # Extract raw content
             if path.suffix == ".zip":
@@ -69,31 +110,59 @@ class AE31(Instrument):
 
             first_row = lines[0].strip().split(",")
             
-            if is_datetime(first_row[0]):
-                skip_rows = 0
-                new_columns = AE31_HEADER
+            skip_rows = 0            
+            if first_row[0]=="1144":
+                new_columns = AE31_COLS
+            elif is_datetime(first_row[0]):
+                new_columns = [f"{dtm}"] + AE31_COLS
             else:
                 skip_rows = 1
-                new_columns = [h.strip() for h in first_row if h.strip()]
+                # new_columns = [h.strip() for h in first_row if h.strip()]
+                new_columns = [f"{dtm}"] + AE31_COLS
 
-            df = pl.read_csv(
-                BytesIO(text.encode("utf-8")),
-                separator=",",
-                has_header=False,
-                skip_rows=skip_rows,
-                new_columns=new_columns,
-                try_parse_dates=True
-            )
+                # patch for files that contain 2 datetime stamps in first data row after header row
+                second_row = lines[1].strip().split(",")
+                if is_datetime(second_row[0]) and is_datetime(second_row[1]):
+                    lines[1] = ",".join(second_row[1:])
+                    text = "\n".join(lines)
 
-            if "Date" in df.columns and "Time" in df.columns:
-                df = df.with_columns(
-                    (pl.col("Date") + " " + pl.col("Time")).str.strptime(pl.Datetime("us"), "%Y-%m-%d %H:%M:%S").alias(dtm)
+            try:
+                df = pl.read_csv(
+                    BytesIO(text.encode("utf-8")),
+                    separator=",",
+                    has_header=False,
+                    skip_rows=skip_rows,
+                    new_columns=new_columns,
+                    try_parse_dates=True
                 )
+            except Exception as err:
+                self.logger.error(f"Parsing of {path.name} failed: {err}")
+                return df, err, file_type
+        
+            if dtm not in df.columns:
+                if "date" in df.columns and "time" in df.columns:
+                    df = df.with_columns(
+                        (pl.col("date") + " " + pl.col("time")).str.strptime(pl.Datetime(time_unit='us',
+                                                                                         time_zone='UTC'), "%d-%b-%Y %H:%M").alias(dtm)
+                    )
+                else:
+                    err = f"Not date/time column found in {path.name}."
+                    self.logger.error(err)
+                return df, err, file_type
 
-            elif dtm not in df.columns:
-                raise ValueError("No datetime column found")
-
-            df = pl_simplify_dtypes(df)
+            # cols = df.columns
+            # df = df.with_columns([
+            #     pl.col(col).cast(pl.Float32) if df.schema[col] == pl.Int64 and i != 1 else pl.col(col)
+            #     for i, col in enumerate(cols)
+            #     ])
+            # Enforce dtypes
+            df = df.with_columns([
+                pl.col(col).cast(dtype)
+                for col, dtype in AE31_DTYPES.items()
+                if col in df.columns
+            ])
+            df = df.with_columns(pl.col(dtm).cast(pl.Datetime(time_unit='us', time_zone='UTC')))
+            # df = pl_simplify_dtypes(df)
             return df, None, "ae31"
 
         except Exception as e:

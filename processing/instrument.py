@@ -82,6 +82,13 @@ class Instrument(ABC):
                 src = root_path / file
                 df, err = self._handle_file(src)
 
+                try:
+                    result = pl.concat([result, df], how="diagonal")
+                except Exception as err:
+                    self.logger.error(f"Error concatenating content from {file} to existing dataframe: {err}")
+                    # err = str(err)
+                    continue
+
                 if err:
                     self._handle_issue_file(src, file, rel_path, issues, errors, err)
                     continue
@@ -89,12 +96,12 @@ class Instrument(ABC):
                 if archive:
                     self._archive_file(src, file, rel_path, archive)
 
-                result = pl.concat([result, df], how="diagonal")
-
-            try:
-                root_path.rmdir()
-            except (PermissionError, OSError):
-                pass
+            # clean up empty folders in source, except the source foulder itself
+            if root_path != source:
+                try:
+                    root_path.rmdir()
+                except (PermissionError, OSError):
+                    pass
 
         if result.is_empty():
             self.logger.warning("No valid data extracted.")
@@ -247,7 +254,8 @@ class Instrument(ABC):
 
             folder.mkdir(parents=True, exist_ok=True)
             parquet_file = folder / f"{self.name}.parquet"
-
+            existing = pl.DataFrame()
+            
             group = pl_simplify_dtypes(group).drop(["_year", "_month"])
             if append_parquet and parquet_file.exists():
                 existing = pl_simplify_dtypes(pl.read_parquet(parquet_file)).drop(["year", "month"])

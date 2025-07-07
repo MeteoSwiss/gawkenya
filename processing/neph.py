@@ -10,13 +10,7 @@ from charset_normalizer import from_path
 
 from processing.instrument import Instrument, pl_simplify_dtypes
 
-
-# def is_datetime(string: str) -> bool:
-#     try:
-#         pl.Series([string]).cast(pl.Datetime("us"))
-#         return True
-#     except:
-#         return False
+MAPPINGS = pl.read_csv('cdp2_aurora_mappings.csv', has_header=True, dtypes=[pl.String]*4)
 
 
 class Neph(Instrument):
@@ -36,7 +30,7 @@ class Neph(Instrument):
             tuple: (DataFrame, error string if any, file type string)
         """
         df = pl.DataFrame()
-        file_type = "ne300"
+        file_type = self.name
 
         try:
             # Extract raw content
