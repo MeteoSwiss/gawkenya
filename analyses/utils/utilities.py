@@ -7,18 +7,20 @@ Created on: 2024-01
 Modifications: date -> modified
 """
 
-from scipy.stats import spearmanr
+import colorsys
+from pathlib import Path
+
+import matplotlib.colors as mc
+import matplotlib.dates as mdates  # to change tick dates
 import numpy as np
 import xarray as xr
-import matplotlib.colors as mc
-import colorsys 
-
-#for tick format:
-from matplotlib.ticker import FormatStrFormatter,AutoMinorLocator, \
-MultipleLocator, LinearLocator, LogLocator
 from matplotlib import ticker
-import matplotlib.dates as mdates #to change tick dates
 from matplotlib.dates import DateFormatter
+#for tick format:
+from matplotlib.ticker import (AutoMinorLocator, FormatStrFormatter,
+                               LinearLocator, LogLocator, MultipleLocator)
+from scipy.stats import spearmanr
+
 
 def get_station_coords(stat):
     '''
@@ -104,3 +106,23 @@ def adjust_lightness(color, amount=0.5):
         c = color
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     return colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+
+
+def get_unique_path(base_path: Path) -> Path:
+    """
+    Returns a unique file path by appending a counter if needed.
+    E.g., ae31-hourly-mean.parquet → ae31-hourly-mean_1.parquet, etc.
+    """
+    if not base_path.exists():
+        return base_path
+
+    stem = base_path.stem
+    suffix = base_path.suffix
+    parent = base_path.parent
+
+    counter = 1
+    while True:
+        candidate = parent / f"{stem}_{counter}{suffix}"
+        if not candidate.exists():
+            return candidate
+        counter += 1
