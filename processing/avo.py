@@ -137,7 +137,7 @@ def correct_pnc_using_dynamic_cutoff(df: pl.DataFrame, pnc_february_level: int=2
     return df
 
 
-def correlate_pnc_pm10(df: pl.DataFrame) -> Tuple[dict, dict]:
+def correlate_pnc_pm10(df: pl.DataFrame, output_path: Path=Path("avo_correlate_pnc_pm10.png")) -> Tuple[dict, dict]:
     """
     Compute correlation and linear regression between 'PNC [1/cm3]' and 'PM10 [ug/m3]'
     before and after the dynamic cutoff date. Visualize results with regression lines.
@@ -214,10 +214,15 @@ def correlate_pnc_pm10(df: pl.DataFrame) -> Tuple[dict, dict]:
     fig.suptitle(f"PNC vs PM10 before and after cutoff ({cutoff:%Y-%m-%d %H:%M})", fontsize=14)
     plt.tight_layout()
     plt.show()
+    plt.savefig(output_path, dpi=300)
+    plt.close()
+
+    print(f"✅ Correlation plot saved to {output_path}")    
 
     # Clean return
     for s in (stats_before, stats_after):
         s.pop("x")
         s.pop("y")
+
 
     return stats_before, stats_after

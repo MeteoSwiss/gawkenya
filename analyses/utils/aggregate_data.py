@@ -4,7 +4,7 @@ from processing.instrument import pl_simplify_dtypes
 
 def aggregate_data(
     source: Path,
-    target: Path,
+    # target: Path,
     instrument_name: str,
     dtm = "dtm",
     freq: str = "hourly",
@@ -17,14 +17,14 @@ def aggregate_data(
 
     Args:
         source (Path): Path to input Parquet file.
-        target (Path): Directory to save the output Parquet file.
+        # target (Path): Directory to save the output Parquet file.
         instrument_name (str): Name of the instrument (used in output filename).
         freq (str): Aggregation frequency, "hourly" or "daily".
         extract_cols (list[str]): Columns to extract and aggregate.
         statistics (str): "mean" or "median" for aggregation method.
     
     Returns:
-        tuple[pl.DataFrame, str]: aggregated pl.DataFrame, file path
+        tuple[pl.DataFrame, str]: aggregated pl.DataFrame, file name
     """
     # Gather all matching parquet files under source recursively
     parquet_files = sorted(f for f in source.rglob("*.parquet") if instrument_name in f.name)
@@ -91,8 +91,8 @@ def aggregate_data(
 
     # Output file path
     out_file = f"{instrument_name}-{freq}-{statistics}.parquet"
-    out_path = target / out_file
+    # out_path = target / out_file
     
-    return grouped, out_path
+    return grouped, out_file
 
 
