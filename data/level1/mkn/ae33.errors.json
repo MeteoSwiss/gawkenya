@@ -1,0 +1,3 @@
+{
+  "ae33-from-logger-2507290614.zip": "could not parse `14\r` as dtype `i64` at column 'column_74' (column number 74)\n\nThe current offset in the file is 493 bytes.\n\nYou might want to try:\n- increasing `infer_schema_length` (e.g. `infer_schema_length=10000`),\n- specifying correct dtype with the `dtypes` argument\n- setting `ignore_errors` to `True`,\n- adding `14\r` to the `null_values` list.\n\nOriginal error: ```remaining bytes non-empty```"
+}
