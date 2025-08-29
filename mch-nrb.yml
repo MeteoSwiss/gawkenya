@@ -37,6 +37,7 @@ nrb-aq:
     - ae31
     - aurora3000
     - avo
+    - fidas
   "49i": 
     pattern: 49i-\d{12}.(zip|dat)
     header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
