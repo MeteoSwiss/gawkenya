@@ -67,8 +67,8 @@ def is_datetime(string: str) -> bool:
         return False
 
 class AE31(Instrument):
-    def __init__(self, name: str = "ae31") -> None:
-        super().__init__(name=name)
+    def __init__(self, name: str = "ae31", log_file: str=str()) -> None:
+        super().__init__(name=name, log_file=log_file)
 
     def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:
         """

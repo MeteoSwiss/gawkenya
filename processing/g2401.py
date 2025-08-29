@@ -15,8 +15,8 @@ class G2401(Instrument):
     Attempts to auto-detect encoding and extract datetime.
     """
 
-    def __init__(self):
-        super().__init__(name="g2401")
+    def __init__(self, log_file: str = str()):
+        super().__init__(name="g2401", log_file=log_file)
         self.dtypes = {
             'DataLog_User_Sync': [pl.Utf8]*2 + [pl.Float64]*4 + [pl.Int64]*2 + [pl.Float64]*14,
         }

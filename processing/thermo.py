@@ -11,8 +11,8 @@ class Thermo(Instrument):
     Automatically detects and parses files, supports .dat and .zip.
     """
 
-    def __init__(self, name: str = "thermo"):
-        super().__init__(name="thermo")
+    def __init__(self, name: str = "thermo", log_file: str=str()) -> None:
+        super().__init__(name="thermo", log_file=log_file)
         self.name = name
         self.headers = {
             "tei49c": [

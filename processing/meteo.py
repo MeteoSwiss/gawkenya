@@ -14,8 +14,8 @@ class Meteo(Instrument):
     Parses fixed-width formatted records and constructs datetime.
     """
 
-    def __init__(self, name: str="vrxa00"):
-        super().__init__(name=name)
+    def __init__(self, name: str="vrxa00", log_file: str=str()):
+        super().__init__(name=name, log_file=log_file)
 
         self.mappings = {'VRXA00': {
                 'iii': 'MeteoSwiss internal station identifier; MKN=187; NRB=',

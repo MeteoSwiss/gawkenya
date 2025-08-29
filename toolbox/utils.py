@@ -1,10 +1,8 @@
-# import configparser
 import logging
 import os
 import sys
 from pathlib import Path
 
-# import chardet
 import polars as pl
 import yaml
 
@@ -32,7 +30,8 @@ def load_config(config_file: str) -> dict:
 
 
 def setup_logging(
-    file_or_name: str,
+    logger_name: str,
+    log_file: str = str(),
     level_file: str = "WARNING",
     level_console: str = "INFO"
 ) -> logging.Logger:
@@ -40,22 +39,20 @@ def setup_logging(
     Set up a logger that optionally logs to both console and file.
 
     Args:
-        file_or_name (str): Either full path to log file or just logger name
-        level_file (str): File log level (e.g., 'DEBUG', 'INFO', etc.)
-        level_console (str): Console log level
+        name (str): logger name
+        log_file (str, optional): Path to log file 
+        level_file (str, optional): File log level (e.g., 'DEBUG', 'INFO', etc.). Defaults to 'WARNING'.
+        level_console (str, optional): Console log level. Defaults to 'INFO'.
 
     Returns:
         logging.Logger
-    """
-    # Determine if argument is a path to a file
-    if Path(file_or_name).suffix:  # Has .log, .txt, etc.
-        file = Path(file_or_name)
+    """   
+    if Path(log_file).suffix:  # Has .log, .txt, etc.
+        file = Path(log_file)
         file_path = file.parent
         file_path.mkdir(parents=True, exist_ok=True)
-        logger_name = file.stem
     else:
         file = None
-        logger_name = file_or_name
 
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
@@ -120,66 +117,6 @@ def pl_simplify_dtypes(
             ops.append(pl.col(name).cast(pl.Int32))
 
     return df.with_columns(ops) if ops else df
-# def pl_simplify_dtypes(df: pl.DataFrame, digits: int=2, exclude: list=list()) -> pl.DataFrame:
-#     """Simplify dtypes of polars Dataframe
-
-#     Args:
-#         df (pl.DataFrame): polars Dataframe
-
-#     Returns:
-#         pl.DataFrame: polars Dataframe with most simple dtypes
-#     """
-#     # for column in df.columns:
-#     for column in [x for x in df.columns if x not in set(exclude)]:
-#         dtype = df[column].dtype
-#         if dtype == pl.Datetime:
-#             df = df.with_columns(pl.col(column).cast(pl.Datetime('us', 'UTC')))
-#             # continue  # Keep datetime columns as is
-#         elif dtype == pl.Float64 or dtype == pl.Float32:
-#             df = df.with_columns(pl.col(column).cast(pl.Float32))  # Convert floats to Float32 for efficiency
-#         elif dtype == pl.Int64 or dtype == pl.Int32:
-#             df = df.with_columns(pl.col(column).cast(pl.Int32))  # Convert integers to Int32 for efficiency
-#         elif dtype == pl.Utf8:
-#             try:
-#                 # Try converting to Int32
-#                 df = df.with_columns(df[column].cast(pl.Int32))
-#             except pl.ComputeError:
-#                 try:
-#                     # If that fails, try Float32
-#                     df = df.with_columns(df[column].cast(pl.Float32))#.round(digits))
-#                 except pl.ComputeError:
-#                     pass  # Keep as string if neither works
-
-#         elif dtype == pl.Binary:
-#             # Optionally, cast binary columns to a simpler form, such as Integers or leave as Binary
-#             df = df.with_columns(pl.col(column).cast(pl.Int32))  # Example: cast binary to Int32 (adjust as needed)
-#         else:
-#             # Handle any other unsupported dtypes
-#             df = df.with_columns(pl.col(column).cast(pl.Utf8))  # For example, cast others to string
-#     return df
-
-
-# def convert_file_to_utf8(file: str) -> None:
-#     """Open a file, determine the encoding of a file, and convert to utf-8.
-
-#     Args:
-#         file (str): full path to file.
-#     """
-#     try:
-#         with open(file, 'rb') as f:
-#             raw_data = f.read()
-#             encoding = chardet.detect(raw_data)['encoding']
-#             # print(encoding['encoding'])
-
-#         if encoding != 'utf-8':
-#             with open(file, 'r', encoding=encoding) as f:
-#                 data = f.read()
-
-#             with open(file, 'w', encoding='utf-8') as f:
-#                 f.write(data)
-
-#     except Exception as err:
-#         print(f"{file} could not be encoded in utf-8.")
 
 
 def aggregate_data(df: pl.DataFrame, dtm: str="dtm", interval: str='1h', how: str='median') -> pl.DataFrame:

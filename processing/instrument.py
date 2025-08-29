@@ -26,7 +26,7 @@ class Instrument(ABC):
         self,
         name: str,
         dtm: str = "dtm",
-        logger_name: Optional[str] = None,
+        log_file: Optional[str] = None,
     ) -> None:
         """
         Initialize the Instrument base class.
@@ -34,11 +34,11 @@ class Instrument(ABC):
         Args:
             name (str): Instrument name, used in output file naming.
             dtm (str): Column name for the datetime field. Defaults to "dtm".
-            logger_name (Optional[str]): Name of the logger. Defaults to instrument name.
+            log_file (Optional[str]): Path of the log file. Defaults to instrument name.
         """
         self.name = name
         self.dtm = dtm
-        self.logger = setup_logging(logger_name or name)
+        self.logger = setup_logging(logger_name=name, log_file=log_file)
 
 
     def compile_to_parquet(
@@ -236,11 +236,35 @@ class Instrument(ABC):
         if not null_rows.is_empty():
             self.logger.warning(f"{len(null_rows)} rows with null '{self.dtm}' column found")
 
-        result = result.filter(pl.col(self.dtm).is_not_null()).with_columns([
-            pl.col(self.dtm).cast(pl.Datetime("us", "UTC")),
-            pl.col(self.dtm).dt.year().alias("_year"),
-            pl.col(self.dtm).dt.month().alias("_month")
-        ]).unique().sort(self.dtm)
+        # Ensure dtm is present and typed first
+        result = (
+            result
+            .filter(pl.col(self.dtm).is_not_null())
+            .with_columns([
+                pl.col(self.dtm).cast(pl.Datetime("us", "UTC")).alias(self.dtm),
+                pl.col(self.dtm).dt.year().alias("_year"),
+                pl.col(self.dtm).dt.month().alias("_month"),
+            ])
+        )
+
+        # --- NEW: coerce any Null-typed columns BEFORE unique() ---
+        null_cols = [c for c, dt in result.schema.items() if dt == pl.Null and c != self.dtm]
+        if null_cols:
+            str_cols = [c for c in null_cols if c in {"id", "checksum"}]
+            num_cols = [c for c in null_cols if c not in {"id", "checksum"}]
+            if str_cols:
+                result = result.with_columns([pl.col(c).cast(pl.Utf8) for c in str_cols])
+            if num_cols:
+                result = result.with_columns([pl.col(c).cast(pl.Float64) for c in num_cols])
+
+        # --- NEW: de-duplicate on a safe subset (timestamp) ---
+        # If your records are unique by timestamp alone, this is sufficient.
+        # If you need stronger uniqueness, add more fields to the subset list.
+        result = (
+            result
+            .unique(subset=[self.dtm], keep="last")   # or keep="first"
+            .sort(self.dtm)
+        )
 
         group_keys = ["_year"] if split == "year" else ["_year", "_month"]
 
@@ -292,7 +316,7 @@ class Instrument(ABC):
 #         self,
 #         name: str,
 #         dtm: str = "dtm",
-#         logger_name: Optional[str] = None,
+#         log_file: Optional[str] = None,
 #     ) -> None:
 #         """
 #         Initialize the BaseInstrument.
@@ -300,11 +324,11 @@ class Instrument(ABC):
 #         Args:
 #             name (str): Instrument name, used in output file naming.
 #             dtm (str): Column name for the datetime field. Defaults to "dtm".
-#             logger_name (Optional[str]): Name of the logger. Defaults to instrument name.
+#             log_file (Optional[str]): Name of the logger. Defaults to instrument name.
 #         """
 #         self.name = name
 #         self.dtm = dtm
-#         self.logger = setup_logging(logger_name or name)
+#         self.logger = setup_logging(log_file or name)
 
 #     def compile_to_parquet(
 #         self,

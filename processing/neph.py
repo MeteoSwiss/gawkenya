@@ -14,8 +14,8 @@ MAPPINGS = pl.read_csv('cdp2_aurora_mappings.csv', has_header=True, dtypes=[pl.S
 
 
 class Neph(Instrument):
-    def __init__(self, name: str = "neph") -> None:
-        super().__init__(name=name)
+    def __init__(self, name: str = "neph", log_file: str=str()) -> None:
+        super().__init__(name=name, log_file=log_file)
         self.name = name
 
     def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:

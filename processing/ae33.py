@@ -12,8 +12,8 @@ class AE33(Instrument):
     Inherits common logic from BaseInstrument.
     """
 
-    def __init__(self):
-        super().__init__(name="ae33")
+    def __init__(self, log_file: str=str()):
+        super().__init__(name="ae33", log_file=log_file)
 
     def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None, str]:
         """
