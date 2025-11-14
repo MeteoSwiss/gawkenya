@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 import matplotlib
 import matplotlib.dates
@@ -8,7 +7,7 @@ from matplotlib.lines import Line2D
 import polars as pl
 from ipyfilechooser import FileChooser  # type: ignore
 from IPython.display import display
-from ipywidgets import widgets, Button, HBox, Layout, Output, Text, VBox, GridBox, ToggleButtons
+from ipywidgets import widgets, Button, HBox, Layout, Output, Text, VBox
 from ipywidgets.widgets import Dropdown
 
 from toolbox.utils import pl_simplify_dtypes
@@ -37,7 +36,7 @@ new_file_on_save = False
 excl_vars_general = (dtm, 'source', '_color_', '_flag_', 'f_None',)
 excl_vars_ae33 = ('Inst_SN', 'DateTime_1', 'unclear', 'DateTime_2', )
 excl_vars_g2401 = ('DATE', 'TIME', 'FRAC_DAYS_SINCE_JAN1', 'FRAC_HRS_SINCE_JAN1', 'JULIAN_DAYS', 'EPOCH_TIME',)
-excl_vars_meteo = ('iii', 'zzzztttt',)
+excl_vars_meteo = ('iii', 'zzzztttt', 'termin')
 exclude_variables = excl_vars_general + excl_vars_ae33 + excl_vars_g2401 + excl_vars_meteo 
 
 def _order_key_items(keys: dict) -> list[tuple[str, dict]]:
@@ -48,6 +47,7 @@ def _order_key_items(keys: dict) -> list[tuple[str, dict]]:
     items += [(k, keys[k]) for _, k in sorted((int(k), k) for k in keys if k.isdigit())]
     items += [(k, v) for k, v in keys.items() if k not in {"escape"} and not k.isdigit()]
     return items
+
 
 def add_legend_below_axes(ax, keys: dict, ncol: int | None = None, bottom_pad: float = 0.22):
     """
@@ -119,54 +119,87 @@ def _reseed_builtin_toolbar(fig):
         pass
 
 
-# def _flagging_is_auto() -> bool:
-#     # Checkbox -> boolean
-#     try:
-#         return bool(flag_mode.value)
-#     except Exception:
-#         return False
+def propagate_zero_span_flags_from_ne300_5002(
+    df: pl.DataFrame,
+    *,
+    dtm: str = "dtm",
+    source_flag_col: str | None = None,
+    overwrite: bool = False,
+) -> pl.DataFrame:
+    """
+    Propagate SPAN/ZERO flags (3/4) from the 5002 flag series to all other
+    channels with numeric column names > 1_000_000.
 
-# def _apply_flags_for_column_preserving_manual(
-#     df: pl.DataFrame,
-#     col: str,
-#     dtm: str = "dtm",
-# ) -> pl.DataFrame:
-#     """
-#     Compute SPAN/ZERO flags for one column using processing.neph.Neph.apply_zero_span_flags,
-#     then merge them into df by filling only rows where existing f_<col> is NULL.
-#     Existing (manual/previous) non-NULL flags are preserved.
-#     """
-#     fcol = f"f_{col}"
-#     if dtm not in df.columns or col not in df.columns:
-#         return df
+    Behavior
+    --------
+    - Creates `f_<nnn>` columns if missing.
+    - Copies only codes {2, 3, 4} from 5002 at matching timestamps.
+    - Preserves existing manual flags by default:
+        * overwrite=False (default): fill only where `f_<nnn>` is NULL.
+        * overwrite=True : set 3/4 wherever 5002 has 3/4 (even if not NULL).
 
-#     # Compute fresh flags on a minimal copy to keep it focused and avoid column clashes
-#     from processing.neph import Neph
-#     inst = Neph.__new__(Neph)  # avoid __init__
-#     tmp = df.select([dtm, col])
-#     tmp_flagged = Neph.apply_zero_span_flags(inst, tmp, dtm=dtm, primary=col)
+    Parameters
+    ----------
+    df : pl.DataFrame
+    dtm : str
+        Timestamp column name (default "dtm").
+    source_flag_col : str | None
+        Column to read 5002 flags from. If None, prefer "f_5002" if present,
+        otherwise fall back to "flags" (useful when 5002 is currently selected).
+    overwrite : bool
+        If True, overwrite non-NULL values; else only fill NULLs.
 
-#     # Stage new flags under a unique temp name to avoid join collisions
-#     new_name = f"__newflag__{col}"
-#     if new_name in df.columns:
-#         df = df.drop(new_name)  # extremely defensive; shouldn’t exist
+    Returns
+    -------
+    pl.DataFrame
+        Updated frame with propagated flags.
+    """
+    if dtm not in df.columns:
+        return df
 
-#     tmp_flagged = tmp_flagged.select(
-#         dtm,
-#         pl.col(f"f_{col}").cast(pl.Int8).alias(new_name)  # keep 0/3/4 as-is
-#     )
+    # Choose the source flag column
+    src = source_flag_col
+    if src is None:
+        if "f_5002" in df.columns:
+            src = "f_5002"
+        elif "flags" in df.columns:
+            src = "flags"
+        else:
+            return df  # nothing to propagate from
 
-#     # Left-join new flags by time, then coalesce to preserve existing non-NULL flags
-#     joined = df.join(tmp_flagged, on=dtm, how="left")
+    if src not in df.columns:
+        return df
 
-#     if fcol in joined.columns:
-#         joined = joined.with_columns(
-#             pl.coalesce([pl.col(fcol), pl.col(new_name)]).alias(fcol)
-#         ).drop(new_name)
-#     else:
-#         joined = joined.rename({new_name: fcol})
+    # mask where 5002 indicates zero/span
+    m_34 = pl.col(src).is_in([2, 3, 4])
 
-#     return joined
+    updates = []
+    for c in df.columns:
+        # select only numeric channel columns > 1_000_000 (and not '5002')
+        if c.isdigit() and int(c) > 1_000_000:
+            fcol = f"f_{c}"
+            # current flag column (or NULL literal if it doesn't exist yet)
+            cur = pl.col(fcol) if fcol in df.columns else pl.lit(None, dtype=pl.Int8)
+
+            if overwrite:
+                # force-copy 3/4 wherever source has 3/4
+                new = (
+                    pl.when(m_34).then(pl.col(src).cast(pl.Int8)).otherwise(cur)
+                    .alias(fcol)
+                )
+            else:
+                # additive: fill only where the target is still NULL
+                new = (
+                    pl.when(cur.is_null() & m_34)
+                      .then(pl.col(src).cast(pl.Int8))
+                      .otherwise(cur)
+                      .alias(fcol)
+                )
+            updates.append(new)
+
+    if not updates:
+        return df
+    return df.with_columns(updates)
 
 
 def on_file_chooser_read_file():
@@ -190,6 +223,9 @@ def on_file_chooser_read_file():
     df = pl.read_parquet(selected_file)
     if "dtm" in df.columns:
         df = df.sort("dtm")
+
+    if "termin" in df.columns:
+        df = df.with_columns(pl.col("termin").cast(pl.Utf8))
 
     # Optional dtype clean-up
     try:
@@ -260,7 +296,7 @@ def on_dropdown_value_selected(change):
         df = df.rename({f_variable: flags})
 
         # Color points based on flags mapping in `keys` (0/3/4 etc.)
-        # Ensure your `keys` dict has an entry for 0 if you want a specific color for "valid".
+        # Ensure `keys` dict has an entry for 0 if you want a specific color for "valid".
         if colors in df.columns:
             for k in keys.keys():
                 if keys[k]["flag"] is not None:
@@ -337,7 +373,8 @@ def on_key_pressed_flag_points(event):
 def on_clicked_save_data(event):
     """
     Save the current dataframe back to the *source* file (no target dir).
-    If `new_file_on_save` is True, create a timestamped filename in the same folder.
+    If the current variable is '5002', propagate SPAN/ZERO flags (3/4)
+    from 5002 to all >1_000_000 channels additively before saving.
     """
     import os
     from datetime import datetime
@@ -345,47 +382,52 @@ def on_clicked_save_data(event):
 
     global df, dropdown_variable_select
 
-    # 1) optional: rename flag column and drop color column if they exist
+    # If the user is on 5002, propagate 3/4 to the other channels (additively).
+    try:
+        if dropdown_variable_select.value == "5002":
+            # When 5002 is open, the plotting alias column is typically `flags`;
+            # tell the propagator to read from it so we don’t rely on f_5002 being present.
+            df = propagate_zero_span_flags_from_ne300_5002(
+                df,
+                dtm="dtm",
+                source_flag_col=flags,   # use the plotting alias as the source
+                overwrite=True,           # additive: fill only NULLs
+            )
+    except Exception as e:
+        try:
+            infobox.value = f"Propagation failed: {e}"
+        except Exception:
+            pass
+
     if dropdown_variable_select.value is not None:
         # rename flag column only if it exists
-        try:
-            if 'flags' in globals() and flags in df.columns:
-                df = df.rename({flags: f"{flag_col_prefix}{variable}"})
-        except Exception:
-            pass
-
+        if flags in df.columns:
+            f_col_name = f"{flag_col_prefix}{variable}"
+            if f_col_name in df.columns:
+                df = df.drop(f_col_name)
+            df = df.rename({flags: f_col_name})
         # drop color column only if it exists
-        try:
-            if 'colors' in globals() and colors in df.columns:
-                df = df.drop(colors)
-        except Exception:
-            pass
+        if colors in df.columns:
+            df = df.drop(colors)
 
-    # 2) compute source path (selected file) and output path
+    # set file name and save to the SOURCE file (no target, no .bak)
     source_file = os.path.join(file_chooser.selected_path, file_chooser.selected_filename)
-    target_file = source_file  # <- save to source
+    if new_file_on_save:
+        base, ext = os.path.splitext(source_file)
+        if os.path.exists(source_file):
+            infobox.value = f"'{os.path.basename(source_file)}' exists already. A unique name will be created."
+            source_file = f"{base}-{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
 
-    # If you still want the optional "new file on save" behavior, keep this:
-    try:
-        if 'new_file_on_save' in globals() and new_file_on_save:
-            base, ext = os.path.splitext(source_file)
-            if os.path.exists(target_file):
-                target_file = f"{base}-{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
-    except Exception:
-        # If the toggle isn't defined, ignore and just overwrite the source file
-        pass
+    os.makedirs(os.path.dirname(source_file), exist_ok=True)
+    infobox.value = f"Saving to '{source_file}'."
 
-    # 3) write dataframe (no .bak)
     try:
-        df = pl_simplify_dtypes(df)  # if you have this helper; otherwise it's a no-op
+        df = pl_simplify_dtypes(df)  # if you have this helper
     except NameError:
         pass
 
-    os.makedirs(os.path.dirname(target_file), exist_ok=True)
-    infobox.value = f"Saving to '{target_file}'."
-    df.write_parquet(target_file)
+    df.write_parquet(source_file)
 
-    # 4) refresh UI figure if present
     try:
         fig.canvas.draw_idle()
     except Exception:

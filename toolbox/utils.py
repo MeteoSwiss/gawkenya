@@ -109,6 +109,8 @@ def pl_simplify_dtypes(
     ops = []
 
     for name, dtype in df.schema.items():
+        if name.lower() == "termin":
+            continue
         if dtype == pl.Datetime:
             continue  # preserve datetime precision
         if simplify_float and dtype == pl.Float64:
