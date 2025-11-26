@@ -1,3 +1,3 @@
 {
-  "ne300-202511171840.zip": "could not parse `` as dtype `datetime[\u03bcs]` at column 'column_1' (column number 1)\n\nThe current offset in the file is 277 bytes.\n\nYou might want to try:\n- increasing `infer_schema_length` (e.g. `infer_schema_length=10000`),\n- specifying correct dtype with the `dtypes` argument\n- setting `ignore_errors` to `True`,\n- adding `` to the `null_values` list.\n\nOriginal error: ```could not find a 'date/datetime' pattern for ```"
+  "ne300-2025112601.zip": "could not parse `` as dtype `datetime[\u03bcs]` at column 'column_1' (column number 1)\n\nThe current offset in the file is 277 bytes.\n\nYou might want to try:\n- increasing `infer_schema_length` (e.g. `infer_schema_length=10000`),\n- specifying correct dtype with the `dtypes` argument\n- setting `ignore_errors` to `True`,\n- adding `` to the `null_values` list.\n\nOriginal error: ```could not find a 'date/datetime' pattern for ```"
 }
