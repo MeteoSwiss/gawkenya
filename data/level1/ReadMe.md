@@ -1,1 +1,0 @@
-# level1 = compiled data, possibly flagged, with geophysical units, in their original temporal resolution

@@ -1,3 +1,0 @@
-Filename Contact Email
-sf6_mkn_surface-flask_2_3001-9999_event.txt Xin Lan xin.lan@noaa.gov
-sf6_mkn_surface-flask_2_3001-9999_monthly.txt Xin Lan xin.lan@noaa.gov

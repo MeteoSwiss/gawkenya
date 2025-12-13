@@ -13,7 +13,7 @@ from ipywidgets.widgets import Dropdown
 from toolbox.utils import pl_simplify_dtypes
 
 # file related configurations
-root_dir = os.path.join(os.getcwd(), 'data')
+root_dir = '/product_data/data/pay/Kenya/git/gawkenyadata'
 source_dir = ''
 target_dir = ''   # folder for compiled and/or flagged data. 
 
@@ -376,7 +376,7 @@ def on_clicked_save_data(event):
     If the current variable is '5002', propagate SPAN/ZERO flags (3/4)
     from 5002 to all >1_000_000 channels additively before saving.
     """
-    import os
+    # import os
     from datetime import datetime
     import polars as pl
 
