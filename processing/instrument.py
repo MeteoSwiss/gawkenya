@@ -293,14 +293,10 @@ class Instrument(ABC):
             tuple[pl.DataFrame, Optional[str]]: DataFrame and optional error string.
         """
         try:
-            df, err = self.extract_to_dataframe(src)
-            # if len(res) == 2:
-            #     df, err = res  # type: ignore[misc]
-            # else:
-            #     df, err, _ = res  # type: ignore[misc]
+            return self.extract_to_dataframe(src)
         except Exception as err:
-            df, err = pl.DataFrame(), str(err)
-        return df, err
+            return pl.DataFrame(), str(err)
+
 
     def _handle_issue_file(self, src: Path, file: str, rel_path: Path, issues: Optional[Path], errors: dict, err: str) -> None:
         errors[file] = err
@@ -376,9 +372,15 @@ class Instrument(ABC):
             parquet_file = folder / f"{self.name}.parquet"
             existing = pl.DataFrame()
             
-            group = pl_simplify_dtypes(group).drop(["_year", "_month"])
+            # tolerate older/newer intermediate partition columns
+            drop_cols = ["year", "month", "_year", "_month"]
+            group = pl_simplify_dtypes(group).drop(drop_cols, strict=False)
+
             if append_parquet and parquet_file.exists():
-                existing = pl_simplify_dtypes(pl.read_parquet(parquet_file)).drop(["year", "month"])
+                existing = (
+                    pl_simplify_dtypes(pl.read_parquet(parquet_file))
+                    .drop(drop_cols, strict=False)
+                )
                 group = pl.concat([existing, group], how="diagonal").unique().sort(self.dtm)
 
             group.write_parquet(parquet_file)

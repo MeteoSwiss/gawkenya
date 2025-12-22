@@ -45,7 +45,7 @@ class Meteo(Instrument):
         # self.logger.info("Class 'Meteo' initialized successfully.")
 
 
-    def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:
+    def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None]:
         """
         Extract data from a METEO file (.txt or .zip) to a Polars DataFrame.
 
@@ -92,11 +92,11 @@ class Meteo(Instrument):
             # df = df.rename({"zzzztttt": "timestamp"})
             df = pl_simplify_dtypes(df)
 
-            return df, None, file_type
+            return df, None
 
-        except Exception as e:
-            self.logger.error(f"Failed to extract {path.name}: {e}")
-            return pl.DataFrame(), str(e), file_type
+        except Exception as err:
+            self.logger.error(f"Failed to extract {path.name}: {err}")
+            return pl.DataFrame(), str(err)
 
 
 #     def remove_extremes(self, df: pl.DataFrame, variable: str, q=0.001) -> tuple([pl.DataFrame, dict]):
