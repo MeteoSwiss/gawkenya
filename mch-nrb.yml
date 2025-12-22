@@ -38,6 +38,9 @@ nrb-aq:
     - aurora3000
     - avo
     - fidas
+    - hmp110-ae31
+    - hmp110-inlet
+    - hmp110-lab
   "49i": 
     pattern: 49i-\d{12}.(zip|dat)
     header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
@@ -55,7 +58,7 @@ nrb-aq:
     split_parquet: month
     expected: 24
   avo:
-    pattern: not-yet-impolemented
+    pattern: not-yet-implemented
     buckets: daily
     expected: 24
   fidas: 
@@ -63,4 +66,18 @@ nrb-aq:
     buckets: daily
     split_parquet: month
     expected: 24
-
+  hmp110-ae31:
+    pattern: hmp110-ae31-\d{10}.(zip|dat)
+    buckets: daily
+    split_parquet: month
+    expected: 24
+  hmp110-inlet:
+    pattern: hmp110-inlet-\d{10}.(zip|dat)
+    buckets: daily
+    split_parquet: month
+    expected: 24
+  hmp110-lab:
+    pattern: hmp110-lab-\d{10}.(zip|dat)
+    buckets: daily
+    split_parquet: month
+    expected: 24

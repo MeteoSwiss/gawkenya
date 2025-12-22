@@ -16,6 +16,8 @@ folders:
   - tei49i
   - g2401
   - ne300
+  - hmp110-ae31
+  - hmp110-inlet
 ae33/data: 
   pattern: ae33-\d{12}.(zip|dat)
   buckets: daily
@@ -53,3 +55,13 @@ ne300:
   buckets: daily
   split_parquet: month
   expected: 144
+hmp110-ae31:
+  pattern: hmp110-ae31-\d{10}.(zip|dat)
+  buckets: daily
+  split_parquet: month
+  expected: 24
+hmp110-inlet:
+  pattern: hmp110-inlet-\d{10}.(zip|dat)
+  buckets: daily
+  split_parquet: month
+  expected: 24

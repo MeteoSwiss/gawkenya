@@ -15,7 +15,7 @@ class Fidas(Instrument):
     def __init__(self, log_file: str=str()):
         super().__init__(name="fidas", log_file=log_file)
 
-    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None, str]:
+    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None]:
         """
         Extract data from a PALAS Fidas .csv file into a Polars DataFrame.
 
@@ -23,16 +23,15 @@ class Fidas(Instrument):
             path (Path): Path to the .csv file.
 
         Returns:
-            tuple: (DataFrame, error string or None, file type ['fidas'])
+            tuple: (DataFrame, error string or None)
         """
         df = pl.DataFrame()
-        file_type = "fidas"
 
         try:
             df = pl.read_parquet(source=path)
             df = pl_simplify_dtypes(df)
-            return df, None, file_type
+            return df, None
 
-        except Exception as e:
-            self.logger.error(f"Failed to extract {path.name}: {e}")
-            return df, str(e), file_type
+        except Exception as err:
+            self.logger.error(f"Failed to extract {path.name}: {err}")
+            return df, str(err)

@@ -1,648 +1,623 @@
-import polars as pl
-from pathlib import Path
-from io import BytesIO
-import zipfile
-import logging
+from __future__ import annotations
+
+import csv
 import re
-from charset_normalizer import from_path
-from processing.instrument import Instrument, pl_simplify_dtypes
-from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
-"""AE-31 Manual
-Section 14.9.3 Expanded Data Format: 
-“date”, “time”, 
-UV [370 nm] result,Blue [470 nm] result, 
-Green [520 nm] result, 
-Yellow [590 nm]result, 
-Red [660 nm] result, 
-IR1 [880 nm, “standard BC”] result,
-IR2 [950 nm] result, 
-air flow (LPM), 
-bypass fraction,
-and then the following columns of data repeated for the seven
-measurement wavelengths:
-sensing zero signal, sensing beam signal, reference zero signal,
-reference beam signal, optical attenuation, air flow (LPM), bypass
-fraction.
-The ‘air flow’ and ‘bypass fraction’ columns are repeated to allow for
-easy visual identification of the separation between the seven sets of
-data columns.
-A typical line in the data file might look like:
-"24-jul-00","16:40", 610 , 604 , 605 , 612 , 617 , 611 , 641 , 3.131 ,-
-.9812 ,-.9814 , 1.1881 , 1.8384 , 1 , 6.4 , 2.704 ,-.9812 ,-.9814 , 4.2483
-, 2.7373 , 1 , 6.4 , 2.45 ,-.9812 ,-.9814 , 2.1716 , 1.9438 , 1 , 6.4 , 2.232
-,-.9812 ,-.9814 , 2.854 , 3.5259 , 1 , 6.4 , 1.957 ,-.9812 ,-.9814 , 3.3428
-, 2.596 , 1 , 6.4 , 1.452 ,-.9812 ,-.9814 , 4.6719 , 3.3935 , 1 , 6.4 , 1.396
-,-.9812 ,-.9814 , 2.705 , 2.438 , 1 , 6.4
-"""
+import polars as pl
 
-AE31_COLS: list[str] = ['id', 'date', 'time', 'UV370', 'B470', 'G520', 'Y590', 'R660', 'IR880', 'IR950', 'flow',] 
-AE31_COLS += ["_370", "sens_zero_370","sens_beam_370","ref_zero_370","ref_beam_370","att_370", ]
-AE31_COLS += ["_470", "sens_zero_470","sens_beam_470","ref_zero_470","ref_beam_470","att_470", ]
-AE31_COLS += ["_520", "sens_zero_520","sens_beam_520","ref_zero_520","ref_beam_520","att_520", ]
-AE31_COLS += ["_590", "sens_zero_590","sens_beam_590","ref_zero_590","ref_beam_590","att_590", ]
-AE31_COLS += ["_660", "sens_zero_660","sens_beam_660","ref_zero_660","ref_beam_660","att_660", ]
-AE31_COLS += ["_880", "sens_zero_880","sens_beam_880","ref_zero_880","ref_beam_880","att_880", ]
-AE31_COLS += ["_950", "sens_zero_950","sens_beam_950","ref_zero_950","ref_beam_950","att_950", ]
-
-"""
-'1144,"20-oct-24","16:05",  2087,  2246,  2261,  2317,  2373,  2447,  2456,  3.8, 
-0.0212, 1.1359, 0.0212, 3.5391,  .53, 65.961, 
-0.0212,  .8765, 0.0212, 2.5901,  .53, 49.016, 
-0.0212, 1.5084, 0.0212, 2.5596,  .53, 42.713, 
-0.0212, 1.2244, 0.0212, 1.1925,  .53, 37.749, 
-0.0212,  .9628, 0.0212, 1.7056,  .53, 33.773, 
-0.0212,  .8833, 0.0212,  .9363,  .53, 24.800, 
-0.0212, 1.6419, 0.0212, 2.0497,  .53, 22.892'
-"""
-AE31_DTYPES: dict[str, pl.DataType] = dict(zip(AE31_COLS,
-                                               [pl.Int32] + [pl.Utf8]*2 + [pl.Int32]*7 + [pl.Float32]*43))
+from processing.instrument import Instrument
 
 
-def is_datetime(string: str) -> bool:
-    try:
-        datetime.strptime(string.strip(), "%Y-%m-%dT%H:%M:%S")
-        return True
-    except ValueError:
-        return False
+# ----------------------------
+# AE31 schema
+# ----------------------------
+
+AE31_COLS: list[str] = [
+    "id", "date", "time",
+    "UV370", "B470", "G520", "Y590", "R660", "IR880", "IR950",
+    "flow",
+]
+AE31_COLS += ["_370", "sens_zero_370", "sens_beam_370", "ref_zero_370", "ref_beam_370", "att_370"]
+AE31_COLS += ["_470", "sens_zero_470", "sens_beam_470", "ref_zero_470", "ref_beam_470", "att_470"]
+AE31_COLS += ["_520", "sens_zero_520", "sens_beam_520", "ref_zero_520", "ref_beam_520", "att_520"]
+AE31_COLS += ["_590", "sens_zero_590", "sens_beam_590", "ref_zero_590", "ref_beam_590", "att_590"]
+AE31_COLS += ["_660", "sens_zero_660", "sens_beam_660", "ref_zero_660", "ref_beam_660", "att_660"]
+AE31_COLS += ["_880", "sens_zero_880", "sens_beam_880", "ref_zero_880", "ref_beam_880", "att_880"]
+AE31_COLS += ["_950", "sens_zero_950", "sens_beam_950", "ref_zero_950", "ref_beam_950", "att_950"]
+
+# Header tokens we consider strong evidence for a header row
+_AE31_HEADER_TOKENS: set[str] = {"dtm", *AE31_COLS}
+
+# Regexes used for heuristics / parsing
+_ISO_DTM_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}")
+_DATE_RE = re.compile(r"^\d{1,2}-[A-Za-z]{3}-\d{2}$")  # e.g. 20-oct-24
+
 
 class AE31(Instrument):
-    def __init__(self, name: str = "ae31", log_file: str=str()) -> None:
+    """
+    Magee AE31 aethalometer raw-file parser.
+
+    Supports (at least) these variants:
+      - header row present (some files only include dtm column)
+      - header row present but data rows missing the 'id' value (shifted columns)
+      - no header row; first field may be dtm OR id
+      - timestamp missing -> dtm is deduced from date + time
+
+    Returns:
+      (df, err) where err is None on success.
+    """
+
+    def __init__(self, name: str = "ae31", log_file: str = str()) -> None:
         super().__init__(name=name, log_file=log_file)
 
-    def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:
+    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, Optional[str]]:
         """
-        Extract data from a AE31 file (.dat, .csv, .txt, or .zip) to a Polars DataFrame.
+        Extract AE31 data into a Polars DataFrame.
 
-        Args:
-            path (Path): Full path to data file.
-            dtm (str): Name of datetime column.
-
-        Returns:
-            tuple: (DataFrame, error string if any, file type string)
+        Contract (per Instrument.extract_to_dataframe):
+            return (df, None) on success
+            return (empty_df, "error message") on failure
         """
-        df = pl.DataFrame()
-        file_type = "ae31"
-        err = None
-        
         try:
-            # Extract raw content
-            if path.suffix == ".zip":
-                with zipfile.ZipFile(path, "r") as z:
-                    data_files = [f for f in z.namelist() if f.endswith(('.dat', '.csv', '.txt'))]
-                    if not data_files:
-                        raise ValueError("No data files found in the zip archive.")
-                    if len(data_files) > 1:
-                        raise ValueError("More than 1 file found in the zip archive.")
-                    name = data_files[0]
-                    raw = z.read(name)
+            lines, has_header, err = self._preprocess_data_file(path, known_header_tokens=_AE31_HEADER_TOKENS)
+            if err:
+                return pl.DataFrame(), err
+            if not lines:
+                return pl.DataFrame(), "Empty file"
+
+            # Iterate CSV records from the decoded lines (zip-aware via Instrument)
+            rows_iter = self._iter_csv_rows(lines)
+            first = next(rows_iter, None)
+            if first is None:
+                return pl.DataFrame(), "No CSV records found"
+
+            if has_header:
+                header = [h.strip().lstrip("\ufeff") for h in first]
+                # drop trailing empty header fields
+                while header and header[-1] == "":
+                    header.pop()
+                schema = header
             else:
-                raw = path.read_bytes()
+                schema = ["dtm"] + AE31_COLS
+                # first is actually a data record; put it back into the stream
+                rows_iter = self._chain_first(first, rows_iter)
 
-            # Detect encoding and decode
-            result = from_path(path).best()
-            encoding = result.encoding if result else "utf-8"
-            text = raw.decode(encoding)
-            lines = text.splitlines()
+            df = self._build_dataframe_from_rows(rows_iter, schema=schema, has_header=has_header)
 
-            if not lines or all(not line.strip() for line in lines):
-                raise ValueError("File is empty or only contains whitespace")
+            # Ensure dtm exists and is Datetime[us, UTC]
+            df = self._ensure_dtm_us_utc(df)
 
-            first_row = lines[0].strip().split(",")
-            
-            skip_rows = 0            
-            if first_row[0]=="1144":
-                new_columns = AE31_COLS
-            elif is_datetime(first_row[0]):
-                new_columns = [f"{dtm}"] + AE31_COLS
-            else:
-                skip_rows = 1
-                # new_columns = [h.strip() for h in first_row if h.strip()]
-                new_columns = [f"{dtm}"] + AE31_COLS
+            # Cast remaining columns (tolerant)
+            df = self._cast_columns(df)
 
-                # patch for files that contain 2 datetime stamps in first data row after header row
-                second_row = lines[1].strip().split(",")
-                if is_datetime(second_row[0]) and is_datetime(second_row[1]):
-                    lines[1] = ",".join(second_row[1:])
-                    text = "\n".join(lines)
-
-            try:
-                df = pl.read_csv(
-                    BytesIO(text.encode("utf-8")),
-                    separator=",",
-                    has_header=False,
-                    skip_rows=skip_rows,
-                    new_columns=new_columns,
-                    try_parse_dates=True
-                )
-            except Exception as err:
-                self.logger.error(f"Parsing of {path.name} failed: {err}")
-                return df, err, file_type
-        
-            if dtm not in df.columns:
-                if "date" in df.columns and "time" in df.columns:
-                    df = df.with_columns(
-                        (pl.col("date") + " " + pl.col("time")).str.strptime(pl.Datetime(time_unit='us',
-                                                                                         time_zone='UTC'), "%d-%b-%Y %H:%M").alias(dtm)
-                    )
-                else:
-                    err = f"Not date/time column found in {path.name}."
-                    self.logger.error(err)
-                return df, err, file_type
-
-            # cols = df.columns
-            # df = df.with_columns([
-            #     pl.col(col).cast(pl.Float32) if df.schema[col] == pl.Int64 and i != 1 else pl.col(col)
-            #     for i, col in enumerate(cols)
-            #     ])
-            # Enforce dtypes
-            df = df.with_columns([
-                pl.col(col).cast(dtype)
-                for col, dtype in AE31_DTYPES.items()
-                if col in df.columns
-            ])
-            df = df.with_columns(pl.col(dtm).cast(pl.Datetime(time_unit='us', time_zone='UTC')))
-            # df = pl_simplify_dtypes(df)
-            return df, None, "ae31"
+            return df, None
 
         except Exception as e:
-            self.logger.error(f"Failed to extract {path.name}: {e}")
-            return df, str(e), file_type
+            # keep message short; logger has full context
+            self.logger.error(f"extract_to_dataframe failed for {path}: {e}")
+            return pl.DataFrame(), str(e)
+
+    # ----------------------------
+    # Helpers
+    # ----------------------------
+
+    @staticmethod
+    def _iter_csv_rows(lines: list[str]):
+        """
+        Yield raw CSV rows (list[str]) from decoded lines, skipping blank records.
+        """
+        for row in csv.reader(lines, skipinitialspace=True):
+            if not row:
+                continue
+            # strip whitespace
+            row = [c.strip() for c in row]
+            # drop trailing empty fields (e.g. lines ending with a comma)
+            while row and row[-1] == "":
+                row.pop()
+            if not row or all(c == "" for c in row):
+                continue
+            yield row
+
+    @staticmethod
+    def _chain_first(first_row: list[str], iterator):
+        yield first_row
+        yield from iterator
+
+    @staticmethod
+    def _looks_like_iso_dtm(value: Optional[str]) -> bool:
+        return bool(value) and bool(_ISO_DTM_RE.match(value.strip()))
+
+    def _build_dataframe_from_rows(
+        self,
+        rows_iter,
+        *,
+        schema: list[str],
+        has_header: bool,
+    ) -> pl.DataFrame:
+        """
+        Normalize rows to `schema` and return a DataFrame (all values as strings/None initially).
+        """
+        ncol = len(schema)
+        if ncol == 0:
+            return pl.DataFrame()
+
+        # indices we use for heuristics / fixes
+        id_idx: Optional[int] = None
+        dtm_idx: Optional[int] = None
+        lower = [c.lower() for c in schema]
+        if "id" in lower:
+            id_idx = lower.index("id")
+        if "dtm" in lower:
+            dtm_idx = lower.index("dtm")
+
+        normalized: list[list[Optional[str]]] = []
+
+        for raw in rows_iter:
+            cleaned: list[Optional[str]] = [None if c == "" else c for c in raw]
+
+            # No-header variant: if schema starts with dtm, row may start with id.
+            if not has_header and dtm_idx == 0:
+                first = cleaned[0] if cleaned else None
+                if not self._looks_like_iso_dtm(first):
+                    cleaned.insert(0, None)
+
+            # Header variant: data row may be missing 'id' (shifted left)
+            if has_header and id_idx is not None and len(cleaned) == ncol - 1:
+                candidate = cleaned[id_idx] if id_idx < len(cleaned) else None
+                if isinstance(candidate, str) and _DATE_RE.match(candidate):
+                    cleaned.insert(id_idx, None)
+
+            # Pad / trim
+            if len(cleaned) < ncol:
+                cleaned.extend([None] * (ncol - len(cleaned)))
+            elif len(cleaned) > ncol:
+                cleaned = cleaned[:ncol]
+
+            normalized.append(cleaned)
+
+        return pl.DataFrame(normalized, schema=schema, orient="row")
+
+    def _ensure_dtm_us_utc(self, df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Ensure a 'dtm' column exists and is Datetime[us, UTC].
+        - If df already has 'dtm', it is parsed.
+        - If missing, and date/time exist, dtm is computed from them.
+        """
+        if df.is_empty():
+            # still ensure dtm exists to satisfy downstream compilation steps
+            return df.with_columns(pl.lit(None).cast(pl.Datetime("us", "UTC")).alias("dtm")) if "dtm" not in df.columns else df
+
+        has_dtm = "dtm" in df.columns
+        has_date_time = "date" in df.columns and "time" in df.columns
+
+        # parse existing dtm if present (ISO-ish)
+        parsed_from_dtm = pl.lit(None, dtype=pl.Datetime)
+        if has_dtm:
+            dtm_str = pl.col("dtm").cast(pl.Utf8)
+            parsed_from_dtm = pl.coalesce(
+                dtm_str.str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f", strict=False),
+                dtm_str.str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S", strict=False),
+                dtm_str.str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S%.f", strict=False),
+                dtm_str.str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+            )
+
+        # parse from date+time if available (e.g. 20-oct-24 + 16:05)
+        parsed_from_date_time = pl.lit(None, dtype=pl.Datetime)
+        if has_date_time:
+            date_fixed = pl.col("date").cast(pl.Utf8).str.to_titlecase()
+            time_fixed = pl.col("time").cast(pl.Utf8)
+            dt_str = pl.concat_str([date_fixed, time_fixed], separator=" ")
+            parsed_from_date_time = pl.coalesce(
+                dt_str.str.strptime(pl.Datetime, "%d-%b-%y %H:%M:%S", strict=False),
+                dt_str.str.strptime(pl.Datetime, "%d-%b-%y %H:%M", strict=False),
+                dt_str.str.strptime(pl.Datetime, "%d-%b-%Y %H:%M:%S", strict=False),
+                dt_str.str.strptime(pl.Datetime, "%d-%b-%Y %H:%M", strict=False),
+            )
+
+        dtm_expr = (
+            pl.coalesce(parsed_from_dtm, parsed_from_date_time)
+            .dt.cast_time_unit("us")
+            .dt.replace_time_zone("UTC")
+            .alias("dtm")
+        )
+
+        return df.with_columns(dtm_expr)
+
+    @staticmethod
+    def _cast_columns(df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Tolerant casting for known AE31 columns.
+        """
+        if df.is_empty():
+            return df
+
+        int_cols = {"UV370", "B470", "G520", "Y590", "R660", "IR880", "IR950"}
+
+        exprs: list[pl.Expr] = []
+
+        # id/date/time as strings or ints
+        if "id" in df.columns:
+            exprs.append(pl.col("id").cast(pl.Utf8).alias("id"))
+        if "date" in df.columns:
+            exprs.append(pl.col("date").cast(pl.Utf8).alias("date"))
+        if "time" in df.columns:
+            exprs.append(pl.col("time").cast(pl.Utf8).alias("time"))
+
+        # other columns
+        for c in df.columns:
+            if c in {"dtm", "id", "date", "time"}:
+                continue
+            if c in int_cols:
+                exprs.append(pl.col(c).cast(pl.Int32, strict=False).alias(c))
+            else:
+                exprs.append(pl.col(c).cast(pl.Float32, strict=False).alias(c))
+
+        return df.with_columns(exprs) if exprs else df
 
 
+# from __future__ import annotations
+
+# import csv
+# import io
+# import re
+# import zipfile
+# from contextlib import contextmanager
+# from datetime import datetime
+# from io import BytesIO
 # from pathlib import Path
-# import polars as pl
+# from typing import IO, Optional, Iterator
 
-# from toolbox.utils import pl_simplify_dtypes
+# import polars as pl
+# from charset_normalizer import from_path
+
 # from processing.instrument import Instrument
+
+# """AE-31 Manual
+# Section 14.9.3 Expanded Data Format: 
+# “date”, “time”, 
+# UV [370 nm] result,Blue [470 nm] result, 
+# Green [520 nm] result, 
+# Yellow [590 nm]result, 
+# Red [660 nm] result, 
+# IR1 [880 nm, “standard BC”] result,
+# IR2 [950 nm] result, 
+# air flow (LPM), 
+# bypass fraction,
+# and then the following columns of data repeated for the seven
+# measurement wavelengths:
+# sensing zero signal, sensing beam signal, reference zero signal,
+# reference beam signal, optical attenuation, air flow (LPM), bypass
+# fraction.
+# The ‘air flow’ and ‘bypass fraction’ columns are repeated to allow for
+# easy visual identification of the separation between the seven sets of
+# data columns.
+# A typical line in the data file might look like:
+# "24-jul-00","16:40", 610 , 604 , 605 , 612 , 617 , 611 , 641 , 3.131 ,-
+# .9812 ,-.9814 , 1.1881 , 1.8384 , 1 , 6.4 , 2.704 ,-.9812 ,-.9814 , 4.2483
+# , 2.7373 , 1 , 6.4 , 2.45 ,-.9812 ,-.9814 , 2.1716 , 1.9438 , 1 , 6.4 , 2.232
+# ,-.9812 ,-.9814 , 2.854 , 3.5259 , 1 , 6.4 , 1.957 ,-.9812 ,-.9814 , 3.3428
+# , 2.596 , 1 , 6.4 , 1.452 ,-.9812 ,-.9814 , 4.6719 , 3.3935 , 1 , 6.4 , 1.396
+# ,-.9812 ,-.9814 , 2.705 , 2.438 , 1 , 6.4
+# """
+
+
+# # Your existing AE31_COLS (kept as you posted; no dtm here)
+# AE31_COLS: list[str] = [
+#     "id", "date", "time",
+#     "UV370", "B470", "G520", "Y590", "R660", "IR880", "IR950",
+#     "flow",
+# ]
+# AE31_COLS += ["_370", "sens_zero_370", "sens_beam_370", "ref_zero_370", "ref_beam_370", "att_370"]
+# AE31_COLS += ["_470", "sens_zero_470", "sens_beam_470", "ref_zero_470", "ref_beam_470", "att_470"]
+# AE31_COLS += ["_520", "sens_zero_520", "sens_beam_520", "ref_zero_520", "ref_beam_520", "att_520"]
+# AE31_COLS += ["_590", "sens_zero_590", "sens_beam_590", "ref_zero_590", "ref_beam_590", "att_590"]
+# AE31_COLS += ["_660", "sens_zero_660", "sens_beam_660", "ref_zero_660", "ref_beam_660", "att_660"]
+# AE31_COLS += ["_880", "sens_zero_880", "sens_beam_880", "ref_zero_880", "ref_beam_880", "att_880"]
+# AE31_COLS += ["_950", "sens_zero_950", "sens_beam_950", "ref_zero_950", "ref_beam_950", "att_950"]
+
+
+# _ISO_DTM_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}")
+
+# """
+# '1144,"20-oct-24","16:05",  2087,  2246,  2261,  2317,  2373,  2447,  2456,  3.8, 
+# 0.0212, 1.1359, 0.0212, 3.5391,  .53, 65.961, 
+# 0.0212,  .8765, 0.0212, 2.5901,  .53, 49.016, 
+# 0.0212, 1.5084, 0.0212, 2.5596,  .53, 42.713, 
+# 0.0212, 1.2244, 0.0212, 1.1925,  .53, 37.749, 
+# 0.0212,  .9628, 0.0212, 1.7056,  .53, 33.773, 
+# 0.0212,  .8833, 0.0212,  .9363,  .53, 24.800, 
+# 0.0212, 1.6419, 0.0212, 2.0497,  .53, 22.892'
+# """
+# # AE31_DTYPES: dict[str, pl.DataType] = dict(zip(AE31_COLS,
+# #                                                [pl.Utf8] + [pl.Utf8]*2 + [pl.Int32]*7 + [pl.Float32]*43))
+
+
+# def is_datetime(string: str) -> bool:
+#     try:
+#         datetime.strptime(string.strip(), "%Y-%m-%dT%H:%M:%S")
+#         return True
+#     except ValueError:
+#         return False
+
+# _DATE_RE = re.compile(r"^\d{1,2}-[A-Za-z]{3}-\d{2}$")  # e.g. 13-dec-25
 
 
 # class AE31(Instrument):
-#     """
-#     Processor for Magee Scientific AE31 aethalometer data files.
-#     Expects data in fixed-width columns with a timestamp field.
-#     """
+#     def __init__(self, name: str = "ae31", log_file: str=str()) -> None:
+#         super().__init__(name=name, log_file=log_file)
 
-#     def __init__(self):
-#         super().__init__(name="ae31")
-
-#     def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None, str]:
+#     def extract_to_dataframe(self, file: Path) -> tuple[pl.DataFrame, str | None, str | None]:
 #         """
-#         Extracts AE31 .txt file into a Polars DataFrame.
+#         Wrapper that dispatches to the appropriate extractor depending on whether the file
+#         starts with a header row or data rows.
 
-#         Args:
-#             path (Path): Path to the input text file.
-
-#         Returns:
-#             tuple: (DataFrame, error string or None, file type)
+#         Heuristics:
+#         - If the first non-empty CSV record contains known column names (e.g. 'dtm', 'UV370',
+#           'sens_zero_370', ...), treat it as a header.
+#         - Otherwise treat it as a no-header file (which may start with dtm or with id).
 #         """
-#         df = pl.DataFrame()
-#         dtm = self.dtm
+#         first_row: Optional[list[str]] = None
 
-#         try:
-#             df = pl.read_csv(
-#                 source=path,
-#                 separator="\t",
-#                 skip_rows=0,
-#                 comment_prefix="#",
-#                 infer_schema_length=100,
-#                 ignore_errors=True
-#             )
+#         with self._open_text(file) as f:
+#             reader = csv.reader(f, skipinitialspace=True)
+#             for row in reader:
+#                 row = [c.strip().lstrip("\ufeff") for c in row]
+#                 while row and row[-1] == "":
+#                     row.pop()
+#                 if not row or all(c == "" for c in row):
+#                     continue
+#                 first_row = row
+#                 break
 
-#             # Look for a datetime column
-#             datetime_col = next((c for c in df.columns if "datetime" in c.lower() or "date/time" in c.lower()), None)
-#             if not datetime_col:
-#                 raise ValueError("No datetime column found in AE31 file.")
+#         if not first_row:
+#             return (pl.DataFrame({name: [] for name in ["dtm"] + AE31_COLS}), None, None)
 
-#             df = df.rename({datetime_col: dtm})
-#             df = df.with_columns(pl.col(dtm).str.to_datetime(format=None, time_unit="us", time_zone="UTC"))
-#             df = pl_simplify_dtypes(df)
-#             return df, None, "ae31"
+#         lowered = {c.lower() for c in first_row if c}
+#         known = {"dtm"} | {c.lower() for c in AE31_COLS}
 
-#         except Exception as e:
-#             self.logger.error(f"Failed to extract {path.name}: {e}")
-#             return df, str(e), "ae31"
+#         if lowered & known:
+#             return self.extract_to_dataframe_with_header(file)
 
-# import logging
-# import os
-# import re
-# import shutil
-# import tempfile
-# import zipfile
-# from datetime import datetime, timedelta
-# from pathlib import Path
-
-# import chardet
-# import polars as pl
-
-
-# class AE31:
-#     config: dict
-#     name: str
-
-#     def __init__(self, config: dict, name='ae31'):
-#         """Magee Scientific AE33 aethalometer data as produced by nrbdaq
-
-#         Args:
-#             config (dict): general configuration
-#         """
-#         self.logger: logging.Logger      # config['logging']
-#         self.name: str
-#         self.root: str                   # config['root']
-#         self.incoming: str               # config['branches']['incoming']
-#         self.archive: str                # config['branches']['archive']
-#         self.issues: str                 # config['branches']['issues']
-
-#         try:
-#             # configure logging
-#             _logger = f"{os.path.basename(config['logging'])}".split('.')[0]
-#             self.logger = logging.getLogger(f"{_logger}.{__name__}")
-#             self.logger.info("Initialize AE31")
-            
-#             self.name = name
-#             self.root = config['root']
-#             self.incoming = config['branches']['incoming']
-#             self.archive = config['branches']['archive']
-#             self.issues = config['branches']['issues']
-            
-#             # root = os.path.expanduser(config['root'])
-
-#             # self.data_path = os.path.join(root, config['AE31']['data'])
-#             # os.makedirs(self.data_path, exist_ok=True)
-#         except Exception as err:
-#             self.logger.error(err)
-#             pass
-
+#         return self.extract_to_dataframe_without_header(file)
     
-#     def move_file(self, src: str, dst: str, split: str = "1mo") -> Path:
-#         """create destination path and move file.
 
-#         Args:
-#             src (str): Full path to source file.
-#             dst (str): Destination root path.
-#             split (str, optional): File organization in dst. One of 'year|month|day'. Defaults to 'month'.
-
-#         Returns:
-#             Path: Full path to destination.
+#     @staticmethod
+#     @contextmanager
+#     def _open_text(path: Path) -> Iterator[io.TextIOBase]:
 #         """
-#         try:
-#             src = Path(src)
-#             match = re.search(r"-(\d{4})(\d{2})(\d{2})\d{2}\d{2}\.(zip|dat|csv|txt)$", src.name)
-
-#             if not match:
-#                 # print(f"shutil.move({src}, {Path(dst) / src.name}")
-#                 shutil.move(src, Path(dst) / src.name)
-#                 return Path(dst) / src.name  # Default case if no timestamp match
-
-#             year, month, day = match.group(1, 2, 3)
-#             dst = Path(dst) / year / month / day
-#             split_map = {
-#                 "1y": dst.parents[2],
-#                 "1mo": dst.parent,
-#                 "1d": dst,
-#             }
-#             dst = split_map.get(split, dst)
-#             dst.mkdir(parents=True, exist_ok=True)
-
-#             # print(f"shutil.move({src}, {Path(dst) / src.name}")
-#             shutil.move(src, dst / src.name)            
-#             self.logger.info(f"file moved: {src} > {dst / src.name}")
-            
-#             return dst / src.name
-        
-#         except Exception as err:
-#             self.logger.error("move_file: %s produced exception: %s", src, err)
-            
-
-#     def read_csv_no_header(self, file_path: str, dtm: str='dtm') -> pl.DataFrame:
-#         """Read an AE31 .csv file and return a pl.DataFrame
-
-#             14.9.3  Data File Format - Seven wavelength Instruments 
-#             The AE-3 series seven wavelength Aethalometers measure optical absorbance at seven optical wavelengths 
-#             from 370 to 950 nm.  The data are reported on a single line written to disk as follows: 
-#             Expanded Data Format:  “date”, “time”, UV [370 nm] result, Blue [470 nm] result, Green [520 nm] result, 
-#             Yellow [590 nm] result, Red [660 nm] result, IR1 [880 nm, “standard BC”] result, IR2 [950 nm] result,  
-#             #air flow (LPM), bypass fraction#, and then the following columns of data repeated for the seven 
-#             measurement wavelengths: 
-#             sensing zero signal, sensing beam signal, reference zero signal, reference beam signal, optical attenuation, 
-#             air flow (LPM), bypass fraction.    
-#             The 'air flow'and 'bypass fraction' columns are repeated to allow for easy visual identification of the 
-#             separation between the seven sets of data columns. 
-#             A typical line in the data file might look like: 
-#             "24-jul-00","16:40", 610 , 604 , 605 , 612 , 617 , 611 , 641 , 
-#             3.131, -.9812 , -.9814 , 1.1881 , 1.8384 , 1 , 6.4 , 
-#             2.704 , -.9812 , -.9814 , 4.2483 , 2.7373 , 1 , 6.4 , 
-#             2.45  , -.9812 , -.9814 , 2.1716 , 1.9438 , 1 , 6.4 , 
-#             2.232 , -.9812 , -.9814 , 2.854 , 3.5259 , 1 , 6.4 , 
-#             1.957 , -.9812 , -.9814 , 3.3428 , 2.596 , 1 , 6.4 , 
-#             1.452  , -.9812 , -.9814 , 4.6719 , 3.3935 , 1 , 6.4 , 
-#             1.396 , -.9812 , -.9814 , 2.705 , 2.438 , 1 , 6.4  
-        
-#         Args:
-#             file (str): full path to file
-
-#         Returns:
-#             pl.DataFrame: dataframe with header
+#         Open either a plain text/CSV file, or a .zip containing a single CSV-like member,
+#         and yield a text stream. Resources are always closed on exit.
 #         """
-#         cols = [f"{dtm}","id","date","time","UV370","B470","G520","Y590","R660","IR880","IR950","flow",]# "bypass",]
-#         # cols += ["?370", "sens_zero_370","sens_beam_370","ref_zero_370","ref_beam_370","att_370", ]#"flow_370", "bypass_370",] 
-#         # cols += ["?470", "sens_zero_470","sens_beam_470","ref_zero_470","ref_beam_470","att_470", ]#"flow_470", "bypass_470",] 
-#         # cols += ["?520", "sens_zero_520","sens_beam_520","ref_zero_520","ref_beam_520","att_520", ]#"flow_520", "bypass_520",] 
-#         # cols += ["?590", "sens_zero_590","sens_beam_590","ref_zero_590","ref_beam_590","att_590", ]#"flow_590", "bypass_590",] 
-#         # cols += ["?660", "sens_zero_660","sens_beam_660","ref_zero_660","ref_beam_660","att_660", ]#"flow_660", "bypass_660",] 
-#         # cols += ["?880", "sens_zero_880","sens_beam_880","ref_zero_880","ref_beam_880","att_880", ]#"flow_880", "bypass_880",] 
-#         # cols += ["?950", "sens_zero_950","sens_beam_950","ref_zero_950","ref_beam_950","att_950", ]#"flow_950", "bypass_950",] 
-#         cols += ['UV370_1','UV370_2','UV370_3','UV370_4','UV370_5','UV370_6',]
-#         cols += ['B470_1','B470_2','B470_3','B470_4','B470_5','B470_6',]
-#         cols += ['G520_1','G520_2','G520_3','G520_4','G520_5','G520_6',]
-#         cols += ['Y590_1','Y590_2','Y590_3','Y590_4','Y590_5','Y590_6',]
-#         cols += ['R660_1','R660_2','R660_3','R660_4','R660_5','R660_6',]
-#         cols += ['IR880_1','IR880_2','IR880_3','IR880_4','IR880_5','IR880_6',]
-#         cols += ['IR950_1','IR950_2','IR950_3','IR950_4','IR950_5','IR950_6',]
-#         df = pl.DataFrame()
+#         if path.suffix.lower() == ".zip":
+#             with zipfile.ZipFile(path) as zf:
+#                 members = [n for n in zf.namelist() if not n.endswith("/")]
+#                 if not members:
+#                     raise ValueError(f"No files found inside zip: {path}")
+#                 with zf.open(members[0], "r") as raw:
+#                     with io.TextIOWrapper(
+#                         raw, encoding="utf-8-sig", errors="replace", newline=""
+#                     ) as txt:
+#                         yield txt
+#         else:
+#             with path.open("r", encoding="utf-8-sig", errors="replace", newline="") as txt:
+#                 yield txt
 
-#         try:
-#             # with open(file, "r") as fh:
-#             #     content = fh.read().replace(" ", "").encode()
-
-#             df = pl.read_csv(file_path, has_header=False)
-#             df = df.cast({pl.Int64: pl.Int32, pl.Float64: pl.Float32})
-#             df.columns = cols
-#             df = df.with_columns(pl.col(dtm).str.to_datetime(time_unit='us', time_zone='UTC'), 
-#                                  pl.col("date").str.to_date("%d-%b-%y").dt.combine(pl.col("time").str.to_time("%H:%M")).alias("date_time"))
-
-#             self.logger.info(f"{file_path} successfully read.")
-            
-#             return df
-#         except Exception as err:
-#             self.logger.error(err)
-#             return pl.DataFrame()
-            
-
-#     def extract_to_dataframe(self, file_path: str, dtm: str='dtm') -> pl.DataFrame:
+#     def extract_to_dataframe_with_header(self, file: Path) -> tuple[pl.DataFrame, str | None, str | None]:
 #         """
-#         Read file and extract to pl.DataFrame.
-        
-#         Args:
-#             file_path (str): Full path to the file.
-#             dtm (str, optional): Name of the datetime column. Defaults to 'dtm'.
+#         Read an AE31 CSV-like file that includes a header row.
 
-#         Returns:
-#             pl.DataFrame: Processed DataFrame.
+#         Handles three variants:
+#         1) Data rows with only dtm (e.g. '2025-12-07T09:05:00,')
+#         2) Data rows missing the 'id' field while header includes 'id'
+#         3) Fully populated data rows
+
+#         Rules:
+#         - Uses the header row for column names (whitespace stripped).
+#         - Pads missing trailing fields with nulls.
+#         - If exactly one field is missing AND it looks like 'id' is missing, inserts null at 'id'.
+#         - Casts:
+#             dtm -> Datetime
+#             UV370..IR950 -> Int32 (strict=False)
+#             everything else (except id/date/time) -> Float32 (strict=False)
 #         """
-#         try:
-#             # If the file is a ZIP file, extract it to a temporary file and process it
-#             if zipfile.is_zipfile(file_path):
-#                 with zipfile.ZipFile(file_path, 'r') as zip_file:
-#                     data_files = [f for f in zip_file.namelist() if f.endswith(('.dat', '.csv', '.txt'))]
-#                     if not data_files:
-#                         raise ValueError("No data files found in the zip archive.")
-#                     if len(data_files) > 1:
-#                         raise ValueError("More than 1 file found in the zip archive.")
+#         with self._open_text(file) as f:
+#             reader = csv.reader(f, skipinitialspace=True)
 
-#                     # # Extract the single file to a temporary file
-#                     # temp_file = tempfile.NamedTemporaryFile(delete=False)
-#                     # with open(temp_file.name, 'wb') as fh:
-#                     #     fh.write(zip_file.read(data_files[0]))
+#             try:
+#                 header = next(reader)
+#             except StopIteration:
+#                 raise ValueError(f"Empty file: {file}")
 
-#                     # df = self.read_csv(temp_file.name, dtm)
+#             # strip whitespace; keep internal empties, but drop trailing empty header fields if any
+#             header = [h.strip().lstrip("\ufeff") for h in header]
+#             while header and header[-1] == "":
+#                 header.pop()
 
-#                     # os.remove(temp_file.name)
+#             ncol = len(header)
+#             if ncol == 0:
+#                 raise ValueError(f"Header row has no columns: {file}")
 
-#                     with zip_file.open(name=data_files[0]) as fh:
-#                         source = fh.read().decode('utf-8').replace(" ", "").encode()
+#             # find 'id' position if present
+#             id_idx: Optional[int] = None
+#             for i, name in enumerate(header):
+#                 if name.lower() == "id":
+#                     id_idx = i
+#                     break
 
-#                     df = pl.read_csv(source)
-#                     df = df.cast({pl.Int64: pl.Int32, pl.Float64: pl.Float32})
-#                     df = df.with_columns(pl.col(dtm).str.to_datetime(time_unit='us', time_zone='UTC'), 
-#                                         pl.col("date").str.to_date("%d-%b-%y").dt.combine(pl.col("time").str.to_time("%H:%M")).alias("date_time"))
-#                 self.logger.info(f"{file_path} successfully read.")    
+#             rows: list[list[Optional[str]]] = []
 
-#                 return df
+#             for fields in reader:
+#                 if not fields:
+#                     continue
 
+#                 fields = [s.strip() for s in fields]
+
+#                 # drop trailing empty fields (typical for lines ending with a comma)
+#                 while fields and fields[-1] == "":
+#                     fields.pop()
+
+#                 # skip fully empty lines
+#                 if not fields or all(s == "" for s in fields):
+#                     continue
+
+#                 # Convert empty strings to None (we do it early so later checks are clean)
+#                 cleaned: list[Optional[str]] = [None if s == "" else s for s in fields]
+
+#                 # Variant: header includes 'id' but data row is missing it (common in your sample)
+#                 # We only do this when the row is exactly 1 field short AND the would-be id field
+#                 # looks like a date (e.g. "13-dec-25"), which strongly indicates shifting.
+#                 if id_idx is not None and len(cleaned) == ncol - 1:
+#                     candidate = cleaned[id_idx] if id_idx < len(cleaned) else None
+#                     if isinstance(candidate, str) and _DATE_RE.match(candidate):
+#                         cleaned.insert(id_idx, None)
+
+#                 # Pad/trim to header length
+#                 if len(cleaned) < ncol:
+#                     cleaned.extend([None] * (ncol - len(cleaned)))
+#                 elif len(cleaned) > ncol:
+#                     cleaned = cleaned[:ncol]
+
+#                 rows.append(cleaned)
+
+#         df = pl.DataFrame(rows, schema=header, orient="row")
+
+#         # Type coercion (tolerant)
+#         int_cols = {"UV370", "B470", "G520", "Y590", "R660", "IR880", "IR950"}
+
+#         exprs: list[pl.Expr] = []
+
+#         if "dtm" in df.columns:
+#             dtm_expr = pl.coalesce(
+#                 pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f", strict=False),
+#                 pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S", strict=False),
+#                 pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S%.f", strict=False),
+#                 pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+#             ).dt.cast_time_unit("us").dt.replace_time_zone("UTC").alias("dtm")
+#             exprs.append(dtm_expr)
+
+
+#         for c in ("id", "date", "time"):
+#             if c in df.columns:
+#                 exprs.append(pl.col(c).cast(pl.Utf8).alias(c))
+
+#         for c in df.columns:
+#             if c in ("dtm", "id", "date", "time"):
+#                 continue
+#             if c in int_cols:
+#                 exprs.append(pl.col(c).cast(pl.Int32, strict=False).alias(c))
 #             else:
-#                 # If it's not a ZIP file, process it directly
-#                 return self.read_csv_no_header(file_path=file_path)
-        
-#         except Exception as err:
-#             self.logger.error("%s: %s", file_path, err)
-#             return pl.DataFrame()
+#                 exprs.append(pl.col(c).cast(pl.Float32, strict=False).alias(c))
+
+#         if exprs:
+#             df = df.with_columns(exprs)
+
+#         return (df, None, None)
 
 
-#     # def append_parquet(self, df: pl.DataFrame, target: Path, dtm: str="dtm",
-#     #                    split: str="month", file_name: str="ae31.parquet") -> pl.DataFrame:
-#     #     try:
-#     #         assert split in {"year", "month", "day"}, "split must be 'year', 'month', or 'day'"
+#     def extract_to_dataframe_without_header(self, file: Path) -> tuple[pl.DataFrame, str | None, str | None]:
+#         """
+#         Read AE31 data files WITHOUT a header row.
 
-#     #         df = df.with_columns(pl.col(dtm).cast(pl.Datetime))
-#     #         start_date, end_date = df[dtm].min().date(), df[dtm].max().date()
-#     #         date_ranges = pl.date_range(start_date, end_date, interval="1d", eager=True)
+#         Handles:
+#         - rows starting with dtm:  dtm,id,date,time,...
+#         - rows starting with id:   id,date,time,... (dtm missing)
+#             -> dtm is computed from date + time
 
-#     #         for date in date_ranges:
-#     #             year, month, day = str(date.year), f"{date.month:02d}", f"{date.day:02d}"
-#     #             dst = target / year / month / day
-#     #             split_map = {
-#     #                 "year": dst.parents[2],
-#     #                 "month": dst.parent,
-#     #                 "day": dst,
-#     #             }
-#     #             dst = split_map.get(split, dst)
-#     #             dst.mkdir(parents=True, exist_ok=True)
+#         Output columns:
+#         dtm + AE31_COLS
 
-#     #             # if split == "year":
-#     #             #     folder_path = folder_path.parents[2]
-#     #             # elif split == "month":
-#     #             #     folder_path = folder_path.parent
+#         dtm is timezone-aware UTC with microsecond resolution.
+#         """
+#         cols = ["dtm"] + AE31_COLS
+#         ncol = len(cols)
 
-#     #             df_filtered = df.filter(
-#     #                 (pl.col(dtm).dt.year() == date.year)
-#     #                 & (split != "year" or (pl.col(dtm).dt.month() == date.month))
-#     #                 & (split != "month" or (pl.col(dtm).dt.date() == date))
-#     #             )   # [TODO] handle case where df extends across split?
+#         rows: list[list[Optional[str]]] = []
 
-#     #             file_path = dst / file_name
-#     #             if file_path.exists():
-#     #                 df_existing = pl.read_parquet(file_path)
-#     #                 rows_existing = len(df_existing)
-#     #                 df_combined = pl.concat([df_existing, df_filtered], how="diagonal").unique().sort(dtm)
-#     #             else:
-#     #                 rows_existing = 0
-#     #                 df_combined = df_filtered.unique().sort(dtm)
-#     #             rows_combined = len(df_combined)
+#         with self._open_text(file) as handle:
+#             reader = csv.reader(handle, skipinitialspace=True)
+#             for fields in reader:
+#                 if not fields:
+#                     continue
 
-#     #             df_combined.write_parquet(file_path)
-            
-#     #         self.logger.info(f"{file_path}: rows added: {rows_combined - rows_existing}")
-#     #         return df_combined
-#     #     except Exception as err:
-#     #         self.logger.error("append_parquet: %s produced exception: %s", target / file_name, err)
-#     #         return pl.DataFrame()
+#                 fields = [s.strip() for s in fields]
 
+#                 # drop trailing empty fields (lines ending with a comma)
+#                 while fields and fields[-1] == "":
+#                     fields.pop()
 
-#     def split_and_save_parquet(self, df: pl.DataFrame, target: Path, file_name: str="ae31.parquet", split: str="1mo", dtm: str="dtm"):
-#         try:
-#             assert split in {"1y", "1mo", "1d"}, "split must be '1y', '1mo', or '1d'"
+#                 if not fields or all(s == "" for s in fields):
+#                     continue
 
-#             if dtm not in df.columns:
-#                 raise ValueError("DataFrame must contain a 'dtm' column.")
-            
-#             df = df.sort(dtm)
-#             df = df.with_columns(pl.col(dtm).dt.replace_time_zone(time_zone='UTC'))
-            
-#             if split == "1y":
-#                 df = df.with_columns(df[dtm].dt.strftime("%Y").alias("folder"))
-#             elif split == "1mo":
-#                 df = df.with_columns(df[dtm].dt.strftime("%Y/%m").alias("folder"))
-#             elif split == "1d":
-#                 df = df.with_columns(df[dtm].dt.strftime("%Y/%m/%d").alias("folder"))
-#             # else:
-#             #     raise ValueError("Invalid split value. Choose from '1y', '1mo', or '1d'.")
-            
-#             # target_path = Path(target)
-#             partitions = df.partition_by("folder", maintain_order=True)
-#             for i, sub_df in enumerate(partitions):
-#                 folder = sub_df["folder"].unique()[0]
-#                 folder_path = target / folder
-#                 folder_path.mkdir(parents=True, exist_ok=True)
-#                 parquet_path = folder_path / file_name
-                
-#                 sub_df = sub_df.drop("folder")  # Drop 'folder' before merging
-                
-#                 if parquet_path.exists():
-#                     existing_df = pl.read_parquet(parquet_path)
-#                     existing_df = existing_df.with_columns(pl.col(dtm).dt.replace_time_zone(time_zone='UTC'))
-#                     existing_df = pl.concat([existing_df, sub_df], how='diagonal')
-#                     existing_df = existing_df.unique().sort(by=dtm)
-#                     existing_df.write_parquet(parquet_path)
+#                 cleaned: list[Optional[str]] = [None if s == "" else s for s in fields]
+
+#                 # Detect whether the row starts with dtm
+#                 first = cleaned[0] if cleaned else None
+#                 has_dtm_first = isinstance(first, str) and bool(_ISO_DTM_RE.match(first))
+
+#                 if has_dtm_first:
+#                     # Expect: dtm,id,date,time,...
+#                     row = cleaned
 #                 else:
-#                     sub_df.sort(by=dtm).write_parquet(parquet_path)
+#                     # Expect: id,date,time,...  -> insert dtm placeholder at position 0
+#                     row = [None] + cleaned
 
-#         except Exception as err:
-#             self.logger.error("split_and_save_parquet: %s produced exception: %s", target / file_name, err)
-#             return pl.DataFrame()
+#                 # Pad/trim to expected length
+#                 if len(row) < ncol:
+#                     row.extend([None] * (ncol - len(row)))
+#                 elif len(row) > ncol:
+#                     row = row[:ncol]
 
+#                 rows.append(row)
+#         df = pl.DataFrame(rows, schema=cols, orient="row")
 
-#     def compile_data(self, source: str=str(), target: str=str(), file_name: str=str(),
-#                                  move_processed_files: bool=True, archive: str=str(), issues: str=str(), 
-#                                  split: str="1mo", dtm: str="dtm") -> Path:
-#         """
-#         Harvest a folder and its sub-folders, compile data into .parquet files, and organize them.
-        
-#         Args:
-#             source (str, optional): Folder to harvest. Defaults to self.root / self.incoming / self.name.
-#             target (str, optional): Folder for .parquet files. Defaults to 'data/level1'.
-#             dtm (str, optional): Timestamp column name. Defaults to 'dtm'.
-#             move_processed_files (bool, optional): Move processed files? Defaults to True.
-#         """
-#         try:
-#             source = Path(source or (Path(self.root) / self.incoming / self.name))
-#             archive = Path(archive or (Path(self.root) / self.archive / self.name))
-#             issues = Path(issues or (Path(self.root) / self.issues / self.name))
-#             target = Path(target or (Path(self.root) / target))
-#             os.makedirs(archive, exist_ok=True)
-#             os.makedirs(target, exist_ok=True)
-#             os.makedirs(issues, exist_ok=True)
+#         int_cols = {"UV370", "B470", "G520", "Y590", "R660", "IR880", "IR950"}
 
-#             file_name = file_name or f"{self.name}.parquet"
-#             if not source.exists():
-#                 return
+#         # Parse dtm from either:
+#         #  - existing dtm string (ISO-ish)
+#         #  - or date+time (e.g. 20-oct-24 + 16:05)
+#         date_fixed = pl.col("date").cast(pl.Utf8).str.to_titlecase()  # "20-oct-24" -> "20-Oct-24"
+#         time_fixed = pl.col("time").cast(pl.Utf8)
 
-#             src = Path()
-#             df = pl.DataFrame()
-#             for root, dirs, files in os.walk(source):
-#                 for file in files:
-#                     _dst = issues  # Default destination
-#                     src = Path(root) / file
-#                     _df = self.extract_to_dataframe(file_path=src, dtm=dtm)
+#         dtm_from_iso = pl.coalesce(
+#             pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f", strict=False),
+#             pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S", strict=False),
+#             pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S%.f", strict=False),
+#             pl.col("dtm").cast(pl.Utf8).str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+#         )
 
-#                     if not _df.is_empty():
-#                         # df = self.append_parquet(df=_df, target=target, dtm=dtm, split=split, file_name=file_name)
-#                         try:
-#                             df = pl.concat([df, _df], how='diagonal')
-#                             if not df.is_empty():
-#                                 _dst = archive  # Success
-#                             else:
-#                                 continue
-#                         except:
-#                             self.logger.error(f"compile_files_to_parquet: {file} could not be added to parquet.")
-#                             pass
-#                     if move_processed_files:
-#                         dst = self.move_file(src=src, dst=_dst, split=split)
-                
-#             if not df.is_empty():
-#                 # remove rows with all null entries and remove duplicates
-#                 df = df.filter(~pl.all_horizontal(pl.all().is_null())).unique()
-#                 df.sort(by=['date_time'])
-#                 self.split_and_save_parquet(df=df, target=target, split=split, file_name=file_name)
-#                 # df.write_parquet(os.path.join(target, f"{self.name}.parquet"))
+#         dtm_from_date_time = pl.coalesce(
+#             pl.concat_str([date_fixed, time_fixed], separator=" ")
+#             .str.strptime(pl.Datetime, "%d-%b-%y %H:%M:%S", strict=False),
+#             pl.concat_str([date_fixed, time_fixed], separator=" ")
+#             .str.strptime(pl.Datetime, "%d-%b-%y %H:%M", strict=False),
+#         )
 
-#             if Path(root) != source:
-#                 try:
-#                     Path(root).rmdir()
-#                 except OSError:
-#                     pass
+#         dtm_expr = (
+#             pl.coalesce(dtm_from_iso, dtm_from_date_time)
+#             .dt.cast_time_unit("us")
+#             .dt.replace_time_zone("UTC")
+#             .alias("dtm")
+#         )
 
-#             return df
+#         exprs: list[pl.Expr] = [dtm_expr]
 
-#         except Exception as err:
-#             self.logger.error("compile_files_to_parquet: file: %s produced error: %s", src, err)
+#         # id as Int32 (null-safe); keep date/time as strings
+#         exprs.append(pl.col("id").cast(pl.Utf8).alias("id"))
+#         exprs.append(pl.col("date").cast(pl.Utf8).alias("date"))
+#         exprs.append(pl.col("time").cast(pl.Utf8).alias("time"))
 
+#         for c in df.columns:
+#             if c in ("dtm", "id", "date", "time"):
+#                 continue
+#             if c in int_cols:
+#                 exprs.append(pl.col(c).cast(pl.Int32, strict=False).alias(c))
+#             else:
+#                 exprs.append(pl.col(c).cast(pl.Float32, strict=False).alias(c))
 
-#     def plot_data(self, filepath: str, save: bool=True):
-#         self.logger.warning("Not implemented.")
-
-
-#         # def read_csv(file_path: str, dtm: str='dtm', mappings: dict=self.mappings) -> pl.DataFrame:
-#         #     """Helper function to read a CSV and handle headers."""
-#         #     try:
-#         #         with open(file_path, 'rb') as f:
-#         #             raw_data = f.read()
-#         #             encoding = chardet.detect(raw_data)['encoding']
-
-#         #         # Read first row to check for header and ACOEM variable indicators
-#         #         with open(file_path, 'r', encoding=encoding) as file:
-#         #             first_row = file.readline().strip().split(',')
-
-#         #         # Check if the first column contains a valid datetime or '37' header
-#         #         if is_datetime(first_row[0]):
-#         #             df = pl.read_csv(file_path, encoding=encoding, has_header=False, try_parse_dates=True)
-#         #             df = df.rename({df.columns[0]: dtm})
-#         #         elif first_row[0] == '37':
-#         #             first_row[0] = dtm
-#         #             first_row += ['operation', 'period']
-#         #             df = pl.read_csv(file_path, encoding=encoding, has_header=False, skip_rows=1, try_parse_dates=True)
-#         #             # df = df.with_columns(
-#         #             #     pl.col(df.columns[0]).str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S").alias(dtm)
-#         #             # )
-#         #             mappings = dict(zip(df.columns, first_row))
-#         #             df = df.rename(mappings)
-#         #         elif first_row[0] == 'Date & Time':
-#         #             # Aurora native format file
-#         #             df = pl.read_csv(file_path, encoding=encoding, has_header=True, try_parse_dates=True)
-#         #             mappings = dict(zip(mappings["aurora_name"].to_list(), mappings["aurora_id"].to_list()))
-#         #             df = df.rename({col: str(mappings[col]) for col in df.columns if col in mappings})
-#         #             df = df.rename({'1': 'dtm'})
-                    
-#         #         else:
-#         #             return pl.DataFrame()
-
-#         #         return pl_simplify_dtypes(df)
-
-#         #     except Exception as err:
-#         #         print(f"Error reading CSV: {err}")
-#         #         return pl.DataFrame()
-
-#         # def is_datetime(value: str) -> bool:
-#         #     """Check if a string value can be parsed as a datetime."""
-#         #     try:
-#         #         datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-#         #         return True
-#         #     except ValueError:
-#         #         return False
-
-
+#         return (df.with_columns(exprs), None, None)
 
 
 # if __name__ == "__main__":
 #     pass
-

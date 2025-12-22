@@ -10,7 +10,7 @@ from charset_normalizer import from_path
 
 from processing.instrument import Instrument, pl_simplify_dtypes
 
-MAPPINGS = pl.read_csv('cdp2_aurora_mappings.csv', has_header=True, dtypes=[pl.String]*4)
+# MAPPINGS = pl.read_csv('cdp2_aurora_mappings.csv', has_header=True, schema_overrides=[pl.String]*4)
 
 
 class Neph(Instrument):
@@ -18,7 +18,7 @@ class Neph(Instrument):
         super().__init__(name=name, log_file=log_file)
         self.name = name
 
-    def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None, str]:
+    def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None]:
         """
         Extract data from a NEPH file (.dat, .csv, .txt, or .zip) to a Polars DataFrame.
 
@@ -27,10 +27,9 @@ class Neph(Instrument):
             dtm (str): Name of datetime column.
 
         Returns:
-            tuple: (DataFrame, error string if any, file type string)
+            tuple: (DataFrame, error string if any)
         """
         df = pl.DataFrame()
-        file_type = self.name
 
         try:
             # Extract raw content
@@ -77,7 +76,7 @@ class Neph(Instrument):
                 df = df.rename({df.columns[0]: dtm})
                 df = df.with_columns(pl.col(dtm).cast(pl.Datetime("us", "UTC")))
                 df = pl_simplify_dtypes(df)
-                return df, None, file_type
+                return df, None
             except:
                 pass
 
@@ -93,7 +92,7 @@ class Neph(Instrument):
                 df = df.rename({df.columns[0]: dtm})
                 df = df.with_columns(pl.col(dtm).cast(pl.Datetime("us", "UTC")))
                 df = pl_simplify_dtypes(df)
-                return df, None, file_type
+                return df, None
             except:
                 pass
 
@@ -129,11 +128,11 @@ class Neph(Instrument):
 
             df = df.with_columns(pl.col(dtm).cast(pl.Datetime("us", "UTC")))
             df = pl_simplify_dtypes(df)
-            return df, None, file_type
+            return df, None
 
-        except Exception as e:
-            self.logger.error(f"Failed to extract {path.name}: {e}")
-            return df, str(e), file_type
+        except Exception as err:
+            self.logger.error(f"Failed to extract {path.name}: {err}")
+            return df, str(err)
 
         
     def apply_zero_span_flags(
