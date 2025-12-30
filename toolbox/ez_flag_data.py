@@ -1,5 +1,4 @@
-import os
-
+from pathlib import Path
 import matplotlib
 import matplotlib.dates
 import matplotlib.pyplot as plt
@@ -13,9 +12,9 @@ from ipywidgets.widgets import Dropdown
 from toolbox.utils import pl_simplify_dtypes
 
 # file related configurations
-root_dir = '/product_data/data/pay/Kenya/git/gawkenyadata'
-source_dir = ''
-target_dir = ''   # folder for compiled and/or flagged data. 
+root_dir = Path(r'/product_data/data/pay/Kenya/git/gawkenyadata')
+source_dir = Path(r'')
+target_dir = Path(r'')   # folder for compiled and/or flagged data. 
 
 # dataframe column label configurations
 dtm = 'dtm'
@@ -337,7 +336,7 @@ def on_picked_flag_point(event):
             color = keys[event.mouseevent.key]["color"]
             df[event.ind, flags] = flag
             df[event.ind, colors] = color
-            sc.set_color(df[colors])
+            sc.set_color(df[colors].to_list())
             fig.canvas.draw_idle()
         else:
             infobox.value = f"Zoom OFF & point picked, but key '{event.mouseevent.key}' not assigned." 
@@ -364,7 +363,7 @@ def on_key_pressed_flag_points(event):
                                 pl.when(condition)
                                 .then(pl.lit(flag))
                                 .otherwise(pl.col(flags)).alias(flags),])
-            sc.set_color(df[colors])
+            sc.set_color(df[colors].to_list())
             fig.canvas.draw_idle()
         else:
             infobox.value = f"Zoom ON, but key '{event.key}' not assigned."
@@ -411,14 +410,15 @@ def on_clicked_save_data(event):
             df = df.drop(colors)
 
     # set file name and save to the SOURCE file (no target, no .bak)
-    source_file = os.path.join(file_chooser.selected_path, file_chooser.selected_filename)
-    if new_file_on_save:
-        base, ext = os.path.splitext(source_file)
-        if os.path.exists(source_file):
-            infobox.value = f"'{os.path.basename(source_file)}' exists already. A unique name will be created."
-            source_file = f"{base}-{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
+        source_file = Path(file_chooser.selected_path) / file_chooser.selected_filename
+    if new_file_on_save and source_file.exists():
+        infobox.value = (
+            f"'{source_file.name}' exists already. A unique name will be created."
+        )
+        ts = datetime.now().strftime('%Y%m%d%H%M%S')
+        source_file = source_file.with_name(f"{source_file.stem}-{ts}{source_file.suffix}")
 
-    os.makedirs(os.path.dirname(source_file), exist_ok=True)
+    source_file.parent.mkdir(parents=True, exist_ok=True)
     infobox.value = f"Saving to '{source_file}'."
 
     try:
@@ -453,7 +453,7 @@ def ez_flag_data(design: int=2, width: int=10, height: int=5):
     file_chooser = FileChooser(
         select_desc="Select file", 
         change_desc="Select file",
-        path=os.path.join(root_dir, source_dir), 
+        path=str(root_dir / source_dir), 
         filter_pattern="*.parquet",
         layout=Layout(width='700px'))
     dropdown_variable_select = Dropdown(
