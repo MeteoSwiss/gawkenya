@@ -90,7 +90,7 @@ class Instrument(ABC):
                 df, err = self._handle_file(src)
 
                 try:
-                    result = pl.concat([result, df], how="diagonal")
+                    result = pl.concat([result, df], how="diagonal_relaxed")
                 except Exception as err:
                     self.logger.error(f"Error concatenating content from {file} to existing dataframe: {err}")
                     # err = str(err)

@@ -31,19 +31,19 @@ fidas:
 meteo: 
   pattern: VRXA00.\d{12}
   buckets: daily
-  split_parquet: year
+  split_parquet: month
   expected: 144
 tei49c: 
   pattern: tei49c-\d{12}.(zip|dat)
   header: pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
-  split_parquet: year
+  split_parquet: month
   expected: 144
 tei49i: 
   pattern: tei49i-\d{12}.(zip|dat)
   header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
-  split_parquet: year
+  split_parquet: month
   expected: 144
 g2401: 
   pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
