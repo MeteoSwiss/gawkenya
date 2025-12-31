@@ -216,141 +216,160 @@ class Neph(Instrument):
 
         # Last resort: try a cast then enforce UTC (covers some odd inferred types)
         return df.with_columns(pl.col(dtm).cast(pl.Datetime).dt.replace_time_zone("UTC").cast(pl.Datetime("us", "UTC")))
+    
+
+    def auto_flag_ne300_data(
+        self,
+        df: pl.DataFrame,
+        *,
+        dtm: str = "dtm",
+        key_4035: str = "4035",
+        minutes_after_transition: int = 10,
+        low: int = 1_000_000,
+        high: int = 8_000_000,
+        flag_col_prefix: str = "f_",
+        overwrite: bool = False,
+        assume_null_is_normal: bool = True,
+    ) -> pl.DataFrame:
+        """Auto-flag NE300 measurement channels based on the 4035 state column.
+
+        Mapping (requested)
+        -------------------
+        4035 -> key
+            0 -> 0 (valid)
+            1 -> 3 (zero)
+            2 -> 4 (span)
+
+        Transition rule
+        ---------------
+        The first `minutes_after_transition` minutes after any transition *from* or *to*
+        {0,1,2} in 4035 are flagged as 2 (uncertain).
+
+        Flag columns
+        ------------
+        For each numeric channel column with `low <= nnn <= high`, create or update
+        `f_<nnn>` additively (fill only NULLs) unless `overwrite=True`.
+        """
+        if dtm not in df.columns or key_4035 not in df.columns:
+            return df
+
+        df = df.sort(dtm)
+
+        k = pl.col(key_4035)
+        if assume_null_is_normal:
+            k = pl.coalesce(k, pl.lit(0))
+        k = k.cast(pl.Int64)
+        k_prev = k.shift(1)
+
+        # Transition when 4035 changes and either side is in {0,1,2}
+        m_transition = (
+            k_prev.is_not_null()
+            & (k != k_prev)
+            & (k.is_in([0, 1, 2]) | k_prev.is_in([0, 1, 2]))
+        )
+
+        transition_time = pl.when(m_transition).then(pl.col(dtm)).otherwise(None)
+        last_transition_time = transition_time.forward_fill()
+
+        window = pl.duration(minutes=minutes_after_transition)
+        m_uncertain = (
+            last_transition_time.is_not_null()
+            & (pl.col(dtm) >= last_transition_time)
+            & ((pl.col(dtm) - last_transition_time) <= window)
+        )
+
+        base_flag = (
+            pl.when(k == 0)
+            .then(0)
+            .when(k == 1)
+            .then(3)
+            .when(k == 2)
+            .then(4)
+            .otherwise(None)
+        )
+
+        auto_flag = pl.when(m_uncertain).then(2).otherwise(base_flag).cast(pl.Int8)
+
+        updates: list[pl.Expr] = []
+        for c in df.columns:
+            if c.isdigit():
+                n = int(c)
+                if low <= n <= high:
+                    fcol = f"{flag_col_prefix}{c}"
+                    cur = (
+                        pl.col(fcol).cast(pl.Int8)
+                        if fcol in df.columns
+                        else pl.lit(None, dtype=pl.Int8)
+                    )
+
+                    if overwrite:
+                        expr = pl.when(auto_flag.is_not_null()).then(auto_flag).otherwise(cur).alias(fcol)
+                    else:
+                        expr = pl.when(cur.is_null()).then(auto_flag).otherwise(cur).alias(fcol)
+
+                    updates.append(expr)
+
+        return df.with_columns(updates) if updates else df
+
+    def propagate_zero_span_flags_from_5002(
+        self,
+        df: pl.DataFrame,
+        *,
+        dtm: str = "dtm",
+        source_flag_col: str | None = None,
+        low: int = 1_000_000,
+        high: int = 8_000_000,
+        flag_col_prefix: str = "f_",
+        overwrite: bool = False,
+    ) -> pl.DataFrame:
+        """Propagate ZERO/SPAN/UNCERTAIN flags (2/3/4) from 5002 to NE300 channels.
+
+        This is intended for your ezFlag workflow, where you manually flag variable "5002"
+        and want to copy those flags to the full-parameter range.
+
+        - Creates `f_<nnn>` columns if missing.
+        - Copies only codes {2,3,4} from `source_flag_col` at matching rows.
+        - Preserves existing manual flags by default:
+            overwrite=False (default): fill only where `f_<nnn>` is NULL.
+            overwrite=True : set 2/3/4 wherever the source has 2/3/4.
+
+        Parameters
+        ----------
+        df:
+            Input table; should contain the source flag column and NE300 parameter columns.
+        source_flag_col:
+            Defaults to `f_5002` if present, otherwise must be provided.
+        """
+        src = source_flag_col
+        if src is None:
+            if "f_5002" in df.columns:
+                src = "f_5002"
+            else:
+                return df
+
+        if src not in df.columns:
+            return df
+
+        m_234 = pl.col(src).is_in([2, 3, 4])
+
+        updates: list[pl.Expr] = []
+        for c in df.columns:
+            if c.isdigit():
+                n = int(c)
+                if low <= n <= high:
+                    fcol = f"{flag_col_prefix}{c}"
+                    cur = pl.col(fcol).cast(pl.Int8) if fcol in df.columns else pl.lit(None, dtype=pl.Int8)
+
+                    if overwrite:
+                        expr = pl.when(m_234).then(pl.col(src).cast(pl.Int8)).otherwise(cur).alias(fcol)
+                    else:
+                        expr = pl.when(cur.is_null() & m_234).then(pl.col(src).cast(pl.Int8)).otherwise(cur).alias(fcol)
+
+                    updates.append(expr)
+
+        return df.with_columns(updates) if updates else df
 
 
-    # def extract_to_dataframe(self, path: Path, dtm: str = "dtm") -> tuple[pl.DataFrame, str | None]:
-    #     """
-    #     Extract data from a NEPH file (.dat, .csv, .txt, or .zip) to a Polars DataFrame.
-
-    #     Args:
-    #         path (Path): Full path to data file.
-    #         dtm (str): Name of datetime column.
-
-    #     Returns:
-    #         tuple: (DataFrame, error string if any)
-    #     """
-    #     df = pl.DataFrame()
-
-    #     try:
-    #         # Extract raw content
-    #         if path.suffix == ".zip":
-    #             with zipfile.ZipFile(path, "r") as z:
-    #                 data_files = [f for f in z.namelist() if f.endswith(('.dat', '.csv', '.txt'))]
-    #                 if not data_files:
-    #                     # remove empty file and rais error
-    #                     path.unlink()
-    #                     raise ValueError("No data files found in the zip archive.")
-    #                 if len(data_files) > 1:
-    #                     raise ValueError("More than 1 file found in the zip archive.")
-    #                 name = data_files[0]
-    #                 raw = z.read(name)
-    #         elif path.suffix == ".dat":
-    #             raw = path.read_bytes()
-    #         else:
-    #             raise ValueError("File type not recognized.")
-            
-    #         # Detect encoding and decode
-    #         res = from_path(path).best()
-    #         encoding = res.encoding if res else "utf-8"
-            
-    #         text = raw.decode(encoding)
-
-    #         # Check if file is empty or only contains blanks or whitespace, remove empty lines
-    #         lines = [line for line in text.splitlines() if line.strip()]
-    #         if not lines:
-    #             # remove empty file and raise error
-    #             path.unlink()
-    #             raise ValueError("File is empty")
-
-    #         first_row = lines[0].strip().split(",")
-
-    #         try:
-    #             _ = datetime.strptime(first_row[0], "%Y-%m-%d %H:%M:%S")
-    #             # file_type = "acoem_no_header"
-    #             df = pl.read_csv(
-    #                 BytesIO(text.encode("utf-8")),
-    #                 separator=",",
-    #                 has_header=False,
-    #                 try_parse_dates=True
-    #             )
-    #             df = df.rename({df.columns[0]: dtm})
-    #             df = df.with_columns(pl.col(dtm).cast(pl.Datetime("us", "UTC")))
-    #             df = pl_simplify_dtypes(df)
-    #             return df, None
-    #         except:
-    #             pass
-
-    #         try:
-    #             _ = datetime.strptime(first_row[0], "%Y-%m-%dT%H:%M:%S")
-    #             # file_type = "aurora3000_no_header"
-    #             df = pl.read_csv(
-    #                 BytesIO(text.encode("utf-8")),
-    #                 separator=",",
-    #                 has_header=False,
-    #                 try_parse_dates=True
-    #             )
-    #             df = df.rename({df.columns[0]: dtm})
-    #             df = df.with_columns(pl.col(dtm).cast(pl.Datetime("us", "UTC")))
-    #             df = pl_simplify_dtypes(df)
-    #             return df, None
-    #         except:
-    #             pass
-
-    #         if first_row[0] == "dtm":
-    #             # file_type = "acoem_with_header-v1"
-    #             df = pl.read_csv(
-    #                 BytesIO(text.encode("utf-8")),
-    #                 separator=",",
-    #                 has_header=False,
-    #                 skip_rows=1,
-    #                 try_parse_dates=True
-    #             )
-    #             if len(df) > 1:
-    #                 mappings = dict(zip(df.columns, first_row))
-    #                 df = df.rename(mappings)
-    #             else:
-    #                 df = pl.DataFrame()
-    #                 raise ValueError("File contains only header")
-
-    #         elif first_row[0] == "37":
-    #             # file_type = "acoem_with_header"
-    #             first_row[0] = dtm
-    #             first_row += ['operation', 'period']
-    #             df = pl.read_csv(
-    #                 BytesIO(text.encode("utf-8")),
-    #                 separator=",",
-    #                 has_header=False,
-    #                 skip_rows=1,
-    #                 try_parse_dates=True
-    #             )
-    #             if len(df) > 1:
-    #                 mappings = dict(zip(df.columns, first_row))
-    #                 df = df.rename(mappings)
-    #             else:
-    #                 df = pl.DataFrame()
-    #                 raise ValueError("File contains only header")
-
-    #         elif first_row[0] == "Date & Time":
-    #             # file_type = "aurora3000_with_header"
-    #             df = pl.read_csv(
-    #                 BytesIO(text.encode("utf-8")),
-    #                 separator=",",
-    #                 has_header=True,
-    #                 try_parse_dates=True
-    #             )
-    #             df = df.rename({df.columns[0]: dtm})
-    #         else:                
-    #             raise ValueError("Unrecognized file format")
-
-    #         df = df.with_columns(pl.col(dtm).cast(pl.Datetime("us", "UTC")))
-    #         df = pl_simplify_dtypes(df)
-    #         return df, None
-
-    #     except Exception as err:
-    #         self.logger.error(f"Failed to extract {path.name}: {err}")
-    #         return df, str(err)
-
-        
     def apply_zero_span_flags(
         self,
         df: pl.DataFrame,
@@ -450,4 +469,3 @@ class Neph(Instrument):
             df = df.with_columns(state).drop(f"_evt_{col}")
 
         return df
-            
