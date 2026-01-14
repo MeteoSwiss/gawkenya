@@ -199,14 +199,19 @@ def on_file_chooser_read_file():
     except Exception:
         pass
 
-    # Auto NE300 flagging only for file name convention "ne300.parquet"
+    # Auto flagging for file name convention "ne300.parquet" and "aurora3000.parquet"
     try:
-        if selected_file.name.lower() == "ne300.parquet":
-            if Neph is not None:
+        if Neph is not None:
+            name = selected_file.name.lower()
+
+            if name == "ne300.parquet":
                 df = Neph(name="neph").auto_flag_ne300_data(df)
 
+            if name == "aurora3000.parquet":
+                df = Neph(name="neph").auto_flag_aurora3000_data(df)
+
     except Exception as e:
-        infobox.value = f"Automatic NE300 flagging failed: {e}"
+        infobox.value = f"Automatic flagging failed: {e}"
 
     # Populate variable dropdown (exclude dtm, helper columns, and any f_* columns)
     try:

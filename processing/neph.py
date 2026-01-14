@@ -14,6 +14,24 @@ from processing.instrument import Instrument, pl_simplify_dtypes
 _DT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$")
 
 
+# Fixed Aurora3000 schema for "no-header" CSVs (identified via filename)
+_AURORA3000_HEADER: list[str] = [
+    "dtm",
+    "ssp1",
+    "ssp2",
+    "ssp3",
+    "sbsp1",
+    "sbsp2",
+    "sbsp3",
+    "sample_temp",
+    "enclosure_temp",
+    "RH",
+    "pressure",
+    "major_state",
+    "DIO_state",
+]
+CALIBRATION_GAS_CONSTANTS_CO2: dict[str, float] = {"450": 71.67, "525": 38.68, "635": 18.07}
+
 @dataclass(frozen=True)
 class _NephReadPlan:
     has_header: bool
@@ -62,6 +80,11 @@ class Neph(Instrument):
 
             plan = self._detect_plan(first_row, dtm)
 
+            # Use filename (zip member name if present) as a key for format detection
+            file_key = (inner_name or path.name).lower()
+
+            plan = self._detect_plan(first_row, dtm, file_key=file_key)
+
             # Read using utf-8 bytes (Polars reads bytes; we control decoding above)
             buf = BytesIO("\n".join(lines).encode("utf-8", errors="strict"))
             df = pl.read_csv(
@@ -75,15 +98,19 @@ class Neph(Instrument):
             if df.height == 0:
                 raise ValueError("No data rows found")
 
-            # If we read without a header but want to apply a header from first_row / override
-            if not plan.has_header:
-                header = plan.header_override or first_row
-                # Map Polars' auto column names to our header labels
-                mappings = dict(zip(df.columns, header, strict=False))
+            # Apply header override ONLY when we actually have one.
+            # (For true no-header formats without a known schema, keep Polars' default column names.)
+            if plan.header_override is not None:
+                if len(plan.header_override) != len(df.columns):
+                    raise ValueError(
+                        f"Header override length mismatch: "
+                        f"{len(plan.header_override)} != {len(df.columns)}"
+                    )
+                mappings = dict(zip(df.columns, plan.header_override, strict=True))
                 df = df.rename(mappings)
 
-            # Rename dtm column if needed
-            if plan.rename_first_col_to_dtm:
+            # Rename dtm column if needed (avoid no-op renames)
+            if plan.rename_first_col_to_dtm and df.columns and df.columns[0] != dtm:
                 df = df.rename({df.columns[0]: dtm})
 
             # Parse dtm robustly (handles both " " and "T")
@@ -151,10 +178,12 @@ class Neph(Instrument):
         return raw.decode(enc, errors="replace")
 
     @staticmethod
-    def _detect_plan(first_row: list[str], dtm: str) -> _NephReadPlan:
+    def _detect_plan(first_row: list[str], dtm: str, *, file_key: str = "") -> _NephReadPlan:
         first_cell = first_row[0]
+        key = file_key.lower()
+        is_aurora3000 = "aurora3000" in key
 
-        # acoem_with_header-v1
+        # acoem_with_header-v1 (also matches aurora3000 header variant where first col is "dtm")
         if first_cell == "dtm":
             return _NephReadPlan(
                 has_header=True,
@@ -175,7 +204,7 @@ class Neph(Instrument):
                 header_override=header,
             )
 
-        # aurora3000_with_header
+        # aurora3000_with_header (older exports)
         if first_cell == "Date & Time":
             return _NephReadPlan(
                 has_header=True,
@@ -186,6 +215,15 @@ class Neph(Instrument):
 
         # no-header variants (first cell looks like datetime)
         if _DT_RE.match(first_cell):
+            # Aurora3000 no-header CSVs: schema is fixed; identify by filename
+            if is_aurora3000:
+                return _NephReadPlan(
+                    has_header=False,
+                    skip_rows=0,
+                    rename_first_col_to_dtm=False,  # header override already sets "dtm"
+                    header_override=_AURORA3000_HEADER.copy(),
+                )
+
             return _NephReadPlan(
                 has_header=False,
                 skip_rows=0,
@@ -310,6 +348,98 @@ class Neph(Instrument):
                     updates.append(expr)
 
         return df.with_columns(updates) if updates else df
+
+
+    def auto_flag_aurora3000_data(
+        self,
+        df: pl.DataFrame,
+        *,
+        dtm: str = "dtm",
+        key_major_state: str = "major_state",
+        minutes_after_transition: int = 10,
+        flag_col_prefix: str = "f_",
+        overwrite: bool = False,
+        assume_null_is_normal: bool = True,
+    ) -> pl.DataFrame:
+        """Auto-flag Aurora 3000 channels based on the major_state column.
+
+        Mapping (requested)
+        -------------------
+        major_state -> f_flag
+            0        -> 0 (valid)
+            1, 3     -> 4 (span)
+            2, 5     -> 3 (zero)
+
+        Transition rule
+        ---------------
+        The first `minutes_after_transition` minutes after any change in major_state
+        are flagged as 2 (uncertain), overriding the base mapping for that window.
+
+        Flag columns
+        ------------
+        Adds/updates `f_<col>` for all *data* columns (everything except dtm,
+        major_state, DIO_state, and existing f_* columns). Updates additively unless
+        overwrite=True.
+        """
+        if dtm not in df.columns or key_major_state not in df.columns:
+            return df
+
+        df = df.sort(dtm)
+
+        # Aurora major_state often arrives as float-like values (e.g., "0.000").
+        # Use rounding to robustly map to 0..7.
+        k_raw = pl.col(key_major_state)
+        if assume_null_is_normal:
+            k_raw = pl.coalesce(k_raw, pl.lit(0))
+
+        k = k_raw.cast(pl.Float64).round(0).cast(pl.Int64)
+        k_prev = k.shift(1)
+
+        # Transition whenever major_state changes (first row excluded)
+        m_transition = k_prev.is_not_null() & (k != k_prev)
+
+        transition_time = pl.when(m_transition).then(pl.col(dtm)).otherwise(None)
+        last_transition_time = transition_time.forward_fill()
+
+        window = pl.duration(minutes=minutes_after_transition)
+        m_uncertain = (
+            last_transition_time.is_not_null()
+            & (pl.col(dtm) >= last_transition_time)
+            & ((pl.col(dtm) - last_transition_time) <= window)
+        )
+
+        base_flag = (
+            pl.when(k == 0)
+            .then(0)
+            .when(k.is_in([1, 3]))
+            .then(4)
+            .when(k.is_in([2, 5]))
+            .then(3)
+            .otherwise(None)
+        )
+
+        auto_flag = pl.when(m_uncertain).then(2).otherwise(base_flag).cast(pl.Int8)
+
+        # Target columns: all non-helper columns
+        exclude = {dtm, key_major_state, "DIO_state"}
+        updates: list[pl.Expr] = []
+
+        for c in df.columns:
+            if c in exclude or c.startswith(flag_col_prefix):
+                continue
+
+            fcol = f"{flag_col_prefix}{c}"
+            cur = pl.col(fcol).cast(pl.Int8) if fcol in df.columns else pl.lit(None, dtype=pl.Int8)
+
+            if overwrite:
+                expr = pl.when(auto_flag.is_not_null()).then(auto_flag).otherwise(cur).alias(fcol)
+            else:
+                expr = pl.when(cur.is_null()).then(auto_flag).otherwise(cur).alias(fcol)
+
+            updates.append(expr)
+
+        return df.with_columns(updates) if updates else df
+
 
     def propagate_zero_span_flags_from_5002(
         self,
