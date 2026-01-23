@@ -1,0 +1,18 @@
+# file organization depends on <buckets>.
+# if buckets==daily: <root>/<middle>/<folders>/<yyyy>/<mm>/<dd>
+# if buckets==monthly: <root>/<middle>/<folders>/<yyyy>/<mm>
+root: /product_data/data/pay/Kenya/BUC/
+logging: mch-buc.log
+branches:
+  incoming: incoming
+  archive: archive
+  issues: incoming_with_issues
+  logs: logs
+folders:
+  - tei49i
+tei49i: 
+  pattern: tei49i-\d{10}.(zip|dat)
+  header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
+  buckets: daily
+  split_parquet: month
+  expected: 144
