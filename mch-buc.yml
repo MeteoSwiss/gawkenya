@@ -9,10 +9,10 @@ branches:
   issues: incoming_with_issues
   logs: logs
 folders:
-  - tei49i
-tei49i: 
+  - "49i"
+"49i": 
   pattern: tei49i-\d{10}.(zip|dat)
   header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   split_parquet: month
-  expected: 144
+  expected: 24
