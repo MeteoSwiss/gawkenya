@@ -111,7 +111,7 @@ def pl_simplify_dtypes(
     for name, dtype in df.schema.items():
         if name.lower() == "termin":
             continue
-        if dtype == pl.Datetime:
+        if hasattr(dtype, "base_type") and dtype.base_type() == pl.Datetime:
             continue  # preserve datetime precision
         if simplify_float and dtype == pl.Float64:
             ops.append(pl.col(name).cast(pl.Float32))
