@@ -1,12 +1,25 @@
-import polars as pl
-from pathlib import Path
-from io import BytesIO
-import zipfile
+from __future__ import annotations
+
+import argparse
 import re
-from processing.instrument import Instrument
+import zipfile
 from datetime import datetime
+from io import BytesIO
+from pathlib import Path
+
+import polars as pl
+
+from processing.instrument import Instrument
 from toolbox.utils import pl_simplify_dtypes
 
+WIND_PAIRS: list[tuple[str, str]] = [
+    ("fa1010z0", "da1010z0"),
+    ("fkl010z0", "dkl010z0"),
+]
+
+EXCLUDE_FROM_OUTPUT = {"source", "zzzztttt"}
+EXCLUDE_FROM_MEAN = {"source", "zzzztttt", "iii"}
+CUMULATIVE_SUM_COLS = {"rre150z0", "ra1150z0"}
 
 class Meteo(Instrument):
     """
@@ -40,8 +53,29 @@ class Meteo(Instrument):
             }
         }
 
-        # self.dtypes = {'VRXA00': [pl.Utf8]*2 + [pl.Float64]*16,}
-        self.dtypes = {'VRXA00': [pl.Int32] + [pl.Utf8] + [pl.Float64]*16,}
+        self.schema_overrides = {
+            "VRXA00": {
+                "iii": pl.Int32,
+                "zzzztttt": pl.Utf8,
+                "tre200s0": pl.Float64,
+                "uor200s0": pl.Float64,
+                "prestas0": pl.Float64,
+                "fa1010z0": pl.Float64,
+                "da1010z0": pl.Float64,
+                "rre150z0": pl.Float64,
+                "ta1200s0": pl.Float64,
+                "ua1200s0": pl.Float64,
+                "pa1stas0": pl.Float64,
+                "fkl010z0": pl.Float64,
+                "dkl010z0": pl.Float64,
+                "ra1150z0": pl.Float64,
+                "fkl010z1": pl.Float64,
+                "gor000z0": pl.Float64,
+                "ta2200s0": pl.Float64,
+                "ua2200s0": pl.Float64,
+            }
+        }
+
         # self.logger.info("Class 'Meteo' initialized successfully.")
 
 
@@ -73,7 +107,7 @@ class Meteo(Instrument):
                         separator=" ",
                         skip_rows=3,
                         null_values="/",
-                        dtypes=self.dtypes["VRXA00"]
+                        schema_overrides=self.schema_overrides["VRXA00"]
                     )
             else:
                 df = pl.read_csv(
@@ -82,15 +116,13 @@ class Meteo(Instrument):
                     separator=" ",
                     skip_rows=3,
                     null_values="/",
-                    dtypes=self.dtypes["VRXA00"]
+                    schema_overrides=self.schema_overrides["VRXA00"]
                 )
 
             df = df.with_columns([
                 pl.col("zzzztttt").str.to_datetime("%Y%m%d%H%M", time_unit="us", time_zone="UTC").alias(dtm),
                 pl.lit(str(path)).alias("source"),
             ])
-            # df = df.rename({"zzzztttt": "timestamp"})
-            df = pl_simplify_dtypes(df)
 
             return df, None
 
@@ -99,300 +131,555 @@ class Meteo(Instrument):
             return pl.DataFrame(), str(err)
 
 
-#     def remove_extremes(self, df: pl.DataFrame, variable: str, q=0.001) -> tuple([pl.DataFrame, dict]):
-#         """Remove extreme values from polars DataFrame. Extremes are defined using quantiles.
-
-#         Args:
-#             df (pl.DataFrame): Meteo data
-#             q (float, optional): Quantile defining extreme values, i.e., values outside [>=q, <=(1-q)]. Defaults to 0.00001.
-
-#         Returns:
-#             pl.DataFrame: polars DataFrame of data that are retained
-#             dict: cutoffs giving the lower and upper boundaries
-
-#         [TODO] Instead of removing the extremes from the dataframe, it would be better to flag them
-#         """
-#         cutoffs = dict()
-#         try:
-#             lower = df[variable].quantile(q)
-#             upper = df[variable].quantile(1-q)
-#             df = df.filter((pl.col(variable) >= lower) & (pl.col(variable) <= upper))
-#             cutoffs[variable] = {'lower': lower, 'upper': upper}
-#             return df, cutoffs
-
-#         except Exception as err:
-#             print(err)
+    def find_vrxa00_files(self, root: Path) -> list[Path]:
+        return sorted(p for p in root.rglob("vrxa00.parquet") if p.is_file())
 
 
-#     def plot_data(self, df: pl.DataFrame, dtm: str="dtm", variable: str="tre200s0", start:str=None, end:str=None, title:str="Meteo Data", ylim=None) -> None:
-#         """Plot a polars DataFrame containing meteo data. Variable names according to MeteoSwiss DWH.
+    def ensure_datetime(self, df: pl.DataFrame, dtm_col: str = "dtm") -> pl.DataFrame:
+        if dtm_col not in df.columns:
+            raise ValueError(f"Missing datetime column: {dtm_col}")
 
-#         Args:
-#             df (pl.DataFrame): Polars DataFrame, with columns depending on <type>
-#             dtm (str, optional): name of dateTime variable
-#             variable (str): ...
-#             start (str): ...
-#             end (str): ...
-#             title (str): Title of plot. Defaults to "Meteo Data"
-#         """
-#         try:
-#             df = df.sort(dtm)
+        dtype = df.schema[dtm_col]
 
-#             if start:
-#                 df = df.filter(pl.col(dtm) >= pl.lit(start).str.strptime(pl.Date))
-#             if end:
-#                 df = df.filter(pl.col(dtm) <= pl.lit(end).str.strptime(pl.Date))
+        if hasattr(dtype, "base_type") and dtype.base_type() == pl.Datetime:
+            return df
 
-#             plt.figure(figsize=(12, 6))
-#             plt.scatter(df[dtm], df[variable], c='blue', marker="o", s=2)
+        if dtype == pl.Utf8:
+            return df.with_columns(
+                pl.col(dtm_col).str.to_datetime(strict=False, time_zone="UTC")
+            )
 
-#             if ylim:
-#                 plt.ylim(ylim)
-#             # plt.legend(legend)
-#             plt.suptitle(title)
-#             # plt.title(subtitle)
-#             plt.xlabel("DateTime")
-#             plt.ylabel(variable)
-#             plt.show()
-#         except Exception as err:
-#             print(err)
+        if dtype == pl.Date:
+            return df.with_columns(pl.col(dtm_col).cast(pl.Datetime("us")))
+
+        return df.with_columns(pl.col(dtm_col).cast(pl.Datetime("us"), strict=False))
 
 
-#     # def vrxa00_to_parquet(self, source: str, target: str, archive: str=None, verbose: bool=True, log: bool=True) -> None:
-#     #     """Extract and compile VRXA00 bulletins found in source and its sub-folders to monthly polars DataFrames, save as parquet files in target.
+    def deduplicate_file(self, path: Path, dtm_col: str = "dtm") -> pl.DataFrame:
+        df = pl.read_parquet(path)
+        df = self.ensure_datetime(df, dtm_col)
 
-#     #     Args:
-#     #         source (str): Root path to directory to process. Sub-directories will also be considered.
-#     #         target (str): Root path to directory where monthly .parquet files will be stored.
-#     #         archive (str): Root path to directory where files will be archived. Sub-folders will be created corresponding to source.
-#     #         verbose (bool, optional): Should information on process be written to console? Defaults to True.
-#     #     Returns:
-#     #         Nothing
-#     #         # pl.DataFrame: DataFrame with DateTime and source columns added to data
-#     #         # dict: name of files that could not be processed as well as errors encountered.
-#     #     """
-#     #     result = pl.DataFrame()
-#     #     errors = dict()
-#     #     try:
-#     #         # process files
-#     #         if verbose:
-#     #             print(f"Processing source {source} ...")
-#     #         for root, dirs, files in os.walk(source):
-#     #             for file in files:
-#     #                 if verbose:
-#     #                     print(f"Processing {file} ...")
-#     #                 tmp, err = self.extract_vrxa00_to_dataframe(os.path.join(root, file), log=log)
-#     #                 if err:
-#     #                     errors.update({file: err})
-#     #                 elif archive:
-#     #                     dst = os.path.join(archive, root[-(len(root)-len(source)-1):])
-#     #                     os.makedirs(dst, exist_ok=True)
-#     #                     # shutil.move(src=os.path.join(root, file), dst=os.path.join(dst, file))
-#     #                     print(f"{os.path.join(root, file)} > {os.path.join(dst, file)}")
-#     #                 result = pl.concat([result, tmp], how='diagonal')
+        before = df.height
+        df = df.unique(maintain_order=True).sort(dtm_col)
+        removed = before - df.height
 
-#     #         # create target directoriy if it doesn't yet exist
-#     #         os.makedirs(target, exist_ok=True)
+        if removed:
+            df.write_parquet(path)
+            print(f"Deduplicated {path}: removed {removed} rows")
+        else:
+            print(f"No duplicates in {path}")
 
-#     #         # remove duplicates, sort data
-#     #         result = result.unique()
-#     #         # result = result.sort("DateTime")
-
-#     #         # store result as parquet file
-#     #         result.write_parquet(os.path.join(target, 'vrxa00.parquet'))
-
-#     #         # write errors to json file
-#     #         with open(os.path.join(target, 'vrxa00.errors.json'), "w") as fh:
-#     #             json.dump(errors, fh)
-
-#     #         # return result, errors
-#     #         return None
-
-#     #     except Exception as err:
-#     #         print(err)
-
-#     # def extract_bulletin(self, file: str, pattern: str, log=True) -> pd.DataFrame:
-#     #     """
-#     #     Open a file, determine its type from the file name, then extract content into a Pandas dataframe.
-
-#     #     Args:
-#     #         file (str): full path to file.
-#     #         pattern (str): should be one of "VMSW43" or "VRXA00"
-#     #         log (bln): Should activities be logged to 'meteo.log'? Defaults to True.
-#     #     """
-#     #     try:
-#     #         msg = f"Extracting file {file}."
-#     #         if log:
-#     #             logger.info(msg)
-    
-#     #         df = pd.DataFrame()
-
-#     #         if bool(re.search(f'{pattern}', file)):
-#     #             if bool(re.search('.zip', file)):
-#     #                 zf = zipfile.ZipFile(file)
-#     #                 df = pd.read_csv(zf.open(zf.namelist()[0]), skiprows=1, header=1, sep=' ', na_values='/')
-#     #             else:
-#     #                 df = pd.read_csv(file, skiprows=1, header=1, sep=' ', na_values='/')
-#     #         df["dtm"] = pd.to_datetime(df['zzzztttt'], format='%Y%m%d%H%M')
-#     #         df['source'] = file
-#     #         df.set_index("dtm", inplace=True)
-
-#     #         if not df.empty:
-#     #             for column in df:
-#     #                 if df[column].dtype == 'float64':
-#     #                     df[column] = pd.to_numeric(df[column], downcast='float')
-#     #                 if df[column].dtype == 'int64':
-#     #                     df[column] = pd.to_numeric(df[column], downcast='integer')
-#     #         return df
-
-#     #     except Exception as err:
-#     #         logger.error(err)
-#     #         return pd.DataFrame()
-
-    
-# #     def extract_bulletins(self, path: str, pattern=["VMSW43", "VRXA00"], recursive=False, archive=None, remove_duplicates=True, save=None, log=True) -> pd.DataFrame:
-# #         """
-# #         Scan a directory and combine file content into a Pandas dataframe.
-
-# #         Args:
-# #             path (str): path to directory.
-# #             recursive (bln): Should sub-directories be considered? Defaults to False.
-# #             pattern (list): Pattern for recognition of bulletin files. Defaults to ["VSMW43", "VRXA00"]
-# #             archive (str): If specified, files are moved to <path>/<archive>. Defaults to None.
-# #             remove_duplicates (bln): Remove duplicates found in resulting data frame? Defaults to True.
-# #             save (str): If one of ["csv", "json", "pkl"], resulting data frame is persisted to file. Defaults to None.
-# #             log (bln): Should activities be logged to 'meteo.log'? Defaults to True.
-# #         """
-# #         try:
-# #             msg = f"Extracting files found at '{path}' with pattern '{pattern}' ..."
-# #             if log:
-# #                 logger.info(msg)
-    
-# #             df = pd.DataFrame()
-
-# #             for p in pattern:
-# #                 files = glob.glob(os.path.join(path, f"{p}*"), recursive=recursive)
-# #                 msg = f"Found {len(files)} files to extract and combine."
-# #                 if log:
-# #                     logger.info(msg)
-
-# #                 for file in files:
-# #                     df = pd.concat([df, self.extract_bulletin(file=file, pattern=p, log=log)])
-# #                     if archive:
-# #                         dstdir = os.path.join(os.path.dirname(file), archive)
-# #                         os.makedirs(dstdir, exist_ok=True)
-# #                         shutil.move(src=file, dst=os.path.join(dstdir, os.path.basename(file)))
-
-# #             if remove_duplicates:
-# #                 logger.info("Duplicate bulletins were found. Unique values were retained.")
-# #                 df.drop_duplicates(subset=df.columns[df.columns != "source"], inplace=True)
-
-# #             if save:
-# #                 dst = os.path.join(path, f"meteo-{time.strftime('%Y%m%d%H%M%S')}.{save}")
-# #                 if save=="csv":
-# #                     df.to_csv(dst)
-# #                 elif save=="json":
-# #                     df.to_json(dst)
-# #                 elif save=="pickle":
-# #                     df.to_pickle(dst)
-# #                 else: 
-# #                     raise ValueError("'save' must be one of ['csv', 'json', 'pickle'].")
-# #                 if log:
-# #                     logger.info(f"Results saved in '{dst}'.")
-
-# #             return df
-
-# #         except Exception as err:
-# #             logger.error(err)
-# #             return pd.DataFrame()
+        return df
 
 
-# #     # def mappings2json(self, path: str, log=True) -> str:
-# #         try:
-# #             file = os.path.join(path, "mappings.json")
-# #             with open(file=file, mode="wt") as fh:
-# #                 fh.write(json.dumps(self.mappings))
-# #             if log:
-# #                 logger.info(f"Mappings saved in '{file}'.")
-# #             return file
-            
-# #         except Exception as err:
-# #             logger.error(err)
+    def flagged_mean_expr(self, col_name: str) -> pl.Expr:
+        """
+        Mean of a column using only rows where its corresponding flag is 0.
+        If no matching flag column exists, use the plain mean.
+        """
+        flag_col = f"f_{col_name}"
+
+        value = pl.col(col_name)
+        valid = value.is_not_null()
+
+        expr = (
+            pl.when((pl.col(flag_col) == 0) & valid)
+            .then(value)
+            .otherwise(None)
+            .mean()
+            .alias(col_name)
+        )
+
+        return expr
 
 
-# #     # def plot_coverage(self, df, figure="meteodata_coverage.png", data="meteodata_coverage.csv", add_period=True, verbose=True):
-# #         """
-# #         Plot the number of days per week with observations as a function of time
-    
-# #         Plot the number of days per week with observations as a function of time        
-    
-# #         Parameters
-# #         ----------
-# #         df : object
-# #             Pandas dataframe, expected to have an index 'dtm'
-    
-# #         figure : str
-# #             Name of image file with file extension
-    
-# #         data : str
-# #             Name of data file with file extension. At present, only .csv is supported.
-    
-# #         add_period : bln
-# #             Append period covered to filename? Defaults to True
-            
-# #         verbose : str
-# #             should function return info? default=True
-    
-# #         Returns
-# #         _______
-# #         nothing
-# #         """
-# #         try:
-# #             cols = df.columns[df.columns.str.contains('P')]            
-# # #            cols = ['P-1', 'P-2']
-# #             x = df.reset_index()['dtm'].tolist()
+    def flagged_sum_expr(self, col_name: str) -> pl.Expr:
+        """
+        Sum of a column using only rows where its corresponding flag is 0.
+        If no matching flag column exists, use the plain sum.
+        """
+        flag_col = f"f_{col_name}"
 
-# #             y = df[cols]
-# #             ymin = df[cols].min().min()
-# #             ymax = df[cols].max().max()
+        value = pl.col(col_name)
+        valid = value.is_not_null()
 
-# #             # set up plot
-# #             fig, ax1 = plt.subplots(nrows=1, ncols=1, sharex=True)
-    
-# #             # configure ax1
-# #             ax1.set_ylim(ymin, ymax)
-# #             ax1.set_title('Meteo Data Coverage at %s GAW Station' % self.config['name'])
-# #             ax1.set_ylabel("Coverage (days per week)")
-    
-            
-# #             for col in cols:           
-# #                 colors = cm.Greens(y[col]/ymax)        
-# #                 ax1.bar(x, y[col], width=-1, align='edge', color = colors, edgecolor = colors, label=col)
-# # #            ax1.plot(df.loc[:, cols], label=cols, marker=".", linewidth=0.3)
-# #             ax1.xaxis_date()
-# #             ax1.legend(cols, prop={'size':6}, loc='best')
-    
-# #             plt.gcf().autofmt_xdate()
-# #             plt.tight_layout()
-            
-# #             path = os.path.join(os.path.expanduser(self.config['results']), 
-# #                                 self.config['wsi'], 'meteo')
-# #             os.makedirs(path, exist_ok=True)
-            
-# #             period = ""            
-# #             if add_period:
-# #                 period = "%s-%s" % (min(x).strftime("%Y%m%d"), max(x).strftime("%Y%m%d"))
-            
-# #             figure = "%s_%s%s" % (os.path.splitext(figure)[0], period, os.path.splitext(figure)[1])
-# #             plt.savefig(os.path.join(path, figure), dpi=300)
-    
-# #             if ".csv" in data.lower():
-# #                 data = "%s_%s%s" % (os.path.splitext(data)[0], period, os.path.splitext(data)[1])
-# #                 df.to_csv(os.path.join(path, data))
-    
-# #         except Exception as err:
-# #             print(err)
+        expr = (
+            pl.when((pl.col(flag_col) == 0) & valid)
+            .then(value)
+            .otherwise(None)
+            .sum()
+            .alias(col_name)
+        )
+
+        return expr
 
 
-# if __name__ == "__main__":
-#     pass
+    def _build_wind_component_columns(self, df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Add temporary u/v columns for wind pairs, masked so that only rows with:
+        - non-null speed
+        - non-null direction
+        - speed flag == 0 (if present)
+        - direction flag == 0 (if present)
+        contribute to the vector mean.
+        """
+        exprs: list[pl.Expr] = []
+
+        for speed_col, dir_col in WIND_PAIRS:
+            if speed_col not in df.columns or dir_col not in df.columns:
+                continue
+
+            speed_flag = f"f_{speed_col}"
+            dir_flag = f"f_{dir_col}"
+
+            valid = pl.col(speed_col).is_not_null() & pl.col(dir_col).is_not_null()
+
+            if speed_flag in df.columns:
+                valid = valid & (pl.col(speed_flag) == 0)
+            if dir_flag in df.columns:
+                valid = valid & (pl.col(dir_flag) == 0)
+
+            rad = pl.col(dir_col).radians()
+
+            exprs.extend(
+                [
+                    pl.when(valid)
+                    .then(-pl.col(speed_col) * rad.sin())
+                    .otherwise(None)
+                    .alias(f"__u_{speed_col}"),
+                    pl.when(valid)
+                    .then(-pl.col(speed_col) * rad.cos())
+                    .otherwise(None)
+                    .alias(f"__v_{speed_col}"),
+                ]
+            )
+
+        return df.with_columns(exprs) if exprs else df
+
+
+    def _rename_s0_z0_to_h0(self, df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Rename columns that end with 's0' or 'z0' to end with 'h0'.
+
+        Examples:
+            ta1200s0 -> ta1200h0
+            fa1010z0 -> fa1010h0
+
+        Other columns are left unchanged.
+        """
+        mapping = {}
+        for col in df.columns:
+            if col.endswith("s0") or col.endswith("z0"):
+                mapping[col] = f"{col[:-2]}h0"
+
+        return df.rename(mapping) if mapping else df
+
+
+    def aggregate_one_frame_hourly(self, df: pl.DataFrame, dtm_col: str = "dtm") -> pl.DataFrame:
+        df = self.ensure_datetime(df, dtm_col)
+        df = self._build_wind_component_columns(df)
+
+        df = df.with_columns(pl.col(dtm_col).dt.truncate("1h").alias("hour"))
+
+        wind_speed_cols = {s for s, _ in WIND_PAIRS}
+        wind_dir_cols = {d for _, d in WIND_PAIRS}
+        wind_cols = wind_speed_cols | wind_dir_cols
+
+        numeric_mean_cols: list[str] = []
+        numeric_sum_cols: list[str] = []
+
+        for name, dtype in df.schema.items():
+            if name in {dtm_col, "hour"}:
+                continue
+            if name in EXCLUDE_FROM_MEAN:
+                continue
+            if name in wind_cols:
+                continue
+            if name.startswith("__u_") or name.startswith("__v_"):
+                continue
+            if name.startswith("f_"):
+                continue
+            if not dtype.is_numeric():
+                continue
+
+            if name in CUMULATIVE_SUM_COLS:
+                numeric_sum_cols.append(name)
+            else:
+                numeric_mean_cols.append(name)
+
+        agg_exprs: list[pl.Expr] = []
+
+        # Ordinary numeric columns -> hourly mean, using only rows with flag == 0 if present
+        for c in numeric_mean_cols:
+            if f"f_{c}" in df.columns:
+                agg_exprs.append(self.flagged_mean_expr(c))
+            else:
+                agg_exprs.append(pl.col(c).mean().alias(c))
+
+        # Cumulative columns -> hourly sum, using only rows with flag == 0 if present
+        for c in numeric_sum_cols:
+            if f"f_{c}" in df.columns:
+                agg_exprs.append(self.flagged_sum_expr(c))
+            else:
+                agg_exprs.append(pl.col(c).sum().alias(c))
+
+        # iii -> first non-null
+        if "iii" in df.columns:
+            agg_exprs.append(pl.col("iii").drop_nulls().first().alias("iii"))
+
+        # Wind u/v means from already-masked temporary columns
+        for speed_col, _dir_col in WIND_PAIRS:
+            u_col = f"__u_{speed_col}"
+            v_col = f"__v_{speed_col}"
+            if u_col in df.columns and v_col in df.columns:
+                agg_exprs.extend(
+                    [
+                        pl.col(u_col).mean().alias(u_col),
+                        pl.col(v_col).mean().alias(v_col),
+                    ]
+                )
+
+        out = df.group_by("hour").agg(agg_exprs).sort("hour")
+
+        post_exprs: list[pl.Expr] = [pl.col("hour").alias("dtm")]
+
+        for c in numeric_mean_cols:
+            if c in out.columns:
+                post_exprs.append(pl.col(c))
+
+        for c in numeric_sum_cols:
+            if c in out.columns:
+                post_exprs.append(pl.col(c))
+
+        if "iii" in out.columns:
+            post_exprs.append(pl.col("iii"))
+
+        for speed_col, dir_col in WIND_PAIRS:
+            u_col = f"__u_{speed_col}"
+            v_col = f"__v_{speed_col}"
+            if u_col in out.columns and v_col in out.columns:
+                mean_u = pl.col(u_col)
+                mean_v = pl.col(v_col)
+
+                post_exprs.extend(
+                    [
+                        ((mean_u.pow(2) + mean_v.pow(2)).sqrt()).alias(speed_col),
+                        ((pl.lit(180.0) + pl.arctan2(mean_u, mean_v).degrees()) % 360.0).alias(dir_col),
+                    ]
+                )
+
+        out = out.select(post_exprs).sort("dtm")
+
+        if "iii" in out.columns:
+            out = out.with_columns(pl.col("iii").cast(pl.Int64, strict=False))
+
+        keep_cols = [
+            c for c in out.columns
+            if out.select(pl.col(c).is_not_null().any()).item()
+        ]
+
+        return self._rename_s0_z0_to_h0(out.select(keep_cols))
+
+
+    def combine_hourly_frames(self, frames: list[pl.DataFrame], dtm_col: str = "dtm") -> pl.DataFrame:
+        if not frames:
+            return pl.DataFrame()
+
+        combined = pl.concat(frames, how="diagonal_relaxed")
+        return self.aggregate_one_frame_hourly(combined, dtm_col=dtm_col)
+
+
+    def write_yearly_level2_parquet(self, df: pl.DataFrame, target: Path) -> None:
+        target.mkdir(parents=True, exist_ok=True)
+
+        if df.is_empty():
+            print("No hourly data to write.")
+            return
+
+        df = df.with_columns(pl.col("dtm").dt.year().alias("year"))
+        years = df.get_column("year").unique().sort().to_list()
+
+        for year in years:
+            out = (
+                df.filter(pl.col("year") == year)
+                .drop("year")
+                .sort("dtm")
+            )
+
+            # Keep calculations in Float64, simplify only final stored output
+            out = pl_simplify_dtypes(out, simplify_float=True, simplify_int=False)
+
+            out_path = target / f"vrxa00_hourly_{year}.parquet"
+            out.write_parquet(out_path)
+            print(f"Wrote {out_path}")
+
+
+    def process_level1_to_level2_hourly(self, source: Path, target: Path, dtm_col: str = "dtm") -> pl.DataFrame:
+        """
+        Deduplicate and aggregate VRXA00 Parquet files with Polars.
+
+        What it does
+        ------------
+        1. Walk a source folder recursively and find all files named `vrxa00.parquet`.
+        2. Open each file, remove exact duplicate rows, and write the cleaned file back in place.
+        3. Aggregate all cleaned data to hourly values.
+        4. Aggregate wind correctly by vector averaging for:
+        - fa1010z0 + da1010z0
+        - fkl010z0 + dkl010z0
+        5. Combine the hourly results into yearly parquet files.
+
+        Rules used
+        ----------
+        - ordinary numeric data columns: hourly mean
+        - wind speed/direction pairs: vector mean
+        - flag columns f_*: hourly max
+        - iii: first non-null value in the hour
+        - zzzztttt: rebuilt as YYYYmmddHHMM from the hourly timestamp
+        - source: dropped from hourly output
+        """
+        files = self.find_vrxa00_files(source)
+        if not files:
+            raise FileNotFoundError(f"No vrxa00.parquet files found under {source}")
+
+        hourly_parts: list[pl.DataFrame] = []
+
+        for path in files:
+            cleaned = self.deduplicate_file(path, dtm_col=dtm_col)
+            hourly = self.aggregate_one_frame_hourly(cleaned, dtm_col=dtm_col)
+            hourly_parts.append(hourly)
+
+        combined = self.combine_hourly_frames(hourly_parts, dtm_col=dtm_col)
+        self.write_yearly_level2_parquet(combined, target)
+
+        return combined
+
+
+    def export_to_wdcgg_format(self, df: pl.DataFrame, target: Path) -> Path:
+        """
+        Export one yearly hourly meteo DataFrame to a WDCGG-style space-separated
+        .dat file.
+
+        Expected input
+        --------------
+        The input DataFrame must represent one full or partial year of hourly data,
+        typically read from one yearly hourly Parquet file produced by this class,
+        e.g. `vrxa00_hourly_2024.parquet`.
+
+        The DataFrame is expected to contain at least:
+            - dtm       : hourly datetime column
+            - iii       : station identifier
+            - tre200h0  : air_temperature
+            - uor200h0  : relative_humidity
+            - prestah0  : air_pressure
+            - gor000h0  : global_solar_radiation
+            - rre150h0  : precipitation_amount
+            - fkl010h0  : wind_speed
+            - dkl010h0  : wind_direction
+
+        Output
+        ------
+        A space-separated text file with columns:
+
+            site_gaw_id year month day hour minute second
+            wind_direction wind_speed relative_humidity air_pressure
+            air_temperature precipitation_amount global_solar_radiation
+            latitude longitude altitude elevation
+
+        File naming
+        -----------
+        The output file name is derived from the station id and year:
+
+            <site>_meteo_<year>.dat
+
+        For example, if iii == 187, the site_gaw_id is "MKN" and the file name is:
+            mkn_meteo_2024.dat
+
+        Missing values
+        --------------
+        Missing floating-point meteorological values are written as -99.9.
+
+        Notes
+        -----
+        - This function currently maps:
+            187 -> "MKN"
+        Additional mappings such as NRB can be added later.
+        - The `target` argument is interpreted as a target directory if it is an
+        existing directory or has no suffix. Otherwise, it is interpreted as a
+        full file path and its parent directory is used, while the final file
+        name is still enforced.
+        """
+        from pathlib import Path
+        import polars as pl
+
+        target = Path(target)
+
+        required = [
+            "dtm",
+            "iii",
+            "tre200h0",
+            "uor200h0",
+            "prestah0",
+            "gor000h0",
+            "rre150h0",
+            "fkl010h0",
+            "dkl010h0",
+        ]
+        missing = [c for c in required if c not in df.columns]
+        if missing:
+            raise ValueError(f"Missing required column(s): {missing}")
+
+        # Determine station code from iii
+        iii_values = (
+            df.select(pl.col("iii").drop_nulls().unique().sort())
+            .get_column("iii")
+            .to_list()
+        )
+        if not iii_values:
+            raise ValueError("Column 'iii' contains no non-null values.")
+
+        if len(iii_values) != 1:
+            raise ValueError(
+                f"Expected a yearly hourly parquet for one station only, "
+                f"but found multiple iii values: {iii_values}"
+            )
+
+        iii_value = iii_values[0]
+
+        station_map = {
+            187: "MKN",
+            # Add NRB here once confirmed, e.g.:
+            # 123: "NRB",
+        }
+
+        if iii_value not in station_map:
+            raise ValueError(
+                f"No station mapping defined for iii={iii_value}. "
+                f"Update station_map in export_to_wdcgg_format()."
+            )
+
+        site_gaw_id = station_map[iii_value]
+        site_prefix = site_gaw_id.lower()
+
+        # Determine year
+        years = (
+            df.select(pl.col("dtm").dt.year().drop_nulls().unique().sort())
+            .get_column("dtm")
+            .to_list()
+        )
+        if not years:
+            raise ValueError("Column 'dtm' contains no valid datetimes.")
+
+        if len(years) != 1:
+            raise ValueError(
+                f"Expected one yearly hourly parquet, but found multiple years: {years}"
+            )
+
+        year = int(years[0])
+
+        # Build final output path
+        filename = f"{site_prefix}_meteo_{year}.dat"
+        if target.exists() and target.is_dir():
+            out_path = target / filename
+        elif target.suffix:
+            out_path = target.parent / filename
+        else:
+            out_path = target / filename
+
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        out = (
+            df.with_columns(
+                [
+                    pl.lit(site_gaw_id).alias("site_gaw_id"),
+                    pl.col("dtm").dt.year().alias("year"),
+                    pl.col("dtm").dt.month().alias("month"),
+                    pl.col("dtm").dt.day().alias("day"),
+                    pl.col("dtm").dt.hour().alias("hour"),
+                    pl.col("dtm").dt.minute().alias("minute"),
+                    pl.col("dtm").dt.second().alias("second"),
+                    pl.col("dkl010h0").cast(pl.Float64, strict=False).alias("wind_direction"),
+                    pl.col("fkl010h0").cast(pl.Float64, strict=False).alias("wind_speed"),
+                    pl.col("uor200h0").cast(pl.Float64, strict=False).alias("relative_humidity"),
+                    pl.col("prestah0").cast(pl.Float64, strict=False).alias("air_pressure"),
+                    pl.col("tre200h0").cast(pl.Float64, strict=False).alias("air_temperature"),
+                    pl.col("rre150h0").cast(pl.Float64, strict=False).alias("precipitation_amount"),
+                    pl.col("gor000h0").cast(pl.Float64, strict=False).alias("global_solar_radiation"),
+                    pl.lit(-0.0621999986).alias("latitude"),
+                    pl.lit(37.2971992493).alias("longitude"),
+                    pl.lit(3688).alias("altitude"),
+                    pl.lit(3678).alias("elevation"),
+                ]
+            )
+            .select(
+                [
+                    "site_gaw_id",
+                    "year",
+                    "month",
+                    "day",
+                    "hour",
+                    "minute",
+                    "second",
+                    "wind_direction",
+                    "wind_speed",
+                    "relative_humidity",
+                    "air_pressure",
+                    "air_temperature",
+                    "precipitation_amount",
+                    "global_solar_radiation",
+                    "latitude",
+                    "longitude",
+                    "altitude",
+                    "elevation",
+                ]
+            )
+            .sort(["year", "month", "day", "hour", "minute", "second"])
+        )
+
+        float_cols = [
+            "wind_direction",
+            "wind_speed",
+            "relative_humidity",
+            "air_pressure",
+            "air_temperature",
+            "precipitation_amount",
+            "global_solar_radiation",
+            "latitude",
+            "longitude",
+        ]
+        out = out.with_columns([pl.col(c).fill_null(-99.9) for c in float_cols])
+
+        header = " ".join(out.columns)
+        lines = [header]
+
+        for row in out.iter_rows(named=True):
+            lines.append(
+                " ".join(
+                    [
+                        str(row["site_gaw_id"]),
+                        str(int(row["year"])),
+                        str(int(row["month"])),
+                        str(int(row["day"])),
+                        str(int(row["hour"])),
+                        str(int(row["minute"])),
+                        str(int(row["second"])),
+                        f"{float(row['wind_direction']):g}",
+                        f"{float(row['wind_speed']):g}",
+                        f"{float(row['relative_humidity']):g}",
+                        f"{float(row['air_pressure']):g}",
+                        f"{float(row['air_temperature']):g}",
+                        f"{float(row['precipitation_amount']):g}",
+                        f"{float(row['global_solar_radiation']):g}",
+                        f"{float(row['latitude']):.10f}",
+                        f"{float(row['longitude']):.10f}",
+                        str(int(row["altitude"])),
+                        str(int(row["elevation"])),
+                    ]
+                )
+            )
+
+        out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return out_path
+
+
+if __name__ == "__main__":
+    pass
