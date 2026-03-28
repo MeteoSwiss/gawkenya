@@ -1,0 +1,57 @@
+[33mcommit e05647abf06a348ee5860df98c0a0a5692229528[m
+Merge: 439710b 57b7577
+Author: jkl <joerg.klausen@meteoswiss.ch>
+Date:   Sun Apr 6 06:51:44 2025 +0000
+
+    On main: i am confused
+
+ data/level1/mkn/2016/A11a.parquet        |    Bin [31m71810[m -> [32m4268698[m bytes
+ data/level1/mkn/2016/S11a.parquet        |    Bin [31m79836[m -> [32m5489687[m bytes
+ data/level1/mkn/2016/S11c.parquet        |    Bin [31m2413[m -> [32m13182[m bytes
+ data/level1/mkn/2016/S11m.parquet        |    Bin [31m35877[m -> [32m465603[m bytes
+ data/level1/mkn/2016/S11s.parquet        |    Bin [31m2492[m -> [32m56010[m bytes
+ data/level1/mkn/2017/A11a.parquet        |    Bin [31m33410[m -> [32m2515377[m bytes
+ data/level1/mkn/2017/S11a.parquet        |    Bin [31m31282[m -> [32m4964926[m bytes
+ data/level1/mkn/2017/S11c.parquet        |    Bin [31m2576[m -> [32m12028[m bytes
+ data/level1/mkn/2017/S11m.parquet        |    Bin [31m28486[m -> [32m375993[m bytes
+ data/level1/mkn/2017/S11s.parquet        |    Bin [31m1516[m -> [32m55336[m bytes
+ data/level1/mkn/2020/A11a.parquet        |    Bin [31m147858[m -> [32m5909422[m bytes
+ data/level1/mkn/2020/S11a.parquet        |    Bin [31m181563[m -> [32m8796569[m bytes
+ data/level1/mkn/2020/S11c.parquet        |    Bin [31m2808[m -> [32m17270[m bytes
+ data/level1/mkn/2020/S11m.parquet        |    Bin [31m38433[m -> [32m655734[m bytes
+ data/level1/mkn/2020/S11s.parquet        |    Bin [31m3020[m -> [32m116046[m bytes
+ data/level1/mkn/2021/A11a.parquet        |    Bin [31m2326292[m -> [32m6084222[m bytes
+ data/level1/mkn/2021/S11a.parquet        |    Bin [31m4346471[m -> [32m10487005[m bytes
+ data/level1/mkn/2021/S11c.parquet        |    Bin [31m10902[m -> [32m22035[m bytes
+ data/level1/mkn/2021/S11m.parquet        |    Bin [31m238993[m -> [32m761594[m bytes
+ data/level1/mkn/2021/S11s.parquet        |    Bin [31m143939[m -> [32m308017[m bytes
+ data/level1/mkn/2022/A11a.parquet        |    Bin [31m4889975[m -> [32m4263263[m bytes
+ data/level1/mkn/2022/S11a.parquet        |    Bin [31m9132221[m -> [32m8440046[m bytes
+ data/level1/mkn/2022/S11c.parquet        |    Bin [31m19216[m -> [32m23336[m bytes
+ data/level1/mkn/2022/S11m.parquet        |    Bin [31m455032[m -> [32m728379[m bytes
+ data/level1/mkn/2022/S11s.parquet        |    Bin [31m327827[m -> [32m600211[m bytes
+ data/level1/mkn/2023/A11a.parquet        |    Bin [31m5635599[m -> [32m5680242[m bytes
+ data/level1/mkn/2023/S11a.parquet        |    Bin [31m8347996[m -> [32m11788566[m bytes
+ data/level1/mkn/2023/S11c.parquet        |    Bin [31m25561[m -> [32m32363[m bytes
+ data/level1/mkn/2023/S11m.parquet        |    Bin [31m608815[m -> [32m995867[m bytes
+ data/level1/mkn/2023/S11s.parquet        |    Bin [31m487474[m -> [32m967415[m bytes
+ data/level1/mkn/2024/A11a.parquet        |    Bin [31m3655716[m -> [32m3668237[m bytes
+ data/level1/mkn/2025/03/ae33.parquet     |    Bin [31m2925475[m -> [32m2977018[m bytes
+ data/level1/mkn/2025/03/g2401.parquet    |    Bin [31m28652325[m -> [32m22494689[m bytes
+ data/level1/mkn/2025/03/ne300.parquet    |    Bin [31m1900396[m -> [32m2644171[m bytes
+ data/level1/mkn/2025/tei49c.parquet      |    Bin [31m1024254[m -> [32m1182981[m bytes
+ data/level1/mkn/2025/tei49i.parquet      |    Bin [31m1395680[m -> [32m1559545[m bytes
+ data/level1/mkn/2025/vrxa00.parquet      |    Bin [31m402144[m -> [32m486263[m bytes
+ data/level1/mkn/A11a.parquet             |    Bin [31m17975006[m -> [32m30740336[m bytes
+ data/level1/mkn/S11a.parquet             |    Bin [31m34663977[m -> [32m50889293[m bytes
+ data/level1/mkn/S11c.parquet             |    Bin [31m62450[m -> [32m104946[m bytes
+ data/level1/mkn/S11k.parquet             |    Bin [31m10918[m -> [32m0[m bytes
+ data/level1/mkn/S11m.parquet             |    Bin [31m1643236[m -> [32m3736692[m bytes
+ data/level1/mkn/S11s.parquet             |    Bin [31m1276954[m -> [32m1189635[m bytes
+ data/level1/mkn/cpd2.errors.json         |      2 [32m+[m[31m-[m
+ data/level2/mkn/ae33_1h_combined.parquet |    Bin [31m499839[m -> [32m512063[m bytes
+ mkn_aerosol_analysis.ipynb               | 182778 [32m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m[31m-[m
+ processing/cpd2.py                       |    153 [32m+[m[31m-[m
+ processing/ne300.py                      |    196 [32m+[m[31m-[m
+ sandbox.ipynb                            |    230 [32m+[m[31m-[m
+ 49 files changed, 183052 insertions(+), 307 deletions(-)
