@@ -3,15 +3,18 @@
 This folder contains scripts to analyse the processed Mt. Kenya measurement data (level 2), including comparison to model (CAMS) data.  
 The analyses is focussing on data since 2020. However, some additional data (e.g. flask data) is available for earlier years. 
 
-## **Content:**
+## <a name='Content:'></a>**Content:**
 <!-- vscode-markdown-toc -->
-* [Files and folder structure](#fiels_folders)
-  * [Folder structure](#Folders)
-  * [Files](#Files)
+* [**Content:**](#Content:)
+* [Files and folder structure](#Filesandfolderstructure)
+	* [Folders](#Folders)
+	* [Files](#Files)
 * [How to](#Howto)
 * [CAMS data](#CAMSdata)
 	* [Which CAMS data do we use?](#WhichCAMSdatadoweuse)
 	* [Details CAMS best-grid selection](#DetailsCAMSbest-gridselection)
+* [FLEXPART modelling](#FLEXPARTmodelling)
+	* [CAMS background](#CAMSbackground)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -22,7 +25,7 @@ The analyses is focussing on data since 2020. However, some additional data (e.g
 
 
 
-## <a name='fiels_folders'></a>Files and folder structure
+## <a name='Filesandfolderstructure'></a>Files and folder structure
 ### <a name='Folders'></a>Folders
 `input/`: scripts to read the data (CAMS model data and measurement data from WDC and ) \
 `output/`: Save analyses figures (saved locally only, excluded from git) \
@@ -88,3 +91,9 @@ For details, check how that was done in the section "Process cams_best_grid" in 
 
 ### <a name='DetailsCAMSbest-gridselection'></a>Details CAMS best-grid selection
 The selection of the best CAMS-grid is done by checking the best average correlation between the measured variables and the corresponding CAMS data. This is done in `input.read_cams.get_best_cams()`
+
+
+## <a name='FLEXPARTmodelling'></a>FLEXPART modelling
+
+### <a name='CAMSbackground'></a>CAMS background
+For adding the background to the simulated data at Mt. Kenya, we used modelled CAMS data at the edge of the full domain. The CAMS background data was produced by Stephan Henne and merged into a single netcdf on cscs with (`/users/lbernet/flexpart/check_background.ipynb`), then copied into the directory `data/level3/flexpart/`. 

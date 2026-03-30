@@ -14,6 +14,13 @@ import matplotlib.colors as mc
 import matplotlib.dates as mdates  # to change tick dates
 import numpy as np
 import xarray as xr
+import matplotlib.colors as mc
+import colorsys 
+import datetime as dt
+
+#for tick format:
+from matplotlib.ticker import FormatStrFormatter,AutoMinorLocator, \
+MultipleLocator, LinearLocator, LogLocator
 from matplotlib import ticker
 from matplotlib.dates import DateFormatter
 #for tick format:
@@ -30,6 +37,18 @@ def get_station_coords(stat):
         lat = -0.062
         lon = 37.297
         alt = 3678
+    elif stat == 'NAIROBI':
+        lat = -1.27
+        lon = 36.8
+        alt = 1795
+    elif stat == 'KAPITI':
+        lat = -1.61 
+        lon = 37.1327
+        alt = np.nan # which altitude?
+    elif stat == 'TAITA':
+        lat = -3.47 
+        lon = 38.20
+        alt = np.nan # which altitude?
     else:
         print('Please define the coordinates for the station ' + stat)
     return lat,lon, alt
@@ -126,3 +145,18 @@ def get_unique_path(base_path: Path) -> Path:
         if not candidate.exists():
             return candidate
         counter += 1
+
+
+
+def to_datetime(date):
+    """
+    Converts a numpy datetime64 object to a python datetime object 
+    From https://gist.github.com/blaylockbk/1677b446bc741ee2db3e943ab7e4cabd?permalink_comment_id=3775327
+    Input:
+      date - a np.datetime64 object
+    Output:
+      DATE - a python datetime object
+    """
+    timestamp = ((date - np.datetime64('1970-01-01T00:00:00'))
+                 / np.timedelta64(1, 's'))
+    return dt.datetime.utcfromtimestamp(timestamp)

@@ -135,7 +135,7 @@ class ebasReader(BaseDataReader):
             read_unc = True # get all available ozone data, which means not only the mean but also uncertainties (and values in ppb and mug/m3)
             df = ebas.compile_ebas_ozone_data_into_dataframe(self.data_path,read_unc=read_unc)
             if read_unc:
-                df.rename(columns={'O3':'value','O3_unc':'value_unc','flag':'QCflag'},inplace=True)
+                df.rename(columns={'O3':'value','O3_unc':'value_sd','flag':'QCflag'},inplace=True)
             else: 
                 df.rename(columns={'O3_0':'value','flag':'QCflag'},inplace=True)
 
@@ -163,7 +163,8 @@ class ebasReader(BaseDataReader):
         df.rename_axis('time',inplace=True) # rename time index 
 
         #replace flag-nan (so far it is set to 0.999)
-        df['QCflag'].replace(0.999, np.nan,inplace=True)
+        #df['QCflag'].replace(0.999, np.nan,inplace=True)
+        df['QCflag'] = df['QCflag'].replace(0.999, np.nan)
 
         # check for duplicat dates. Sometimes we have multiple files for the same years. 
         #Usually, the new file just adds dates where the old file had nan. 
