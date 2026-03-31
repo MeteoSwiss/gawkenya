@@ -1,228 +1,659 @@
+from __future__ import annotations
+
+import re
+import shutil
+import zipfile
+from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
-from typing import Tuple
-from zipfile import ZipFile
+from typing import Iterable
 
-import matplotlib.pyplot as plt
-import numpy as np
 import polars as pl
 
-def extract_detailed_data_zip_to_polars_dfs(zip_path: Path) -> dict[str, pl.DataFrame]:
-    """
-    Extract AVO CSV files from a ZIP archive in memory and return a dictionary of cleaned Polars DataFrames,
-    one per unique 'Source' value. Each DataFrame contains a 'dtm' column with UTC timezone and microsecond precision.
-    """
-    result: dict[str, pl.DataFrame] = {}
+from processing.instrument import Instrument
+from toolbox.utils import pl_simplify_dtypes
 
-    with ZipFile(zip_path, "r") as archive:
-        for name in archive.namelist():
-            if not name.lower().endswith(".csv"):
+
+class AVO(Instrument):
+    """
+    Processor for IQAir AirVisual Outdoor (AVO) data files.
+
+    Supported input formats:
+      - ``.zip`` exports containing one or more ``.csv`` or ``.txt`` members
+      - plain ``.csv`` or ``.txt`` exports
+      - pre-compiled ``.parquet`` files such as instant, hourly, daily,
+        weekly, monthly, and yearly products
+
+    The extractor normalizes raw exports and pre-compiled parquet files to a
+    compact schema centered on ``dtm`` (UTC, microsecond precision) and writes
+    separate compiled parquet products such as ``avo-hourly.parquet`` and
+    ``avo-daily.parquet``.
+
+    When ``split='month'``, compiled files are stored below the provided target
+    root as ``<target>/<YYYY>/<MM>/avo-<product>.parquet``. The processor does
+    not inject its own ``avo`` subdirectory; the caller-controlled target path
+    remains authoritative.
+    """
+
+    _TEXT_SUFFIXES = {".csv", ".txt", ".zip"}
+    _SUPPORTED_SUFFIXES = _TEXT_SUFFIXES | {".parquet"}
+    _NULL_VALUES = ["", "nan", "NaN", "NAN", "null", "NULL"]
+
+    _DROP_COLUMNS = {
+        "Device timezone",
+        "Datetime_end(UTC)",
+        "Temperature (Fahrenheit)",
+        "AQI US",
+        "AQI CN",
+        "slot.2.co",
+    }
+
+    _NUMERIC_COLUMNS = {
+        "co2",
+        "pm1",
+        "pr",
+        "hm",
+        "tp",
+        "pm25_aqius",
+        "pm25_aqicn",
+        "pm25_conc",
+        "pm10_aqius",
+        "pm10_aqicn",
+        "pm10_conc",
+        "pnc",
+    }
+
+    _PRODUCT_ALIASES = {
+        "instant": "instant",
+        "inst": "instant",
+        "realtime": "instant",
+        "real-time": "instant",
+        "live": "instant",
+        "hourly": "hourly",
+        "hour": "hourly",
+        "daily": "daily",
+        "day": "daily",
+        "weekly": "weekly",
+        "week": "weekly",
+        "monthly": "monthly",
+        "month": "monthly",
+        "annual": "yearly",
+        "yearly": "yearly",
+        "year": "yearly",
+    }
+
+    _PRODUCT_PATTERN = re.compile(
+        r"(?:^|[_\-.])(instant|inst|realtime|real-time|live|hourly|hour|daily|day|weekly|week|monthly|month|annual|yearly|year)(?:[_\-.]|$)",
+        re.IGNORECASE,
+    )
+
+    _RENAME_MAP = {
+        "Datetime_start(UTC)": "ts",
+        "Timestamp": "ts",
+        "DateTime": "ts",
+        "Source": "source",
+        "CO2": "co2",
+        "CO2 (ppm)": "co2",
+        "Temperature (Celsius)": "tp",
+        "Humidity (%)": "hm",
+        "Pressure (pascal)": "pr",
+        "PM1 (ug/m3)": "pm1",
+        "PM2.5 (ug/m3)": "pm25_conc",
+        "PM10 (ug/m3)": "pm10_conc",
+        "PM2.5 AQI US": "pm25_aqius",
+        "PM2.5 AQI CN": "pm25_aqicn",
+        "PM10 AQI US": "pm10_aqius",
+        "PM10 AQI CN": "pm10_aqicn",
+        "PM2.5 (AQI US)": "pm25_aqius",
+        "PM2.5 (AQI CN)": "pm25_aqicn",
+        "PM10 (AQI US)": "pm10_aqius",
+        "PM10 (AQI CN)": "pm10_aqicn",
+        "PM2.5 (AQI-US)": "pm25_aqius",
+        "PM2.5 (AQI-CN)": "pm25_aqicn",
+        "PM10 (AQI-US)": "pm10_aqius",
+        "PM10 (AQI-CN)": "pm10_aqicn",
+        "Particle Count": "pnc",
+        "Particle count": "pnc",
+    }
+
+    def __init__(self, name: str = "avo", log_file: str = str()) -> None:
+        super().__init__(name="avo", log_file=log_file)
+        self.name = name
+
+    def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None]:
+        """
+        Extract AVO data from a file into a normalized Polars DataFrame.
+
+        Args:
+            path: Path to a ``.zip``, ``.csv``, ``.txt``, or ``.parquet`` file.
+
+        Returns:
+            Tuple of ``(dataframe, error_message_or_none)``.
+        """
+        df = pl.DataFrame()
+
+        try:
+            suffix = path.suffix.lower()
+            if suffix == ".parquet":
+                df = pl.read_parquet(path)
+            elif suffix == ".zip":
+                df = self._read_zip_export(path)
+            elif suffix in {".csv", ".txt"}:
+                df = self._read_csv_export(path.read_bytes(), origin=path.name)
+            else:
+                raise ValueError(
+                    f"Unsupported AVO file format '{path.suffix}'. "
+                    "Expected .zip, .csv, .txt, or .parquet."
+                )
+
+            if df.is_empty():
+                return df, None
+
+            df = self._normalize_dataframe(df)
+            df = pl_simplify_dtypes(df)
+            return df, None
+
+        except Exception as err:
+            self.logger.error("Failed to extract %s: %s", path.name, err)
+            return df, str(err)
+
+    def compile_to_parquet(
+        self,
+        source: Path,
+        target: Path,
+        archive: Path,
+        issues: Path,
+        split: bool | str | Iterable[str] = True,
+    ) -> None:
+        """
+        Compile AVO files to parquet, keeping each aggregation product in its
+        own compiled parquet file.
+
+        With ``split='month'``, output is written as:
+
+            ``<target>/<YYYY>/<MM>/avo-<product>.parquet``
+
+        Args:
+            source: Directory containing incoming AVO files.
+            target: Root directory for compiled parquet output.
+            archive: Directory where successfully processed source files are moved.
+            issues: Directory where problematic source files are moved.
+            split: Partitioning scheme. Supported values are falsy for no split,
+                ``True`` or ``'month'`` for year/month, ``'year'`` for year only,
+                ``'day'`` for year/month/day, or an iterable of explicit parts.
+        """
+        source = Path(source)
+        target = Path(target)
+        archive = Path(archive)
+        issues = Path(issues)
+        split_parts = self._normalize_split(split)
+
+        files = [
+            path
+            for path in sorted(source.rglob("*"))
+            if path.is_file() and path.suffix.lower() in self._SUPPORTED_SUFFIXES
+        ]
+
+        if not files:
+            self.logger.info("No AVO files found in %s", source)
+            return
+
+        grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
+        archived_paths: list[Path] = []
+
+        for path in files:
+            df, err = self.extract_to_dataframe(path)
+            if err is not None:
+                self.logger.error("Failed to compile %s: %s", path.name, err)
+                self._move_processed_file(path=path, source_root=source, destination_root=issues)
                 continue
 
-            with archive.open(name) as file:
-                csv_bytes = BytesIO(file.read())
+            if df.is_empty():
+                self.logger.warning("Skipping empty AVO file %s", path.name)
+                self._move_processed_file(path=path, source_root=source, destination_root=archive)
+                continue
 
-                df = pl.read_csv(csv_bytes, infer_schema_length=5000)
+            product = self._infer_product_kind(path)
+            grouped[product].append(df)
+            archived_paths.append(path)
 
-                # Ensure required columns
-                if "Datetime_start(UTC)" not in df.columns or "Source" not in df.columns:
-                    continue
+        for product, frames in grouped.items():
+            combined = self._combine_frames(frames)
+            if combined.is_empty():
+                continue
+            self._write_product_partitions(
+                df=combined,
+                product=product,
+                target_root=target,
+                split_parts=split_parts,
+            )
 
-                # Create dtm column with microsecond resolution and UTC timezone
-                dtm = (
-                    pl.col("Datetime_start(UTC)")
-                    .str.strptime(pl.Datetime, "%m/%d/%Y %H:%M")
-                    .cast(pl.Datetime("us"))
-                    .dt.replace_time_zone("UTC")
-                    .alias("dtm")
+        for path in archived_paths:
+            self._move_processed_file(path=path, source_root=source, destination_root=archive)
+
+    def _read_zip_export(self, path: Path) -> pl.DataFrame:
+        """
+        Read all CSV/TXT members from an AVO ZIP export and concatenate them.
+
+        Args:
+            path: ZIP archive path.
+
+        Returns:
+            Concatenated raw dataframe.
+        """
+        frames: list[pl.DataFrame] = []
+
+        with zipfile.ZipFile(path, "r") as archive:
+            member_names = [
+                name for name in archive.namelist()
+                if not name.endswith("/") and Path(name).suffix.lower() in {".csv", ".txt"}
+            ]
+
+            if not member_names:
+                raise ValueError("ZIP archive does not contain a readable CSV/TXT member.")
+
+            for member_name in member_names:
+                with archive.open(member_name) as handle:
+                    frames.append(self._read_csv_export(handle.read(), origin=f"{path.name}:{member_name}"))
+
+        return self._combine_frames(frames)
+
+    def _read_csv_export(self, raw: bytes, origin: str) -> pl.DataFrame:
+        """
+        Read an AVO CSV/TXT export from bytes.
+
+        Args:
+            raw: File content.
+            origin: Origin label for error reporting.
+
+        Returns:
+            Raw dataframe before normalization.
+        """
+        try:
+            return pl.read_csv(
+                BytesIO(raw),
+                null_values=self._NULL_VALUES,
+                infer_schema_length=5000,
+                ignore_errors=False,
+                try_parse_dates=False,
+            )
+        except Exception as err:
+            raise ValueError(f"Could not parse AVO CSV/TXT export from {origin}: {err}") from err
+
+    def _normalize_dataframe(self, df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Harmonize dataframe schema across raw exports and pre-compiled parquet.
+
+        Args:
+            df: Raw dataframe.
+
+        Returns:
+            Normalized dataframe.
+        """
+        rename_map = {col: str(col).strip().lstrip("\ufeff") for col in df.columns}
+        df = df.rename(rename_map)
+
+        empty_columns = [col for col in df.columns if not str(col).strip()]
+        if empty_columns:
+            df = df.drop(empty_columns)
+
+        non_null_columns = [
+            col for col in df.columns
+            if df.select(pl.col(col).is_not_null().sum()).item() > 0
+        ]
+        df = df.select(non_null_columns)
+
+        drop_columns = [
+            col for col in df.columns
+            if col in self._DROP_COLUMNS or col.lower().startswith("slot.")
+        ]
+        if drop_columns:
+            df = df.drop(drop_columns)
+
+        df = df.rename({col: self._canonical_name(col) for col in df.columns})
+
+        if "pnc" in df.columns:
+            df = df.with_columns((pl.col("pnc").cast(pl.Float64, strict=False) / 1000.0).alias("pnc"))
+
+        dtm_col = getattr(self, "dtm", "dtm")
+        if dtm_col not in df.columns:
+            if "ts" in df.columns:
+                df = df.with_columns(self._parse_timestamp_expr("ts").alias(dtm_col))
+            elif "Datetime_start(UTC)" in df.columns:
+                df = df.with_columns(self._parse_timestamp_expr("Datetime_start(UTC)").alias(dtm_col))
+            else:
+                raise ValueError(
+                    f"Missing timestamp column. Available columns: {', '.join(map(str, df.columns))}"
                 )
-                df = df.with_columns(dtm)
+        else:
+            df = df.with_columns(self._parse_timestamp_expr(dtm_col).alias(dtm_col))
 
-                # Drop columns where all values are null
-                df = df.select([col for col in df.columns if df.select(pl.col(col).is_not_null().sum()).item() > 0])
+        if "ts" not in df.columns:
+            df = df.with_columns(
+                pl.col(dtm_col).dt.strftime("%Y-%m-%dT%H:%M:%S%.3fZ").alias("ts")
+            )
+        else:
+            df = df.with_columns(pl.col("ts").cast(pl.Utf8, strict=False).alias("ts"))
 
-                # Drop unwanted columns
-                df = df.drop([col for col in ["Device timezone", 
-                                              "Datetime_start(UTC)", 
-                                              "Datetime_end(UTC)", 
-                                              "AQI US","AQI CN", 
-                                              "Temperature (Fahrenheit)", 
-                                              "slot.2.co",
-                                              ] if col in df.columns])
+        exprs: list[pl.Expr] = []
+        if "source" in df.columns:
+            exprs.append(pl.col("source").cast(pl.Utf8, strict=False).alias("source"))
 
-                # Convert pressure from Pa to hPa
-                if "Pressure (pascal)" in df.columns:
-                    df = df.with_columns(
-                        (pl.col("Pressure (pascal)") / 100).alias("P [hPa]")
-                    ).drop("Pressure (pascal)")
+        for column in self._NUMERIC_COLUMNS:
+            if column in df.columns:
+                exprs.append(pl.col(column).cast(pl.Float64, strict=False).alias(column))
 
-                # Convert Particle Count from 1/L to 1/cm3
-                if "Particle Count" in df.columns:
-                    df = df.with_columns(
-                        (pl.col("Particle Count") / 1000).alias("PNC [1/cm3]")
-                    ).drop("Particle Count")
+        if exprs:
+            df = df.with_columns(exprs)
 
-                # Rename columns and correct wrong assignments
-                df = df.rename({"Temperature (Celsius)": "T [°C]", 
-                                "Humidity (%)": "RH [%]",
-                                "PM1 (ug/m3)": "PM1 [ug/m3]",
-                                "PM2.5 (ug/m3)": "PM2.5 [ug/m3]",
-                                "PM10 (ug/m3)": "PM10 [ug/m3]",
-                                # "Particle Count": "PNC [1/cm3]",
-                                # "slot.2.pm25": "Cn_1",
-                                # "slot.4.pm1": "Cn_2",
-                                # "slot.2.pm1": "pm10_1",
-                                # "slot.3.no2": "pm10_2",
-                                # "slot.2.pm10": "pm25_1",
-                                # "slot.4.co2": "pm25_2",
-                                # "slot.2.co2": "pm1_1",
-                                # "slot.3.co": "pm1_2",
-                                })
+        preferred_order = [
+            "ts",
+            "source",
+            "co2",
+            "pm1",
+            "pr",
+            "hm",
+            "tp",
+            "pm25_aqius",
+            "pm25_aqicn",
+            "pm25_conc",
+            "pm10_aqius",
+            "pm10_aqicn",
+            "pm10_conc",
+            "pnc",
+            dtm_col,
+        ]
+        selected = [column for column in preferred_order if column in df.columns]
+        return df.select(selected).sort(dtm_col)
 
+    def _canonical_name(self, column: str) -> str:
+        """
+        Convert a raw export column name to its canonical output name.
 
-                # Split by Source
-                for source in df.select("Source").unique().to_series().to_list():
-                    source_df = df.filter(pl.col("Source") == source).drop("Source")
-                    source_df = source_df.sort("dtm")
-                    result[source] = source_df
+        Args:
+            column: Raw column name.
 
-    return result
+        Returns:
+            Canonical column name.
+        """
+        cleaned = str(column).strip().lstrip("\ufeff")
+        return self._RENAME_MAP.get(cleaned, cleaned)
 
-# Example usage:
-# from pathlib import Path
-# dfs = extract_avo_zip_to_polars_dfs(Path("/path/to/IQAir_Export_validated_devices_29Jun24-29Jun25_hourly.zip"))
+    def _parse_timestamp_expr(self, column: str) -> pl.Expr:
+        """
+        Build a robust parser for AVO timestamps.
 
-import polars as pl
+        Args:
+            column: Name of the source timestamp column.
 
+        Returns:
+            Expression yielding ``pl.Datetime('us', 'UTC')``.
+        """
+        source = pl.col(column).cast(pl.Utf8, strict=False).str.strip_chars()
+        return (
+            pl.coalesce(
+                [
+                    source.str.strptime(
+                        pl.Datetime(time_zone="UTC"),
+                        format="%Y-%m-%dT%H:%M:%S%.f%#z",
+                        strict=False,
+                    ),
+                    source.str.strptime(
+                        pl.Datetime(time_zone="UTC"),
+                        format="%Y-%m-%d %H:%M:%S%.f%#z",
+                        strict=False,
+                    ),
+                    source.str.strptime(
+                        pl.Datetime,
+                        format="%Y-%m-%dT%H:%M:%S%.f",
+                        strict=False,
+                    ).dt.replace_time_zone("UTC"),
+                    source.str.strptime(
+                        pl.Datetime,
+                        format="%Y-%m-%d %H:%M:%S%.f",
+                        strict=False,
+                    ).dt.replace_time_zone("UTC"),
+                    source.str.strptime(
+                        pl.Datetime,
+                        format="%Y-%m-%dT%H:%M:%S",
+                        strict=False,
+                    ).dt.replace_time_zone("UTC"),
+                    source.str.strptime(
+                        pl.Datetime,
+                        format="%Y-%m-%d %H:%M:%S",
+                        strict=False,
+                    ).dt.replace_time_zone("UTC"),
+                    source.str.strptime(
+                        pl.Datetime,
+                        format="%m/%d/%Y %H:%M",
+                        strict=False,
+                    ).dt.replace_time_zone("UTC"),
+                ]
+            )
+            .dt.with_time_unit("us")
+        )
 
-def correct_pnc_using_dynamic_cutoff(df: pl.DataFrame, pnc_february_level: int=20, factor: int=1) -> pl.DataFrame:
-    """
-    Find the last date in February 2025 where 'PNC [1/cm3]' < pnc_february_level,
-    and multiply 'PNC [1/cm3]' by factor for all earlier rows.
+    def _infer_product_kind(self, path: Path) -> str:
+        """
+        Infer the aggregation product from the input file name.
 
-    Args:
-        df (pl.DataFrame): Input DataFrame with 'dtm' and 'PNC [1/cm3]' columns.
+        Args:
+            path: Input file path.
 
-    Returns:
-        pl.DataFrame: Corrected DataFrame.
-    """
-    # Ensure datetime is naive or in UTC
-    df = df.with_columns(pl.col("dtm").dt.replace_time_zone(None))
+        Returns:
+            Product label such as ``instant``, ``hourly``, or ``daily``.
+            Falls back to ``raw`` when no aggregation token is found.
+        """
+        stem = path.stem.lower()
+        match = self._PRODUCT_PATTERN.search(stem)
+        if match:
+            token = match.group(1).lower()
+            return self._PRODUCT_ALIASES.get(token, token)
 
-    # Filter for February 2025 values where 'PNC [1/cm3]' < 30
-    february_filter = (
-        (pl.col("dtm").dt.year() == 2025) &
-        (pl.col("dtm").dt.month() == 2) &
-        (pl.col("PNC [1/cm3]") < pnc_february_level)
-    )
+        for token in re.split(r"[_\-.]+", stem):
+            mapped = self._PRODUCT_ALIASES.get(token.lower())
+            if mapped:
+                return mapped
 
-    february_dates = df.filter(february_filter).select("dtm")
+        return "raw"
 
-    if february_dates.is_empty():
-        print("No qualifying February 2025 values found. No correction applied.")
-        return df
+    def _product_filename(self, product: str) -> str:
+        """
+        Build the compiled parquet filename for a product.
 
-    cutoff = february_dates.max().item()
+        Args:
+            product: Aggregation product label.
 
-    print(f"Applying correction before: {cutoff}")
+        Returns:
+            Output filename.
+        """
+        if product == "raw":
+            return f"{self.name}.parquet"
+        return f"{self.name}-{product}.parquet"
 
-    # Apply correction for dates before the cutoff
-    df = df.with_columns(
-        pl.when(pl.col("dtm") < cutoff)
-        .then(pl.col("PNC [1/cm3]") * factor)
-        .otherwise(pl.col("PNC [1/cm3]"))
-        .alias("PNC [1/cm3]")
-    )
+    def _normalize_split(self, split: bool | str | Iterable[str]) -> list[str]:
+        """
+        Normalize the split configuration used by other processors.
 
-    return df
+        Args:
+            split: Split configuration.
 
+        Returns:
+            List of partition parts from ``year``, ``month``, and ``day``.
+        """
+        if split is False or split is None:
+            return []
+        if split is True:
+            return ["year", "month"]
+        if isinstance(split, str):
+            value = split.strip().lower()
+            if not value or value in {"none", "false", "no"}:
+                return []
+            if value == "year":
+                return ["year"]
+            if value == "month":
+                return ["year", "month"]
+            if value == "day":
+                return ["year", "month", "day"]
+            if value in {"year,month", "year/month"}:
+                return ["year", "month"]
+            if value in {"year,month,day", "year/month/day"}:
+                return ["year", "month", "day"]
+            raise ValueError(f"Unsupported split value '{split}' for AVO.")
 
-def correlate_pnc_pm10(df: pl.DataFrame, output_path: Path=Path("avo_correlate_pnc_pm10.png")) -> Tuple[dict, dict]:
-    """
-    Compute correlation and linear regression between 'PNC [1/cm3]' and 'PM10 [ug/m3]'
-    before and after the dynamic cutoff date. Visualize results with regression lines.
+        parts: list[str] = []
+        for item in split:
+            key = str(item).strip().lower()
+            if key in {"year", "month", "day"} and key not in parts:
+                parts.append(key)
+        return parts
 
-    Returns:
-        Tuple[dict, dict]: stats_before and stats_after
-    """
-    # Ensure datetime is naive
-    df = df.with_columns(pl.col("dtm").dt.replace_time_zone(None))
+    def _combine_frames(self, frames: list[pl.DataFrame]) -> pl.DataFrame:
+        """
+        Combine multiple dataframes with tolerant schema alignment.
 
-    # Find cutoff date
-    feb_filter = (
-        (pl.col("dtm").dt.year() == 2025) &
-        (pl.col("dtm").dt.month() == 2) &
-        (pl.col("PNC [1/cm3]") < 30)
-    )
-    feb_dates = df.filter(feb_filter).select("dtm")
+        Args:
+            frames: Dataframes to combine.
 
-    if feb_dates.is_empty():
-        raise ValueError("No qualifying February 2025 values found.")
+        Returns:
+            Combined dataframe.
+        """
+        valid_frames = [frame for frame in frames if frame is not None and not frame.is_empty()]
+        if not valid_frames:
+            return pl.DataFrame()
+        if len(valid_frames) == 1:
+            return valid_frames[0]
+        return pl.concat(valid_frames, how="diagonal_relaxed")
 
-    cutoff = feb_dates.max().item()
+    def _output_basename(self, product: str) -> str:
+        """
+        Resolve the output filename for one product.
 
-    # Prepare subsets
-    before = df.filter(pl.col("dtm") < cutoff).select(["PNC [1/cm3]", "PM10 [ug/m3]"]).drop_nulls()
-    after = df.filter(pl.col("dtm") >= cutoff).select(["PNC [1/cm3]", "PM10 [ug/m3]"]).drop_nulls()
+        Args:
+            product: Product label.
 
-    def compute_stats(subdf: pl.DataFrame) -> dict:
-        x = subdf["PNC [1/cm3]"].to_numpy()
-        y = subdf["PM10 [ug/m3]"].to_numpy()
-        if len(x) < 2:
-            return {"correlation": float("nan"), "slope": float("nan"), "intercept": float("nan"), "x": x, "y": y}
-        corr = np.corrcoef(x, y)[0, 1]
-        slope, intercept = np.polyfit(x, y, deg=1)
-        return {"correlation": corr, "slope": slope, "intercept": intercept, "x": x, "y": y}
+        Returns:
+            Compiled parquet filename.
+        """
+        return self._product_filename(product)
 
-    stats_before = compute_stats(before)
-    stats_after = compute_stats(after)
+    def _write_product_partitions(
+        self,
+        df: pl.DataFrame,
+        product: str,
+        target_root: Path,
+        split_parts: list[str],
+    ) -> None:
+        """
+        Write a product dataframe to one or more parquet partitions.
 
-    # Plotting
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5), sharex=True, sharey=True)
+        Args:
+            df: Combined dataframe for one product.
+            product: Aggregation product.
+            target_root: Output root passed by the caller.
+            split_parts: Normalized split specification.
+        """
+        basename = self._output_basename(product)
 
-    # --- Before Cutoff ---
-    x, y = stats_before["x"], stats_before["y"]
-    ax1.scatter(x, y, alpha=0.6, label="Data")
-    x_fit = np.linspace(x.min(), x.max(), 100)
-    y_fit = stats_before["slope"] * x_fit + stats_before["intercept"]
-    ax1.plot(x_fit, y_fit, color="black", lw=2, label="Regression")
-    ax1.set_title("Before cutoff")
-    ax1.set_xlabel("PNC [1/cm3]")
-    ax1.set_ylabel("PM10 [ug/m3]")
-    ax1.text(0.05, 0.95,
-             f"$r$ = {stats_before['correlation']:.3f}\n"
-             f"$y = {stats_before['slope']:.3f}x + {stats_before['intercept']:.2f}$",
-             transform=ax1.transAxes,
-             fontsize=10, va='top', ha='left', bbox=dict(facecolor='white', alpha=0.7))
-    ax1.legend()
+        if "dtm" not in df.columns:
+            raise ValueError("AVO dataframe is missing required 'dtm' column.")
 
-    # --- After Cutoff ---
-    x, y = stats_after["x"], stats_after["y"]
-    ax2.scatter(x, y, alpha=0.6, color='orange', label="Data")
-    x_fit = np.linspace(x.min(), x.max(), 100)
-    y_fit = stats_after["slope"] * x_fit + stats_after["intercept"]
-    ax2.plot(x_fit, y_fit, color="black", lw=2, label="Regression")
-    ax2.set_title("After cutoff")
-    ax2.set_xlabel("PNC [1/cm3]")
-    ax2.text(0.05, 0.95,
-             f"$r$ = {stats_after['correlation']:.3f}\n"
-             f"$y = {stats_after['slope']:.3f}x + {stats_after['intercept']:.2f}$",
-             transform=ax2.transAxes,
-             fontsize=10, va='top', ha='left', bbox=dict(facecolor='white', alpha=0.7))
-    ax2.legend()
+        work = df.with_columns(
+            [
+                pl.col("dtm").dt.year().alias("_year"),
+                pl.col("dtm").dt.month().alias("_month"),
+                pl.col("dtm").dt.day().alias("_day"),
+            ]
+        )
 
-    fig.suptitle(f"PNC vs PM10 before and after cutoff ({cutoff:%Y-%m-%d %H:%M})", fontsize=14)
-    plt.tight_layout()
-    plt.show()
-    plt.savefig(output_path, dpi=300)
-    plt.close()
+        if not split_parts:
+            out_dir = target_root
+            payload = work.drop(["_year", "_month", "_day"], strict=False)
+            self._append_or_write_parquet(payload=payload, out_path=out_dir / basename)
+            return
 
-    print(f"✅ Correlation plot saved to {output_path}")    
+        group_columns = [f"_{part}" for part in split_parts]
+        for key, part_df in work.partition_by(group_columns, as_dict=True, maintain_order=True).items():
+            if not isinstance(key, tuple):
+                key = (key,)
+            out_dir = target_root
+            mapping = dict(zip(split_parts, key))
+            if "year" in mapping:
+                out_dir = out_dir / f"{int(mapping['year']):04d}"
+            if "month" in mapping:
+                out_dir = out_dir / f"{int(mapping['month']):02d}"
+            if "day" in mapping:
+                out_dir = out_dir / f"{int(mapping['day']):02d}"
 
-    # Clean return
-    for s in (stats_before, stats_after):
-        s.pop("x")
-        s.pop("y")
+            payload = part_df.drop(["_year", "_month", "_day"], strict=False)
+            self._append_or_write_parquet(payload=payload, out_path=out_dir / basename)
 
+    def _append_or_write_parquet(self, payload: pl.DataFrame, out_path: Path) -> None:
+        """
+        Append to an existing parquet or create a new one.
 
-    return stats_before, stats_after
+        Args:
+            payload: Data to write.
+            out_path: Target parquet path.
+        """
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = pl_simplify_dtypes(payload)
+
+        if out_path.exists():
+            existing = pl.read_parquet(out_path)
+            combined = pl.concat([existing, payload], how="diagonal_relaxed")
+            sort_columns = [column for column in ["dtm", "source"] if column in combined.columns]
+            if sort_columns:
+                combined = combined.sort(sort_columns)
+            payload = combined.unique(maintain_order=True)
+
+        payload.write_parquet(out_path)
+        self.logger.info("Wrote %s", out_path)
+
+    def _move_processed_file(
+        self,
+        path: Path,
+        source_root: Path,
+        destination_root: Path,
+    ) -> None:
+        """
+        Move a processed file while preserving its relative subdirectory.
+
+        Args:
+            path: Original file path.
+            source_root: Root source directory.
+            destination_root: Archive or issues directory.
+        """
+        try:
+            relative = path.relative_to(source_root)
+        except ValueError:
+            relative = Path(path.name)
+
+        destination = destination_root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+
+        if destination.exists():
+            destination = self._deduplicated_destination(destination)
+
+        shutil.move(str(path), str(destination))
+
+    def _deduplicated_destination(self, destination: Path) -> Path:
+        """
+        Generate a non-conflicting destination path.
+
+        Args:
+            destination: Proposed destination path.
+
+        Returns:
+            Non-existing destination path.
+        """
+        stem = destination.stem
+        suffix = destination.suffix
+        parent = destination.parent
+
+        counter = 1
+        candidate = destination
+        while candidate.exists():
+            candidate = parent / f"{stem}.{counter}{suffix}"
+            counter += 1
+        return candidate
