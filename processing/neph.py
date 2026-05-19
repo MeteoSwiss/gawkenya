@@ -30,6 +30,52 @@ _AURORA3000_HEADER: list[str] = [
     "major_state",
     "DIO_state",
 ]
+
+# Fixed NE-300 / ACOEM schema used to repair files where the DAQ wrote only
+# the first few header fields (observed as "dtm,4035,2002") but all data
+# values are still present. Keep this aligned with a complete NE-300 header.
+_NE300_ACOEM_HEADER: list[str] = [
+    "dtm",
+    "4035",
+    "2002",
+    "2635000",
+    "2525000",
+    "2450000",
+    "2635090",
+    "2525090",
+    "2450090",
+    "5001",
+    "5002",
+    "5003",
+    "5004",
+    "5005",
+    "5006",
+    "5010",
+    "26635000",
+    "26525000",
+    "26450000",
+    "13525000",
+    "15635000",
+    "15525000",
+    "15450000",
+    "11635000",
+    "11525000",
+    "11450000",
+    "11635090",
+    "11525090",
+    "11450090",
+    "6007",
+    "6008",
+    "6001",
+    "6002",
+    "6003",
+    "6635000",
+    "6525000",
+    "6450000",
+    "6635090",
+    "6525090",
+    "6450090",
+]
 CALIBRATION_GAS_CONSTANTS_CO2: dict[str, float] = {"450": 71.67, "525": 38.68, "635": 18.07}
 
 @dataclass(frozen=True)
@@ -78,10 +124,15 @@ class Neph(Instrument):
             if not first_row or not first_row[0]:
                 raise ValueError("First row is empty or malformed")
 
-            plan = self._detect_plan(first_row, dtm)
-
             # Use filename (zip member name if present) as a key for format detection
             file_key = (inner_name or path.name).lower()
+
+            lines, header_repaired = self._repair_incomplete_ne300_header(lines, dtm=dtm)
+            if header_repaired:
+                self.logger.warning(
+                    f"Repaired incomplete NE-300 header in {inner_name or path.name}"
+                )
+                first_row = [c.strip() for c in lines[0].split(",")]
 
             plan = self._detect_plan(first_row, dtm, file_key=file_key)
 
@@ -176,6 +227,64 @@ class Neph(Instrument):
         best2 = from_path(path_for_fallback).best()
         enc = best2.encoding if best2 and best2.encoding else "utf-8"
         return raw.decode(enc, errors="replace")
+
+    @staticmethod
+    def _repair_incomplete_ne300_header(lines: list[str], *, dtm: str) -> tuple[list[str], bool]:
+        """Repair truncated NE-300 headers before CSV parsing.
+
+        Some DAQ output files have a header row with only the first few fields,
+        for example ``dtm,4035,2002``, while each data row still contains the
+        complete NE-300 record. Polars correctly treats this as malformed CSV.
+
+        If the written header is a prefix of the known NE-300 / ACOEM header
+        and the first data row has more fields than the header row, replace the
+        header with the known schema up to the observed data width.
+
+        Parameters
+        ----------
+        lines:
+            Non-empty, stripped CSV lines from the input file.
+        dtm:
+            Name to use for the datetime column.
+
+        Returns
+        -------
+        tuple[list[str], bool]
+            The possibly repaired lines and a flag indicating whether a repair
+            was applied.
+        """
+        if len(lines) < 2:
+            return lines, False
+
+        header = [c.strip() for c in lines[0].split(",")]
+        first_data_row = [c.strip() for c in lines[1].split(",")]
+
+        if not header or header[0] != dtm:
+            return lines, False
+
+        if len(header) >= len(first_data_row):
+            return lines, False
+
+        canonical_header = _NE300_ACOEM_HEADER.copy()
+        canonical_header[0] = dtm
+
+        # Only repair if the existing header is a prefix of the canonical header.
+        # This avoids accidentally rewriting unrelated "dtm,..." CSV formats.
+        if header != canonical_header[: len(header)]:
+            return lines, False
+
+        if len(first_data_row) > len(canonical_header):
+            extras = [
+                f"extra_{idx}"
+                for idx in range(1, len(first_data_row) - len(canonical_header) + 1)
+            ]
+            repaired_header = canonical_header + extras
+        else:
+            repaired_header = canonical_header[: len(first_data_row)]
+
+        repaired_lines = lines.copy()
+        repaired_lines[0] = ",".join(repaired_header)
+        return repaired_lines, True
 
     @staticmethod
     def _detect_plan(first_row: list[str], dtm: str, *, file_key: str = "") -> _NephReadPlan:

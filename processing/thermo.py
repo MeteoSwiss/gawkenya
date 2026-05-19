@@ -368,7 +368,7 @@ class Thermo(Instrument):
                 rows = self._extract_legacy_rows(lines, schema=schema, path=path)
                 if not rows:
                     raise ValueError("No valid legacy Thermo data records found.")
-                df = pl.DataFrame(rows, schema=schema)
+                df = pl.DataFrame(rows, schema=schema, orient="row")
                 df = self._coerce_numeric_columns(df, dtype_map=dtype_map, path=path)
                 df = self._finalize_legacy_dataframe(df, path=path)
 

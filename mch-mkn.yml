@@ -65,3 +65,51 @@ hmp110-inlet:
   buckets: daily
   split_parquet: month
   expected: 24
+
+level2:
+  station: mkn
+  datetime_column: dtm
+  timezone: UTC
+  valid_flag_value: 0
+  accept_null_flags: true
+  parquet_compression: zstd
+  output:
+    hourly: true
+    daily: true
+  flags:
+    mode: per_column_prefix
+    prefix: f_
+  aggregation:
+    hourly:
+      default: mean
+      every: 1h
+      label: left
+      closed: left
+    daily:
+      default: mean
+      every: 1d
+      label: left
+      closed: left
+  instruments:
+    tei49c:
+      columns:
+        - o3
+    tei49i:
+      columns:
+        - o3
+    ae33/data:
+      source_parquet: ae33
+      columns:
+        - BC1
+        - BC2
+        - BC3
+        - BC4
+        - BC5
+        - BC6
+    fidas:
+      columns:
+        - "60"
+        - "61"
+        - "62"
+        - "63"
+        - "64"

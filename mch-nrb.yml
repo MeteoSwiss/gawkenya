@@ -58,9 +58,10 @@ nrb-aq:
     split_parquet: month
     expected: 24
   avo:
-    pattern: not-yet-implemented
-    buckets: daily
-    expected: 24
+    pattern: (?i)^kmd_hq_nairobi_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
+    # buckets: daily
+    split_parquet: month    
+    # expected: 24
   fidas: 
     pattern: fidas-\d{10}.parquet
     buckets: daily
@@ -81,3 +82,47 @@ nrb-aq:
     buckets: daily
     split_parquet: month
     expected: 24
+
+  level2:
+    station: nrb
+    datetime_column: dtm
+    timezone: UTC
+    valid_flag_value: 0
+    accept_null_flags: true
+    parquet_compression: zstd
+    output:
+      hourly: true
+      daily: true
+    flags:
+      mode: per_column_prefix
+      prefix: f_
+    aggregation:
+      hourly:
+        default: mean
+        every: 1h
+        label: left
+        closed: left
+      daily:
+        default: mean
+        every: 1d
+        label: left
+        closed: left
+    instruments:
+      "49i":
+        columns:
+          - O3
+      ae31:
+        columns:
+          - UV370
+          - B470
+          - G520
+          - Y590
+          - R660
+          - IR880
+          - IR950
+      fidas:
+        columns:
+          - PM1
+          - PM2.5
+          - PM4
+          - PM10
