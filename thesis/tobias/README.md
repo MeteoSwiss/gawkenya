@@ -1,1 +1,1 @@
-MSc thesis by Tobias Müllner 2026
+BSc thesis by Tobias Müllner 2026
