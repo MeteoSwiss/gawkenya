@@ -36,7 +36,10 @@ nrb-aq:
     - "49i"
     - ae31
     - aurora3000
-    - avo
+    - avo-roof
+    - avo-garden
+    - avo-mogogosiek
+    - avo-huduma
     - fidas
     - hmp110-ae31
     - hmp110-inlet
@@ -57,11 +60,18 @@ nrb-aq:
     buckets: daily
     split_parquet: month
     expected: 24
-  avo:
+  avo-roof:
     pattern: (?i)^kmd_hq_nairobi_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
-    # buckets: daily
     split_parquet: month    
-    # expected: 24
+  avo-garden:
+    pattern: (?i)^kmd_sensor_hq_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
+    split_parquet: month    
+  avo-mogogosiek:
+    pattern: (?i)^mogogosiek_tea_factory_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
+    split_parquet: month    
+  avo-huduma:
+    pattern: (?i)^huduma_center_bomet_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
+    split_parquet: month    
   fidas: 
     pattern: fidas-\d{10}.parquet
     buckets: daily

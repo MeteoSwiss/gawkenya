@@ -9,16 +9,16 @@ branches:
   issues: incoming_with_issues
   logs: logs
 folders:
-  - ae33/data
+  - ae33  #/data
   - fidas
   - meteo
-  - tei49c
-  - tei49i
+  - 49c
+  - 49i
   - g2401
   - ne300
   - hmp110-ae33
   - hmp110-inlet
-ae33/data: 
+ae33: 
   pattern: ae33-\d{12}.(zip|dat)
   buckets: daily
   split_parquet: month
@@ -33,18 +33,18 @@ meteo:
   buckets: daily
   split_parquet: month
   expected: 144
-tei49c: 
-  pattern: tei49c-\d{12}.(zip|dat)
-  header: pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres
+49c: 
+  pattern: (?i)^49c-\d{10}\.(zip|dat)$
+  # header: pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   split_parquet: month
-  expected: 144
-tei49i: 
-  pattern: tei49i-\d{12}.(zip|dat)
-  header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
+  expected: 24
+49i: 
+  pattern: (?i)^49i-\d{10}\.(zip|dat)$
+  # header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   split_parquet: month
-  expected: 144
+  expected: 24
 g2401: 
   pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
   buckets: daily

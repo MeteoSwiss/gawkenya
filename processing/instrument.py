@@ -48,6 +48,16 @@ class Instrument(ABC):
             self.logger = setup_logging(logger_name=name, log_file=(log_file or f"{name}.log"))
 
 
+    def should_process_file(self, path: Path) -> bool:
+        """
+        Return True when a file should be passed to the instrument extractor.
+
+        Subclasses may override this to restrict processing by filename or suffix.
+        The default preserves the existing behaviour and accepts every file.
+        """
+        return True
+
+
     def compile_to_parquet(
         self,
         source: str | Path,
@@ -85,8 +95,13 @@ class Instrument(ABC):
             rel_path = root_path.relative_to(source)
 
             for file in files:
-                self.logger.info(f"Processing {file}")
                 src = root_path / file
+
+                if not self.should_process_file(src):
+                    self.logger.debug(f"Ignoring non-data file: {file}")
+                    continue
+
+                self.logger.info(f"Processing {file}")
                 df, err = self._handle_file(src)
 
                 try:

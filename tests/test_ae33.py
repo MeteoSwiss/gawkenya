@@ -1,6 +1,8 @@
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
+
 import polars as pl
 import pytest
 
@@ -63,39 +65,36 @@ def test_ae33_file_types(temp_test_dir, filename, should_succeed):
         issue_files = list(temp_test_dir["issues"].rglob("*"))
         assert any(f.name == filename for f in issue_files), "Expected file in issues folder"
 
-# import os
-# import polars as pl
-# import unittest
-# from processing.ae33 import AE33
 
-# class TestAE33(unittest.TestCase):
-#     def setUp(self):
-#         self.source = "tests/data/ae33"
-#         self.target = "tests/data"
+def test_ae33_log_file_is_left_untouched(temp_test_dir):
+    source = temp_test_dir["source"]
+    archive = temp_test_dir["archive"]
+    issues = temp_test_dir["issues"]
 
-#     def test_extract_zipfile_to_dataframe(self): 
-#         ae33 = AE33()
-#         path="tests/data/ae33/ae33-202310190000.zip"
-#         if os.path.exists(path):
-#             obj = ae33.extract_zipfile_to_dataframe(path=path)
-#         self.assertEqual(obj[0].shape, (10, 74))
-#         self.assertEqual(obj[1], None)
+    log_file = source / "ae33-log-2026073006.zip"
 
+    with zipfile.ZipFile(log_file, "w") as zf:
+        zf.writestr(
+            "ae33-log-2026073006.csv",
+            "timestamp,message\n2026-07-30T06:00:00,example log entry\n",
+        )
 
-#     def test_zipfiles_to_parquet(self):
-#         ae33 = AE33()
-#         target = os.path.join(self.target, 'ae33.parquet')
-#         if os.path.exists(target):
-#             os.remove(target)
+    ae33 = AE33()
+    df, errors = ae33.compile_to_parquet(
+        source=source,
+        target=temp_test_dir["target"],
+        archive=archive,
+        issues=issues,
+        append_parquet=True,
+        split="month",
+    )
 
-#         df, errors = ae33.zipfiles_to_parquet(source=self.source, target=self.target, plot=False)
+    assert df.is_empty()
+    assert errors == {}
 
-#         self.assertEqual(df.shape, (307, 74))
-#         self.assertEqual(errors, {})
+    # The log file must remain exactly where it arrived.
+    assert log_file.exists()
 
-#         # clean up
-#         if os.path.exists(target):
-#             os.remove(target)
-
-# if __name__ == '__main__':
-#     unittest.main()
+    # It must neither be archived nor classified as an issue.
+    assert not list(archive.rglob(log_file.name))
+    assert not list(issues.rglob(log_file.name))

@@ -54,9 +54,33 @@ class AE33(Instrument):
     )
 
     _DTM_FORMAT: str = "%m/%d/%Y %I:%M:%S %p"
+    _DATA_SUFFIXES: frozenset[str] = frozenset({".dat", ".zip"})
 
     def __init__(self, log_file: Optional[str] = None) -> None:
         super().__init__(name="ae33", log_file=log_file)
+
+
+    def should_process_file(self, path: Path) -> bool:
+        """
+        Accept AE33 measurement files, but leave AE33 log files untouched.
+
+        Examples accepted:
+        - ae33-202310190530.dat
+        - ae33-202310190600.zip
+        - ae33-2026073006.zip
+
+        Examples ignored:
+        - ae33-log-2026073006.zip
+        - ae33-log-2026073006.csv
+        """
+        name = path.name.casefold()
+
+        return (
+            name.startswith("ae33-")
+            and not name.startswith("ae33-log-")
+            and path.suffix.casefold() in self._DATA_SUFFIXES
+        )
+
 
     @staticmethod
     def _read_bytes_zip_or_file(path: Path) -> tuple[bytes, Optional[str]]:
@@ -108,7 +132,7 @@ class AE33(Instrument):
             df = pl.read_csv(
                 source=io.BytesIO(raw),      # Pylance-friendly
                 has_header=False,
-                separator="|",
+                separator=",",
                 comment_prefix="#",
                 new_columns=cols,
                 schema_overrides=schema_overrides,

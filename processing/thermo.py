@@ -1,9 +1,25 @@
 from __future__ import annotations
 
+"""Thermo 49C/49I raw-data processor.
+
+This drop-in replacement supports both generations of files used in gawkenya:
+
+* legacy whitespace-delimited files beginning with ``pcdate``;
+* current pydaq comma-delimited files beginning with ``dtm``;
+* plain text files and ZIP archives containing a text member;
+* instrument aliases ``49c``/``tei49c`` and ``49i``/``tei49i``.
+
+The extractor returns the standard ``(DataFrame, error)`` tuple expected by
+``processing.instrument.Instrument.compile_to_parquet``.
+"""
+
 import csv
 import io
-from pathlib import Path
+import re
 import zipfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Iterable
 
 import polars as pl
 
@@ -12,370 +28,590 @@ from toolbox.utils import pl_simplify_dtypes
 
 
 class Thermo(Instrument):
-    """
-    Processor for Thermo ozone analyzer data files (49c and 49i).
+    """Processor for Thermo 49C and 49I ozone-analyser data files."""
 
-    The parser auto-detects both legacy Thermo text files, whose first header
-    field is ``pcdate``, and the newer long-term format produced by the current
-    code, whose first header field is ``dtm``. Input may be provided as plain
-    text files or as ``.zip`` archives containing a single data member.
-    """
+    _ALIASES = {
+        "49c": "tei49c",
+        "tei49c": "tei49c",
+        "49i": "tei49i",
+        "tei49i": "tei49i",
+    }
+
+    _LEGACY_HEADERS = {
+        "tei49c": [
+            "pcdate",
+            "pctime",
+            "time",
+            "date",
+            "o3",
+            "flags",
+            "cellai",
+            "cellbi",
+            "bncht",
+            "lmpt",
+            "o3lt",
+            "flowa",
+            "flowb",
+            "pres",
+        ],
+        "tei49i": [
+            "pcdate",
+            "pctime",
+            "time",
+            "date",
+            "flags",
+            "o3",
+            "hio3",
+            "cellai",
+            "cellbi",
+            "bncht",
+            "lmpt",
+            "o3lt",
+            "flowa",
+            "flowb",
+            "pres",
+        ],
+    }
+
+    # Current pydaq emits the same modern layout for both instruments. 49C has
+    # an empty hio3 field, which is dropped after parsing when entirely null.
+    _MODERN_HEADER = [
+        "dtm",
+        "time",
+        "date",
+        "o3",
+        "flags",
+        "hio3",
+        "cellai",
+        "cellbi",
+        "bncht",
+        "lmpt",
+        "o3lt",
+        "flowa",
+        "flowb",
+        "pres",
+    ]
+
+    _FLOAT_COLUMNS = {
+        "o3",
+        "hio3",
+        "bncht",
+        "lmpt",
+        "o3lt",
+        "flowa",
+        "flowb",
+        "pres",
+    }
+    _INTEGER_COLUMNS = {"cellai", "cellbi"}
+    _TEXT_COLUMNS = {"pcdate", "pctime", "time", "date", "flags", "source"}
+    _PREFERRED_MEMBER_SUFFIXES = {".csv", ".dat", ".txt"}
 
     def __init__(self, name: str = "thermo", log_file: str = str()) -> None:
-        super().__init__(name="thermo", log_file=log_file)
-        self.name = name
+        # Preserve the caller-supplied name because Instrument uses it for the
+        # compiled parquet filename. Instrument type is resolved separately.
+        super().__init__(name=name, log_file=log_file)
 
+        # Public compatibility attributes retained from the previous class.
         self.headers = {
-            "tei49c": [
-                "pcdate", "pctime", "time", "date", "o3", "flags",
-                "cellai", "cellbi", "bncht", "lmpt", "o3lt",
-                "flowa", "flowb", "pres",
-            ],
-            "tei49i": [
-                "pcdate", "pctime", "time", "date", "flags", "o3",
-                "hio3", "cellai", "cellbi", "bncht", "lmpt", "o3lt",
-                "flowa", "flowb", "pres",
-            ],
-            "49i": [
-                "pcdate", "pctime", "time", "date", "flags", "o3",
-                "hio3", "cellai", "cellbi", "bncht", "lmpt", "o3lt",
-                "flowa", "flowb", "pres",
-            ],
+            "tei49c": list(self._LEGACY_HEADERS["tei49c"]),
+            "49c": list(self._LEGACY_HEADERS["tei49c"]),
+            "tei49i": list(self._LEGACY_HEADERS["tei49i"]),
+            "49i": list(self._LEGACY_HEADERS["tei49i"]),
         }
-
         self.modern_headers = {
-            "tei49i": [
-                "dtm", "time", "date", "o3", "flags", "hio3",
-                "cellai", "cellbi", "bncht", "lmpt", "o3lt",
-                "flowa", "flowb", "pres",
-            ],
-            "49i": [
-                "dtm", "time", "date", "o3", "flags", "hio3",
-                "cellai", "cellbi", "bncht", "lmpt", "o3lt",
-                "flowa", "flowb", "pres",
-            ],
+            alias: list(self._MODERN_HEADER)
+            for alias in ("tei49c", "49c", "tei49i", "49i")
         }
 
+        legacy_49c_types = (
+            [pl.Utf8] * 4
+            + [pl.Float32]
+            + [pl.Utf8]
+            + [pl.Int32] * 2
+            + [pl.Float32] * 6
+        )
+        legacy_49i_types = (
+            [pl.Utf8] * 5
+            + [pl.Float32] * 2
+            + [pl.Int32] * 2
+            + [pl.Float32] * 6
+        )
+        modern_types = (
+            [pl.Utf8] * 3
+            + [pl.Float32]
+            + [pl.Utf8]
+            + [pl.Float32]
+            + [pl.Int32] * 2
+            + [pl.Float32] * 6
+        )
         self.dtypes = {
-            "tei49c": [pl.Utf8] * 4 + [pl.Float32] * 1 + [pl.Utf8] * 1 + [pl.Int32] * 2 + [pl.Float32] * 6,
-            "tei49i": [pl.Utf8] * 5 + [pl.Float32] * 2 + [pl.Int32] * 2 + [pl.Float32] * 6,
-            "49i": [pl.Utf8] * 5 + [pl.Float32] * 2 + [pl.Int32] * 2 + [pl.Float32] * 6,
+            "tei49c": list(legacy_49c_types),
+            "49c": list(legacy_49c_types),
+            "tei49i": list(legacy_49i_types),
+            "49i": list(legacy_49i_types),
         }
-
         self.modern_dtypes = {
-            "tei49i": [pl.Utf8] * 3 + [pl.Float32] * 1 + [pl.Utf8] * 1 + [pl.Float32] * 1 + [pl.Int32] * 2 + [pl.Float32] * 6,
-            "49i": [pl.Utf8] * 3 + [pl.Float32] * 1 + [pl.Utf8] * 1 + [pl.Float32] * 1 + [pl.Int32] * 2 + [pl.Float32] * 6,
+            alias: list(modern_types)
+            for alias in ("tei49c", "49c", "tei49i", "49i")
         }
 
-    def _read_lines(self, path: Path) -> list[str]:
+    @staticmethod
+    def _clean_field_name(value: str) -> str:
+        """Normalize a source header field to a stable lowercase name."""
+        return str(value).strip().lstrip("\ufeff").lower()
+
+    @classmethod
+    def _normalize_model_name(cls, value: str) -> str | None:
+        """Resolve a supported instrument alias to ``tei49c`` or ``tei49i``."""
+        normalized = str(value).strip().lower().replace("_", "").replace("-", "")
+        if normalized == "thermo":
+            return None
+        if normalized in {"49c", "tei49c"}:
+            return "tei49c"
+        if normalized in {"49i", "tei49i"}:
+            return "tei49i"
+        return cls._ALIASES.get(str(value).strip().lower())
+
+    def _detect_model(self, path: Path) -> str:
+        """Determine the Thermo model from the filename and configured name.
+
+        A model encoded in the source filename takes precedence because one
+        generic ``Thermo()`` instance may be used to inspect either model.
         """
-        Read text lines from a Thermo source file.
+        filename = path.name.lower()
+        match = re.search(r"(?:^|[^a-z0-9])(?:tei)?49([ci])(?=[^a-z0-9]|$)", filename)
+        filename_model = f"tei49{match.group(1)}" if match else None
+        configured_model = self._normalize_model_name(self.name)
 
-        For ``.zip`` inputs, the first non-directory archive member is read.
-        For plain files, the content is read directly.
+        if filename_model and configured_model and filename_model != configured_model:
+            self.logger.warning(
+                "%s: filename indicates %s but processor name %r indicates %s; using filename",
+                path.name,
+                filename_model,
+                self.name,
+                configured_model,
+            )
 
-        Args:
-            path: Input file path.
+        model = filename_model or configured_model
+        if model is None:
+            raise ValueError(
+                "Could not determine Thermo model. Use Thermo(name='49c'), "
+                "Thermo(name='tei49c'), Thermo(name='49i'), or "
+                "Thermo(name='tei49i'), or provide a filename containing 49c/49i."
+            )
+        return model
 
-        Returns:
-            Decoded text lines.
-        """
+    def _read_raw_text(self, path: Path, model: str) -> tuple[str, str | None]:
+        """Read a plain text file or the best data member from a ZIP archive."""
+        member_name: str | None = None
+
         if path.suffix.lower() == ".zip":
             with zipfile.ZipFile(path, "r") as archive:
-                member_names = [name for name in archive.namelist() if not name.endswith("/")]
-                if not member_names:
-                    raise ValueError("ZIP archive does not contain a readable file.")
-                member_name = member_names[0]
-                with archive.open(member_name) as handle:
-                    return handle.read().decode("utf-8-sig", errors="replace").splitlines()
+                members = [
+                    name
+                    for name in archive.namelist()
+                    if not name.endswith("/")
+                    and not name.startswith("__MACOSX/")
+                    and Path(name).name != ".DS_Store"
+                ]
+                if not members:
+                    raise ValueError("ZIP archive does not contain a readable data member.")
 
-        return path.read_text(encoding="utf-8-sig").splitlines()
+                def member_rank(name: str) -> tuple[int, int, str]:
+                    member_path = Path(name)
+                    suffix_rank = 0 if member_path.suffix.lower() in self._PREFERRED_MEMBER_SUFFIXES else 1
+                    model_token = "49c" if model == "tei49c" else "49i"
+                    model_rank = 0 if model_token in member_path.name.lower() else 1
+                    return suffix_rank, model_rank, name
 
-    def _detect_layout(self, lines: list[str]) -> tuple[str, list[str]]:
-        """
-        Detect the Thermo file layout from the first non-empty header line.
-
-        Args:
-            lines: Raw text lines.
-
-        Returns:
-            Tuple of ``(layout, header_fields)`` where layout is one of
-            ``"legacy"`` or ``"modern"``.
-        """
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                continue
-
-            comma_header = [field.strip() for field in stripped.split(",")]
-            if comma_header and comma_header[0].lower() == "dtm":
-                return "modern", comma_header
-
-            whitespace_header = stripped.split()
-            if whitespace_header and whitespace_header[0].lower() == "pcdate":
-                return "legacy", whitespace_header
-
-            break
-
-        raise ValueError("Unsupported Thermo file header. Expected 'pcdate' or 'dtm' as first field.")
-
-    def _extract_legacy_rows(
-        self,
-        lines: list[str],
-        schema: list[str],
-        path: Path,
-    ) -> list[list[str]]:
-        """
-        Extract whitespace-delimited legacy Thermo rows.
-
-        Args:
-            lines: Raw file lines.
-            schema: Expected column names.
-            path: Input path for logging context.
-
-        Returns:
-            Parsed row values as strings.
-        """
-        expected_fields = len(schema)
-        rows: list[list[str]] = []
-
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped.lower().startswith("pcdate"):
-                continue
-
-            parts = stripped.split()
-            if len(parts) == expected_fields:
-                rows.append(parts)
-            else:
-                self.logger.warning("%s invalid legacy row: %s", path.name, stripped)
-
-        return rows
-
-    def _extract_modern_rows(
-        self,
-        lines: list[str],
-        schema: list[str],
-        path: Path,
-    ) -> list[list[str]]:
-        """
-        Extract comma-delimited modern Thermo rows.
-
-        Args:
-            lines: Raw file lines.
-            schema: Expected column names.
-            path: Input path for logging context.
-
-        Returns:
-            Parsed row values as strings.
-        """
-        expected_fields = len(schema)
-        rows: list[list[str]] = []
-
-        reader = csv.reader(io.StringIO("\n".join(lines)))
-        header_skipped = False
-
-        for raw_parts in reader:
-            parts = [part.strip() for part in raw_parts]
-            if not parts or not any(parts):
-                continue
-
-            if not header_skipped and parts[0].lower() == "dtm":
-                header_skipped = True
-                continue
-
-            if len(parts) == expected_fields:
-                rows.append(parts)
-            else:
-                self.logger.warning("%s invalid modern row: %s", path.name, ",".join(parts))
-
-        return rows
-
-    def _coerce_numeric_columns(
-        self,
-        df: pl.DataFrame,
-        dtype_map: dict[str, pl.DataType],
-        path: Path,
-    ) -> pl.DataFrame:
-        """
-        Coerce numeric Thermo columns with tolerance for integer-like floats.
-
-        Integer columns sometimes occur in text as values such as ``123.000``.
-        These are normalized before casting.
-
-        Args:
-            df: Raw DataFrame containing string columns.
-            dtype_map: Target dtype mapping by column.
-            path: Input path for logging context.
-
-        Returns:
-            DataFrame with numeric columns coerced as far as possible.
-        """
-        int_types = {
-            pl.Int8, pl.Int16, pl.Int32, pl.Int64,
-            pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
-        }
-        int_cols = [column for column, dtype in dtype_map.items() if dtype in int_types]
-
-        if int_cols:
-            exprs: list[pl.Expr] = []
-            for column in int_cols:
-                target = dtype_map[column]
-                s = pl.col(column).cast(pl.Utf8, strict=False)
-                s_clean = (
-                    s.str.strip_chars()
-                    .str.replace_all(r"\.$", "")
-                    .str.replace_all(r"\.0+$", "")
-                )
-                direct_int = s_clean.cast(target, strict=False)
-
-                f = s.cast(pl.Float64, strict=False)
-                f_int = (
-                    pl.when(
-                        f.is_not_null()
-                        & ((f - f.floor()).abs() < 1e-6)
+                members.sort(key=member_rank)
+                member_name = members[0]
+                if len(members) > 1:
+                    self.logger.info(
+                        "%s: selected ZIP member %r from %d candidates",
+                        path.name,
+                        member_name,
+                        len(members),
                     )
-                    .then(f.floor())
-                    .otherwise(None)
-                    .cast(target, strict=False)
-                )
+                raw = archive.read(member_name)
+        else:
+            raw = path.read_bytes()
 
-                exprs.append(pl.coalesce([direct_int, f_int]).alias(column))
+        decode_errors: list[str] = []
+        for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+            try:
+                return raw.decode(encoding), member_name
+            except UnicodeDecodeError as err:
+                decode_errors.append(f"{encoding}: {err}")
 
-            df = df.with_columns(exprs)
+        raise ValueError("Could not decode source data: " + "; ".join(decode_errors))
 
-        df = df.with_columns(
-            [pl.col(column).cast(dtype, strict=False).alias(column) for column, dtype in dtype_map.items()]
+    @staticmethod
+    def _nonempty_lines(text: str) -> list[str]:
+        """Return non-empty lines while preserving source order."""
+        return [line for line in text.splitlines() if line.strip()]
+
+    @staticmethod
+    def _try_parse_datetime(value: str) -> datetime | None:
+        """Parse a timestamp and normalize it to timezone-aware UTC."""
+        text = str(value).strip()
+        if not text:
+            return None
+
+        iso_text = text[:-1] + "+00:00" if text.endswith(("Z", "z")) else text
+        try:
+            parsed = datetime.fromisoformat(iso_text)
+        except ValueError:
+            parsed = None
+
+        if parsed is None:
+            formats = (
+                "%Y/%m/%d %H:%M:%S.%f",
+                "%Y/%m/%d %H:%M:%S",
+                "%m/%d/%Y %H:%M:%S.%f",
+                "%m/%d/%Y %H:%M:%S",
+                "%Y-%m-%d %H:%M:%S.%f",
+                "%Y-%m-%d %H:%M:%S",
+            )
+            for fmt in formats:
+                try:
+                    parsed = datetime.strptime(text, fmt)
+                    break
+                except ValueError:
+                    continue
+
+        if parsed is None:
+            return None
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    def _detect_layout(
+        self,
+        lines: list[str],
+        model: str,
+    ) -> tuple[str, list[str], bool]:
+        """Detect layout and return ``(layout, columns, has_header)``."""
+        if not lines:
+            raise ValueError("Source file is empty.")
+
+        first = lines[0].strip().lstrip("\ufeff")
+        csv_fields = next(csv.reader([first], skipinitialspace=True))
+        csv_fields = [field.strip() for field in csv_fields]
+
+        if csv_fields and self._clean_field_name(csv_fields[0]) == "dtm":
+            columns = [self._clean_field_name(field) for field in csv_fields]
+            return "modern", columns, True
+
+        if len(csv_fields) > 1 and self._try_parse_datetime(csv_fields[0]) is not None:
+            if len(csv_fields) == len(self._MODERN_HEADER):
+                return "modern", list(self._MODERN_HEADER), False
+            if len(csv_fields) == len(self._MODERN_HEADER) - 1:
+                columns = [column for column in self._MODERN_HEADER if column != "hio3"]
+                return "modern", columns, False
+
+        whitespace_fields = first.split()
+        if whitespace_fields and self._clean_field_name(whitespace_fields[0]) == "pcdate":
+            columns = [self._clean_field_name(field) for field in whitespace_fields]
+            return "legacy", columns, True
+
+        # Headerless legacy files are accepted when the first two tokens form a
+        # valid date/time and the field count matches the instrument schema.
+        legacy_columns = list(self._LEGACY_HEADERS[model])
+        if len(whitespace_fields) == len(legacy_columns):
+            combined = f"{whitespace_fields[0]} {whitespace_fields[1]}"
+            if self._try_parse_datetime(combined) is not None:
+                return "legacy", legacy_columns, False
+
+        raise ValueError(
+            "Unsupported Thermo layout. Expected a modern CSV header beginning "
+            "with 'dtm' or a legacy whitespace header beginning with 'pcdate'."
         )
 
-        for column in int_cols:
-            null_count = df[column].null_count()
-            if null_count:
+    def _extract_modern_records(
+        self,
+        lines: list[str],
+        columns: list[str],
+        has_header: bool,
+        path: Path,
+    ) -> list[dict[str, str]]:
+        """Extract comma-delimited modern records using the actual header."""
+        if len(set(columns)) != len(columns):
+            raise ValueError(f"Duplicate modern header fields after normalization: {columns}")
+        if "dtm" not in columns:
+            raise ValueError("Modern Thermo input is missing the required 'dtm' column.")
+
+        required = {"dtm", "o3", "flags"}
+        missing = sorted(required.difference(columns))
+        if missing:
+            raise ValueError(f"Modern Thermo input is missing required columns: {', '.join(missing)}")
+
+        records: list[dict[str, str]] = []
+        reader = csv.reader(io.StringIO("\n".join(lines)), skipinitialspace=True)
+        header_consumed = not has_header
+        expected_fields = len(columns)
+
+        for line_number, raw_fields in enumerate(reader, start=1):
+            fields = [field.strip() for field in raw_fields]
+            if not fields or not any(fields):
+                continue
+
+            if not header_consumed:
+                header_consumed = True
+                continue
+
+            if self._clean_field_name(fields[0]) == "dtm":
+                # Repeated headers can occur in concatenated text exports.
+                continue
+
+            while len(fields) > expected_fields and fields[-1] == "":
+                fields.pop()
+
+            if len(fields) != expected_fields:
                 self.logger.warning(
-                    "%s: column '%s' has %s null(s) after int coercion/cast",
+                    "%s:%d: skipped modern row with %d fields; expected %d",
                     path.name,
-                    column,
-                    null_count,
+                    line_number,
+                    len(fields),
+                    expected_fields,
+                )
+                continue
+
+            records.append(dict(zip(columns, fields)))
+
+        return records
+
+    def _extract_legacy_records(
+        self,
+        lines: list[str],
+        columns: list[str],
+        has_header: bool,
+        path: Path,
+    ) -> list[dict[str, str]]:
+        """Extract whitespace-delimited legacy records."""
+        if len(set(columns)) != len(columns):
+            raise ValueError(f"Duplicate legacy header fields after normalization: {columns}")
+
+        required = {"pcdate", "pctime", "o3", "flags"}
+        missing = sorted(required.difference(columns))
+        if missing:
+            raise ValueError(f"Legacy Thermo input is missing required columns: {', '.join(missing)}")
+
+        records: list[dict[str, str]] = []
+        expected_fields = len(columns)
+        header_consumed = not has_header
+
+        for line_number, line in enumerate(lines, start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            fields = stripped.split()
+
+            if not header_consumed:
+                header_consumed = True
+                continue
+            if fields and self._clean_field_name(fields[0]) == "pcdate":
+                continue
+
+            if len(fields) != expected_fields:
+                self.logger.warning(
+                    "%s:%d: skipped legacy row with %d fields; expected %d",
+                    path.name,
+                    line_number,
+                    len(fields),
+                    expected_fields,
+                )
+                continue
+
+            records.append(dict(zip(columns, fields)))
+
+        return records
+
+    def _records_to_dataframe(
+        self,
+        records: list[dict[str, str]],
+        model: str,
+        layout: str,
+        path: Path,
+    ) -> pl.DataFrame:
+        """Normalize parsed records and construct the final dataframe."""
+        normalized_records: list[dict[str, str]] = []
+        timestamps: list[datetime] = []
+
+        for row_number, record in enumerate(records, start=1):
+            if layout == "modern":
+                parsed = self._try_parse_datetime(record.get("dtm", ""))
+            else:
+                parsed = self._try_parse_datetime(
+                    f"{record.get('pcdate', '')} {record.get('pctime', '')}"
                 )
 
-        return df
+            if parsed is None:
+                self.logger.warning(
+                    "%s: skipped record %d because its timestamp could not be parsed",
+                    path.name,
+                    row_number,
+                )
+                continue
 
-    def _finalize_legacy_dataframe(self, df: pl.DataFrame, path: Path) -> pl.DataFrame:
-        """
-        Finalize a legacy Thermo DataFrame by parsing ``pcdate`` + ``pctime``.
+            cleaned = {self._clean_field_name(key): str(value).strip() for key, value in record.items()}
+            cleaned.pop("dtm", None)
 
-        Args:
-            df: Parsed legacy data.
-            path: Input path for logging context.
+            # Modern files do not contain pcdate/pctime. Derive them to retain
+            # the stable legacy-compatible output schema used downstream. For
+            # legacy files, preserve the original pcdate/pctime strings.
+            if layout == "modern":
+                cleaned["pcdate"] = parsed.strftime("%Y-%m-%d")
+                cleaned["pctime"] = parsed.strftime("%H:%M:%S")
 
-        Returns:
-            Finalized DataFrame with parsed timestamp and source.
-        """
-        dtm_column = self.dtm
+            normalized_records.append(cleaned)
+            timestamps.append(parsed)
 
-        df = df.with_columns([
-            pl.lit(str(path)).alias("source"),
-            pl.format("{} {}", "pcdate", "pctime")
-            .str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False)
-            .dt.replace_time_zone("UTC")
-            .dt.with_time_unit("us")
-            .alias(dtm_column),
-        ])
+        if not normalized_records:
+            raise ValueError("No valid Thermo records remained after timestamp parsing.")
 
-        return df
+        all_columns: list[str] = []
+        seen: set[str] = set()
+        for record in normalized_records:
+            for column in record:
+                if column not in seen:
+                    seen.add(column)
+                    all_columns.append(column)
 
-    def _finalize_modern_dataframe(self, df: pl.DataFrame, path: Path) -> pl.DataFrame:
-        """
-        Finalize a modern Thermo DataFrame by parsing the input ``dtm`` column.
+        # Start with strings. Known measurement fields are cast below.
+        data = {
+            column: [record.get(column) for record in normalized_records]
+            for column in all_columns
+        }
+        df = pl.DataFrame(data)
+        df = df.with_columns(
+            [
+                pl.Series(
+                    self.dtm,
+                    timestamps,
+                    dtype=pl.Datetime(time_unit="us", time_zone="UTC"),
+                ),
+                pl.lit(str(path)).alias("source"),
+            ]
+        )
 
-        For backward compatibility, ``pcdate`` and ``pctime`` are derived from
-        ``dtm`` so downstream code can continue to work with either style.
+        float_columns = [column for column in self._FLOAT_COLUMNS if column in df.columns]
+        if float_columns:
+            df = df.with_columns(
+                [
+                    pl.col(column)
+                    .cast(pl.Utf8, strict=False)
+                    .str.strip_chars()
+                    .cast(pl.Float64, strict=False)
+                    .alias(column)
+                    for column in float_columns
+                ]
+            )
 
-        Args:
-            df: Parsed modern data.
-            path: Input path for logging context.
+        integer_columns = [column for column in self._INTEGER_COLUMNS if column in df.columns]
+        if integer_columns:
+            integer_exprs: list[pl.Expr] = []
+            for column in integer_columns:
+                source = pl.col(column).cast(pl.Utf8, strict=False).str.strip_chars()
+                as_float = source.cast(pl.Float64, strict=False)
+                integer_exprs.append(
+                    pl.when(
+                        as_float.is_not_null()
+                        & ((as_float - as_float.round(0)).abs() < 1e-6)
+                    )
+                    .then(as_float.round(0))
+                    .otherwise(None)
+                    .cast(pl.Int64, strict=False)
+                    .alias(column)
+                )
+            df = df.with_columns(integer_exprs)
 
-        Returns:
-            Finalized DataFrame with parsed timestamp and source.
-        """
-        parsed_name = "__parsed_dtm"
-        dtm_column = self.dtm
+        text_columns = [column for column in self._TEXT_COLUMNS if column in df.columns]
+        if text_columns:
+            df = df.with_columns(
+                [pl.col(column).cast(pl.Utf8, strict=False).alias(column) for column in text_columns]
+            )
 
-        df = df.with_columns([
-            pl.col("dtm")
-            .str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False)
-            .dt.replace_time_zone("UTC")
-            .dt.with_time_unit("us")
-            .alias(parsed_name),
-        ])
+        # 49C's current pydaq layout includes an empty hio3 placeholder. Drop it
+        # when it has no information so legacy and modern 49C schemas align.
+        if "hio3" in df.columns and df["hio3"].null_count() == df.height:
+            df = df.drop("hio3")
 
-        df = df.with_columns([
-            pl.lit(str(path)).alias("source"),
-            pl.col(parsed_name).dt.strftime("%Y-%m-%d").alias("pcdate"),
-            pl.col(parsed_name).dt.strftime("%H:%M:%S").alias("pctime"),
-            pl.col(parsed_name).alias(dtm_column),
-        ])
+        canonical = list(self._LEGACY_HEADERS[model])
+        if "hio3" not in df.columns:
+            canonical = [column for column in canonical if column != "hio3"]
+        extras = [
+            column
+            for column in df.columns
+            if column not in canonical and column not in {"source", self.dtm}
+        ]
+        ordered = [
+            column
+            for column in [*canonical, *extras, "source", self.dtm]
+            if column in df.columns
+        ]
 
-        if dtm_column != "dtm":
-            df = df.drop("dtm")
-
-        return df.drop(parsed_name)
+        df = df.select(ordered).sort(self.dtm)
+        return pl_simplify_dtypes(df)
 
     def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None]:
-        """
-        Extract data from a Thermo 49c or 49i text file into a Polars DataFrame.
-
-        Supported layouts:
-        - legacy whitespace-delimited files starting with ``pcdate``
-        - modern comma-delimited files starting with ``dtm``
-
-        Supported containers:
-        - plain text files such as ``.dat`` or ``.csv``
-        - ``.zip`` archives containing one text member
+        """Extract one legacy or modern Thermo source file.
 
         Args:
-            path: Path to the input data file.
+            path: Plain source file or ZIP archive.
 
         Returns:
-            Tuple of ``(dataframe, error_message_or_none)``.
+            ``(dataframe, None)`` on success, otherwise an empty dataframe and
+            an explanatory error string.
         """
-        file_type = "49i" if "49i-" in path.name.lower() else self.name
-        if file_type not in self.headers:
-            file_type = "tei49c"
-
+        path = Path(path)
         try:
-            lines = self._read_lines(path)
-            layout, _ = self._detect_layout(lines)
+            model = self._detect_model(path)
+            text, member_name = self._read_raw_text(path, model=model)
+            lines = self._nonempty_lines(text)
+            layout, columns, has_header = self._detect_layout(lines, model=model)
+
+            source_description = path.name
+            if member_name:
+                source_description += f"::{member_name}"
+            self.logger.info(
+                "%s: detected model=%s layout=%s header=%s",
+                source_description,
+                model,
+                layout,
+                has_header,
+            )
 
             if layout == "modern":
-                if file_type not in self.modern_headers:
-                    raise ValueError(
-                        f"Modern 'dtm' layout is not configured for Thermo type '{file_type}'."
-                    )
-                schema = self.modern_headers[file_type]
-                dtype_map = dict(zip(schema, self.modern_dtypes[file_type]))
-                rows = self._extract_modern_rows(lines, schema=schema, path=path)
-                if not rows:
-                    raise ValueError("No valid modern Thermo data records found.")
-                df = pl.DataFrame(rows, schema=schema)
-                df = self._coerce_numeric_columns(df, dtype_map=dtype_map, path=path)
-                df = self._finalize_modern_dataframe(df, path=path)
+                records = self._extract_modern_records(
+                    lines,
+                    columns=columns,
+                    has_header=has_header,
+                    path=path,
+                )
             else:
-                schema = self.headers[file_type]
-                dtype_map = dict(zip(schema, self.dtypes[file_type]))
-                rows = self._extract_legacy_rows(lines, schema=schema, path=path)
-                if not rows:
-                    raise ValueError("No valid legacy Thermo data records found.")
-                df = pl.DataFrame(rows, schema=schema, orient="row")
-                df = self._coerce_numeric_columns(df, dtype_map=dtype_map, path=path)
-                df = self._finalize_legacy_dataframe(df, path=path)
+                records = self._extract_legacy_records(
+                    lines,
+                    columns=columns,
+                    has_header=has_header,
+                    path=path,
+                )
 
-            if "hio3" in df.columns and df["hio3"].null_count() == len(df):
-                df = df.drop("hio3")
+            if not records:
+                raise ValueError(f"No valid {layout} Thermo data records found.")
 
-            df = pl_simplify_dtypes(df)
+            df = self._records_to_dataframe(
+                records,
+                model=model,
+                layout=layout,
+                path=path,
+            )
+            self.logger.info(
+                "%s: extracted %d row(s), %d column(s)",
+                source_description,
+                df.height,
+                df.width,
+            )
             return df, None
 
         except Exception as err:
