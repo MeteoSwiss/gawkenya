@@ -25,12 +25,14 @@ nrb-dobson:
 
 nrb-aq:
   root: /product_data/data/pay/Kenya/NRB
+  level1_root: /product_data/data/pay/Kenya/git/gawkenyadata/level1
+  default_target: nrb
   logging: mch-nrb.log
   branches:
     incoming: incoming
     archive: archive
     issues: incoming_with_issues
-    logs: logs    
+    logs: logs
   file_name: file_coverage_nrb_aq.json
   folders:
     - "49i"
@@ -63,15 +65,21 @@ nrb-aq:
   avo-roof:
     pattern: (?i)^kmd_hq_nairobi_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
     split_parquet: month    
+    read_archive: false
   avo-garden:
     pattern: (?i)^kmd_sensor_hq_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
-    split_parquet: month    
+    split_parquet: month
+    read_archive: false    
   avo-mogogosiek:
     pattern: (?i)^mogogosiek_tea_factory_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
-    split_parquet: month    
+    split_parquet: month
+    target: mgg
+    read_archive: false
   avo-huduma:
     pattern: (?i)^huduma_center_bomet_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
-    split_parquet: month    
+    split_parquet: month
+    target: buc
+    read_archive: false
   fidas: 
     pattern: fidas-\d{10}.parquet
     buckets: daily
@@ -132,7 +140,26 @@ nrb-aq:
           - IR950
       fidas:
         columns:
-          - PM1
-          - PM2.5
-          - PM4
-          - PM10
+          - "60"
+          - "61"
+          - "62"
+          - "63"
+          - "64"
+      avo-roof-instant:
+        columns:
+          - tp
+          - hm
+          - pr
+          - co2
+          - pm1
+          - pm25_conc
+          - pm10_conc
+      avo-garden-instant:
+        columns:
+          - tp
+          - hm
+          - pr
+          - co2
+          - pm1
+          - pm25_conc
+          - pm10_conc

@@ -160,86 +160,198 @@ class AVO(Instrument):
         """
         Compile incoming AVO files into partitioned parquet products.
 
-        This override avoids the generic per-file append/rewrite pattern that
-        causes AVO compilation to appear to stall as monthly outputs grow.
-        Instead it:
+        Output files follow the same directory structure as the other
+        instruments:
 
-        1. extracts all readable input files,
-        2. batches them by ``cadence`` and target date partition,
-        3. reads any existing target parquet only once per target file,
-        4. writes each target parquet once,
-        5. moves processed source files to archive or issues.
+            <target>/<year>/<month>/avo-<name>-<cadence>.parquet
+
+        For example:
+
+            level1/nrb/2026/08/avo-roof-instant.parquet
+            level1/nrb/2026/08/avo-roof-hourly.parquet
+            level1/nrb/2026/08/avo-roof-daily.parquet
+            level1/nrb/2026/08/avo-roof-monthly.parquet
+
+        All readable input files are staged by cadence and date partition.
+        Each target parquet is read and written only once per processing run.
+
+        Extraction and parquet-writing errors remain fatal where appropriate.
+        Archive and issues-directory move failures are housekeeping failures:
+        they are reported, but do not stop processing.
 
         Args:
-            source: Incoming source directory.
-            target: Station-level level1 target directory.
-            archive: Optional archive directory for successfully processed files.
-            issues: Optional directory for failed files.
-            split: Partitioning mode. ``month`` means ``yyyy/mm``;
-                ``day`` means ``yyyy/mm/dd``; ``year`` means ``yyyy``.
+            source:
+                Incoming source directory for one AVO sensor.
+            target:
+                Station-level level1 directory, for example
+                ``level1/nrb``. The sensor name is included in the output
+                filename, not added as another directory.
+            archive:
+                Optional archive directory for successfully processed files.
+            issues:
+                Optional issues directory for failed input files.
+            split:
+                Date partitioning mode. ``month`` creates ``yyyy/mm``;
+                ``day`` creates ``yyyy/mm/dd``; ``year`` creates ``yyyy``.
         """
         source = Path(source)
         target = Path(target)
         archive = Path(archive) if archive is not None else None
         issues = Path(issues) if issues is not None else None
 
-        self._announce(f"[{self.name}] scanning source directory: {source}")
+        self._announce(
+            f"[{self.name}] scanning source directory: {source}"
+        )
+
         if not source.exists():
-            self._announce(f"[{self.name}] source directory does not exist; nothing to do.")
+            self._announce(
+                f"[{self.name}] source directory does not exist; "
+                "nothing to do."
+            )
             return
 
         files = self._list_input_files(source)
+
         if not files:
-            self._announce(f"[{self.name}] no supported input files found.")
+            self._announce(
+                f"[{self.name}] no supported input files found."
+            )
             return
 
-        self._announce(f"[{self.name}] found {len(files)} input file(s).")
+        self._announce(
+            f"[{self.name}] found {len(files)} input file(s)."
+        )
 
         staged: dict[Path, list[pl.DataFrame]] = {}
         successes: list[Path] = []
         failures: list[tuple[Path, str]] = []
 
         for index, path in enumerate(files, start=1):
-            self._announce(f"[{self.name}] extracting file {index}/{len(files)}: {path.name}")
+            self._announce(
+                f"[{self.name}] extracting file "
+                f"{index}/{len(files)}: {path.name}"
+            )
+
             df, err = self.extract_to_dataframe(path)
+
             if err is not None:
                 failures.append((path, err))
-                self._announce(f"[{self.name}] extraction failed for {path.name}: {err}")
+                self._announce(
+                    f"[{self.name}] extraction failed for "
+                    f"{path.name}: {err}"
+                )
                 continue
+
             if df.is_empty():
-                failures.append((path, "Extracted dataframe is empty."))
-                self._announce(f"[{self.name}] extracted dataframe is empty for {path.name}")
+                error = "Extracted dataframe is empty."
+                failures.append((path, error))
+                self._announce(
+                    f"[{self.name}] extracted dataframe is empty "
+                    f"for {path.name}"
+                )
                 continue
 
             cadence = self._infer_cadence(path)
-            part_map = self._split_dataframe_by_partition(df, target_root=target / self.name, cadence=cadence, split=split)
+
+            if cadence == "unknown":
+                error = (
+                    "Could not infer AVO cadence from filename. Expected "
+                    "one of instant, hourly, daily, weekly, monthly, yearly "
+                    "or annual after the 'avo_' filename component."
+                )
+                failures.append((path, error))
+                self._announce(
+                    f"[{self.name}] rejected {path.name}: {error}"
+                )
+                continue
+
+            # Important:
+            # ``target`` is already the station-level root, for example
+            # level1/nrb. Do not append self.name as another directory.
+            part_map = self._split_dataframe_by_partition(
+                df,
+                target_root=target,
+                cadence=cadence,
+                split=split,
+            )
+
             for out_path, part_df in part_map.items():
                 staged.setdefault(out_path, []).append(part_df)
 
             successes.append(path)
+
             self._announce(
-                f"[{self.name}] staged {path.name}: rows={df.height:,}, cadence={cadence}, partitions={len(part_map)}"
+                f"[{self.name}] staged {path.name}: "
+                f"rows={df.height:,}, "
+                f"cadence={cadence}, "
+                f"partitions={len(part_map)}"
             )
 
         if not staged:
-            self._announce(f"[{self.name}] no staged output partitions were produced.")
-            self._move_failed_files(failures, issues)
+            self._announce(
+                f"[{self.name}] no staged output partitions were produced."
+            )
+
+            issue_move_failures = self._move_failed_files(
+                failures,
+                issues,
+            )
+
+            self._announce(
+                f"[{self.name}] done. "
+                f"targets_written=0, "
+                f"succeeded=0, "
+                f"failed={len(failures)}, "
+                f"archive_move_failed=0, "
+                f"issues_move_failed={len(issue_move_failures)}"
+            )
             return
 
         self._announce(
-            f"[{self.name}] writing {len(staged)} parquet target(s) from {len(successes)} successful input file(s)."
+            f"[{self.name}] writing {len(staged)} parquet target(s) "
+            f"from {len(successes)} successful input file(s)."
         )
+
         written = 0
-        for out_index, (out_path, frames) in enumerate(sorted(staged.items(), key=lambda item: str(item[0])), start=1):
-            self._announce(f"[{self.name}] writing target {out_index}/{len(staged)}: {out_path}")
-            self._write_partition(out_path, frames)
+
+        sorted_targets = sorted(
+            staged.items(),
+            key=lambda item: str(item[0]),
+        )
+
+        for out_index, (out_path, frames) in enumerate(
+            sorted_targets,
+            start=1,
+        ):
+            self._announce(
+                f"[{self.name}] writing target "
+                f"{out_index}/{len(staged)}: {out_path}"
+            )
+
+            self._write_partition(
+                out_path,
+                frames,
+            )
             written += 1
 
-        self._move_successful_files(successes, archive)
-        self._move_failed_files(failures, issues)
+        # These helpers catch PermissionError and other filesystem errors.
+        # They return failed moves instead of terminating the processor.
+        archive_move_failures = self._move_successful_files(
+            successes,
+            archive,
+        )
+        issue_move_failures = self._move_failed_files(
+            failures,
+            issues,
+        )
 
         self._announce(
-            f"[{self.name}] done. targets_written={written}, succeeded={len(successes)}, failed={len(failures)}"
+            f"[{self.name}] done. "
+            f"targets_written={written}, "
+            f"succeeded={len(successes)}, "
+            f"failed={len(failures)}, "
+            f"archive_move_failed={len(archive_move_failures)}, "
+            f"issues_move_failed={len(issue_move_failures)}"
         )
 
     def _read_zip_export(self, path: Path) -> pl.DataFrame:
@@ -473,44 +585,70 @@ class AVO(Instrument):
         split: str,
     ) -> dict[Path, pl.DataFrame]:
         """
-        Split a dataframe by target date partition and return output-path mapping.
+        Split a dataframe into date partitions.
 
-        Args:
-            df: Normalized dataframe.
-            target_root: Root output directory for this AVO source.
-            cadence: Cadence token inferred from the filename.
-            split: Partitioning mode.
+        ``target_root`` must be the station-level directory, for example:
 
-        Returns:
-            Mapping of output parquet path to partition dataframe.
+            level1/nrb
+
+        Resulting monthly paths are:
+
+            level1/nrb/YYYY/MM/avo-<sensor>-<cadence>.parquet
         """
+        target_root = Path(target_root)
         split = str(split).strip().lower()
+
         if split == "month":
-            df = df.with_columns([
-                pl.col("dtm").dt.year().alias("_year"),
-                pl.col("dtm").dt.month().alias("_month"),
-            ])
-            grouped = df.partition_by(["_year", "_month"], as_dict=False, maintain_order=True)
+            partitioned = df.with_columns(
+                [
+                    pl.col("dtm").dt.year().alias("_year"),
+                    pl.col("dtm").dt.month().alias("_month"),
+                ]
+            )
+
             result: dict[Path, pl.DataFrame] = {}
-            for part_df in grouped:
+
+            for part_df in partitioned.partition_by(
+                ["_year", "_month"],
+                as_dict=False,
+                maintain_order=True,
+            ):
                 year = int(part_df["_year"][0])
                 month = int(part_df["_month"][0])
-                out_path = target_root / f"{year:04d}" / f"{month:02d}" / self._output_filename(cadence)
-                result[out_path] = part_df.drop(["_year", "_month"])
+
+                out_path = (
+                    target_root
+                    / f"{year:04d}"
+                    / f"{month:02d}"
+                    / self._output_filename(cadence)
+                )
+
+                result[out_path] = part_df.drop(
+                    ["_year", "_month"]
+                )
+
             return result
 
         if split == "day":
-            df = df.with_columns([
-                pl.col("dtm").dt.year().alias("_year"),
-                pl.col("dtm").dt.month().alias("_month"),
-                pl.col("dtm").dt.day().alias("_day"),
-            ])
-            grouped = df.partition_by(["_year", "_month", "_day"], as_dict=False, maintain_order=True)
+            partitioned = df.with_columns(
+                [
+                    pl.col("dtm").dt.year().alias("_year"),
+                    pl.col("dtm").dt.month().alias("_month"),
+                    pl.col("dtm").dt.day().alias("_day"),
+                ]
+            )
+
             result = {}
-            for part_df in grouped:
+
+            for part_df in partitioned.partition_by(
+                ["_year", "_month", "_day"],
+                as_dict=False,
+                maintain_order=True,
+            ):
                 year = int(part_df["_year"][0])
                 month = int(part_df["_month"][0])
                 day = int(part_df["_day"][0])
+
                 out_path = (
                     target_root
                     / f"{year:04d}"
@@ -518,29 +656,87 @@ class AVO(Instrument):
                     / f"{day:02d}"
                     / self._output_filename(cadence)
                 )
-                result[out_path] = part_df.drop(["_year", "_month", "_day"])
+
+                result[out_path] = part_df.drop(
+                    ["_year", "_month", "_day"]
+                )
+
             return result
 
         if split == "year":
-            df = df.with_columns(pl.col("dtm").dt.year().alias("_year"))
-            grouped = df.partition_by(["_year"], as_dict=False, maintain_order=True)
+            partitioned = df.with_columns(
+                pl.col("dtm").dt.year().alias("_year")
+            )
+
             result = {}
-            for part_df in grouped:
+
+            for part_df in partitioned.partition_by(
+                ["_year"],
+                as_dict=False,
+                maintain_order=True,
+            ):
                 year = int(part_df["_year"][0])
-                out_path = target_root / f"{year:04d}" / self._output_filename(cadence)
-                result[out_path] = part_df.drop(["_year"])
+
+                out_path = (
+                    target_root
+                    / f"{year:04d}"
+                    / self._output_filename(cadence)
+                )
+
+                result[out_path] = part_df.drop("_year")
+
             return result
 
-        # Fallback: no partitioning.
-        return {target_root / self._output_filename(cadence): df}
+        if split in {"none", "", "false"}:
+            return {
+                target_root / self._output_filename(cadence): df
+            }
+
+        raise ValueError(
+            f"Unsupported split mode {split!r}. "
+            "Expected 'month', 'day', 'year', or 'none'."
+        )
 
     def _output_filename(self, cadence: str) -> str:
-        """Return output parquet filename for a cadence token."""
-        cadence = cadence.lower().strip()
-        if cadence in {"instant", "hourly", "daily", "weekly", "monthly", "yearly"}:
-            return f"avo-{cadence}.parquet"
-        return "avo.parquet"
+        """
+        Return the complete AVO sensor/cadence parquet filename.
 
+        Examples:
+            avo-roof-hourly.parquet
+            avo-huduma-monthly.parquet
+        """
+        normalized_cadence = cadence.strip().lower()
+
+        if normalized_cadence == "annual":
+            normalized_cadence = "yearly"
+
+        valid_cadences = {
+            "instant",
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly",
+            "yearly",
+        }
+
+        if normalized_cadence not in valid_cadences:
+            raise ValueError(
+                f"Unsupported AVO cadence {cadence!r}. "
+                f"Expected one of {sorted(valid_cadences)}."
+            )
+
+        sensor_name = self.name.strip().lower()
+
+        if not sensor_name:
+            raise ValueError(
+                "AVO processor name must not be empty."
+            )
+
+        if not sensor_name.startswith("avo-"):
+            sensor_name = f"avo-{sensor_name}"
+
+        return f"{sensor_name}-{normalized_cadence}.parquet"
+    
     def _write_partition(self, out_path: Path, frames: list[pl.DataFrame]) -> None:
         """Read existing parquet once, merge, deduplicate, and write once."""
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -566,35 +762,156 @@ class AVO(Instrument):
         combined = pl_simplify_dtypes(combined)
         combined.write_parquet(out_path)
 
-    def _move_successful_files(self, paths: list[Path], archive: Path | None) -> None:
-        """Move successfully processed files to archive if requested."""
-        if archive is None:
-            return
-        archive.mkdir(parents=True, exist_ok=True)
+    def _move_successful_files(
+        self,
+        paths: list[Path],
+        archive: Path | None,
+    ) -> list[tuple[Path, str]]:
+        """
+        Move successfully processed files to the archive.
+
+        Archiving is housekeeping. Permission and filesystem errors are
+        reported but never propagated, because the parquet output has already
+        been written successfully.
+
+        Returns:
+            A list of source paths that could not be moved, together with
+            their error messages.
+        """
+        move_failures: list[tuple[Path, str]] = []
+
+        if archive is None or not paths:
+            return move_failures
+
+        try:
+            archive.mkdir(parents=True, exist_ok=True)
+        except OSError as err:
+            error = f"{type(err).__name__}: {err}"
+
+            self._warn(
+                f"[{self.name}] cannot create or access archive directory "
+                f"{archive}: {error}"
+            )
+
+            return [(path, error) for path in paths]
+
         for path in paths:
             destination = archive / path.name
-            if destination.exists():
-                destination.unlink()
-            shutil.move(str(path), str(destination))
 
-    def _move_failed_files(self, failures: list[tuple[Path, str]], issues: Path | None) -> None:
-        """Move failed files to the issues directory if requested."""
-        if not failures:
-            return
-        if issues is None:
-            return
-        issues.mkdir(parents=True, exist_ok=True)
-        for path, err in failures:
+            try:
+                if not path.exists():
+                    self._warn(
+                        f"[{self.name}] source file disappeared before "
+                        f"archiving: {path}"
+                    )
+                    continue
+
+                if destination.exists():
+                    destination.unlink()
+
+                shutil.move(
+                    str(path),
+                    str(destination),
+                )
+
+            except (OSError, shutil.Error) as err:
+                error = f"{type(err).__name__}: {err}"
+                move_failures.append((path, error))
+
+                self._warn(
+                    f"[{self.name}] data were processed successfully, but "
+                    f"the source file could not be archived: "
+                    f"{path} -> {destination} | {error}. "
+                    f"The source file remains in incoming."
+                )
+
+        return move_failures
+    
+    def _move_failed_files(
+        self,
+        failures: list[tuple[Path, str]],
+        issues: Path | None,
+    ) -> list[tuple[Path, str]]:
+        """
+        Move failed input files to the issues directory.
+
+        Moving an input file is housekeeping. Permission and filesystem
+        errors are reported but never propagated.
+
+        Returns:
+            A list of source paths that could not be moved, together with
+            their move error messages.
+        """
+        move_failures: list[tuple[Path, str]] = []
+
+        if not failures or issues is None:
+            return move_failures
+
+        try:
+            issues.mkdir(parents=True, exist_ok=True)
+        except OSError as err:
+            error = f"{type(err).__name__}: {err}"
+
+            self._warn(
+                f"[{self.name}] cannot create or access issues directory "
+                f"{issues}: {error}"
+            )
+
+            return [
+                (path, error)
+                for path, _processing_error in failures
+            ]
+
+        for path, processing_error in failures:
             destination = issues / path.name
-            if destination.exists():
-                destination.unlink()
-            shutil.move(str(path), str(destination))
-            self.logger.error("Moved failed AVO file to issues: %s (%s)", path.name, err)
 
+            try:
+                if not path.exists():
+                    self._warn(
+                        f"[{self.name}] failed source file disappeared before "
+                        f"it could be moved: {path}"
+                    )
+                    continue
+
+                if destination.exists():
+                    destination.unlink()
+
+                shutil.move(
+                    str(path),
+                    str(destination),
+                )
+
+                self.logger.error(
+                    "Moved failed AVO file to issues: %s (%s)",
+                    path.name,
+                    processing_error,
+                )
+
+            except (OSError, shutil.Error) as err:
+                move_error = f"{type(err).__name__}: {err}"
+                move_failures.append((path, move_error))
+
+                self._warn(
+                    f"[{self.name}] failed source file could not be moved "
+                    f"to issues: {path} -> {destination} | {move_error}. "
+                    f"Original processing error: {processing_error}"
+                )
+
+        return move_failures
+    
     def _announce(self, message: str) -> None:
         """Emit a visible progress message and also log it."""
         print(message, flush=True)
         try:
             self.logger.info(message)
+        except Exception:
+            pass
+
+    def _warn(self, message: str) -> None:
+        """Emit a visible warning and write it to the processor log."""
+        print(f"WARNING: {message}", flush=True)
+
+        try:
+            self.logger.warning(message)
         except Exception:
             pass

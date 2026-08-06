@@ -97,6 +97,9 @@ level2:
     tei49i:
       columns:
         - o3
+        - flowa
+        - flowb
+        - pres
     ae33/data:
       source_parquet: ae33
       columns:
