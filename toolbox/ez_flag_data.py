@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import matplotlib
@@ -13,7 +14,6 @@ try:
     from processing.neph import Neph
 except Exception:
     Neph = None  # type: ignore
-
 from ipyfilechooser import FileChooser  # type: ignore
 from IPython.display import display
 from ipywidgets import Button, HBox, Layout, Output, Text, VBox
@@ -74,7 +74,12 @@ def _order_key_items(keys: dict[str, dict[str, Any]]) -> list[tuple[str, dict[st
     return items
 
 
-def add_legend_below_axes(ax, keys: dict[str, dict[str, Any]], ncol: int | None = None, bottom_pad: float = 0.22):
+def add_legend_below_axes(
+    ax,
+    keys: dict[str, dict[str, Any]],
+    ncol: int | None = None,
+    bottom_pad: float = 0.22,
+):
     """
     Place a figure-level legend centered below the x-axis (outside plot area).
     """
@@ -128,15 +133,18 @@ def _reseed_builtin_toolbar(fig):
     tb = getattr(fig.canvas, "toolbar", None)
     if not tb:
         return
+
     try:
         # mpl>=3.6
         if hasattr(tb, "_nav_stack") and hasattr(tb._nav_stack, "clear"):
             tb._nav_stack.clear()
+
         # older mpl
         if hasattr(tb, "_views") and hasattr(tb._views, "clear"):
             tb._views.clear()
         if hasattr(tb, "_positions") and hasattr(tb._positions, "clear"):
             tb._positions.clear()
+
         # push current view as 'home'
         if hasattr(tb, "push_current"):
             tb.push_current()
@@ -164,7 +172,43 @@ def _selected_path_from_filechooser(fc: FileChooser) -> Path | None:
     raw = getattr(fc, "selected", None) or getattr(fc, "value", None)
     if raw:
         return Path(str(raw))
+
     return None
+
+
+def _refresh_variable_selector(cols: list[str]) -> str | None:
+    """
+    Refresh the variable dropdown after loading a new dataframe.
+
+    If the previously selected variable exists in the new dataframe, preserve
+    that selection and return it so the caller can explicitly re-plot it.
+
+    If it does not exist, reset the selector to None so the next variable
+    selection always emits a change event, including when the user later
+    selects a variable with the same name as in the previous file.
+    """
+    global dropdown_variable_select, variable
+
+    previous_variable = dropdown_variable_select.value
+    next_variable = previous_variable if previous_variable in cols else None
+
+    # Updating Dropdown.options can itself change Dropdown.value. Suppress the
+    # observer while rebuilding the selector, then trigger exactly one plot
+    # explicitly from on_file_chooser_read_file().
+    dropdown_variable_select.unobserve(on_dropdown_value_selected, names="value")
+    try:
+        dropdown_variable_select.options = [
+            ("— select variable —", None),
+            *[(col, col) for col in cols],
+        ]
+        dropdown_variable_select.value = next_variable
+    finally:
+        dropdown_variable_select.observe(on_dropdown_value_selected, names="value")
+
+    if next_variable is None:
+        variable = None
+
+    return next_variable
 
 
 def on_file_chooser_read_file():
@@ -209,16 +253,32 @@ def on_file_chooser_read_file():
 
             if name == "aurora3000.parquet":
                 df = Neph(name="neph").auto_flag_aurora3000_data(df)
-
     except Exception as e:
         infobox.value = f"Automatic flagging failed: {e}"
 
     # Populate variable dropdown (exclude dtm, helper columns, and any f_* columns)
-    try:
-        cols = [c for c in df.columns if c not in ("dtm", "_flag_", "_color_") and not c.startswith("f_")]
-        dropdown_variable_select.options = cols
-    except Exception:
-        pass
+    cols = [
+        c
+        for c in df.columns
+        if c not in ("dtm", "_flag_", "_color_") and not c.startswith("f_")
+    ]
+
+    selected_variable = _refresh_variable_selector(cols)
+
+    if selected_variable is not None:
+        # The dropdown may legitimately keep the same value across files.
+        # That does not emit an ipywidgets change event, so explicitly plot
+        # the preserved selection against the freshly loaded dataframe.
+        on_dropdown_value_selected(
+            SimpleNamespace(old=None, new=selected_variable)
+        )
+    else:
+        # No valid previous selection: clear the stale plot and leave the
+        # dropdown at None so any subsequent selection fires immediately.
+        ax.cla()
+        ax.set_title(f"ezFlag - Interactive data flagging\n{selected_file}")
+        fig.canvas.draw_idle()
+        _reseed_builtin_toolbar(fig)
 
     infobox.value = f"Opened: {selected_file} | shape={df.shape}"
 
@@ -237,7 +297,11 @@ def on_dropdown_value_selected(change):
     ax.cla()
     ax.set_title(f"ezFlag - Interactive data flagging\n{selected_file}")
 
-    if not variable or variable not in df.columns or df.select(pl.col(variable).count()).item() == 0:
+    if (
+        not variable
+        or variable not in df.columns
+        or df.select(pl.col(variable).count()).item() == 0
+    ):
         infobox.value = f"No data available for {variable}"
         return
 
@@ -245,7 +309,9 @@ def on_dropdown_value_selected(change):
     f_variable = f"{flag_col_prefix}{variable}"
 
     # Base color
-    df = df.with_columns(pl.lit(keys["escape"]["color"], dtype=pl.Utf8).alias(colors))
+    df = df.with_columns(
+        pl.lit(keys["escape"]["color"], dtype=pl.Utf8).alias(colors)
+    )
 
     # Swap previously selected variable's plotting flag back into its f_<old>
     if flags in df.columns and old is not None:
@@ -254,7 +320,6 @@ def on_dropdown_value_selected(change):
     # Bring selected variable's flags into the plotting alias
     if f_variable in df.columns:
         df = df.rename({f_variable: flags})
-
         if colors in df.columns:
             for k in keys.keys():
                 if keys[k]["flag"] is not None:
@@ -265,9 +330,18 @@ def on_dropdown_value_selected(change):
                         .alias(colors)
                     )
     else:
-        df = df.with_columns(pl.lit(keys["escape"]["flag"], dtype=pl.Int8).alias(flags))
+        df = df.with_columns(
+            pl.lit(keys["escape"]["flag"], dtype=pl.Int8).alias(flags)
+        )
 
-    sc = ax.scatter(df[dtm], df[variable], c=df[colors].to_list(), alpha=0.7, s=10, picker=5)
+    sc = ax.scatter(
+        df[dtm],
+        df[variable],
+        c=df[colors].to_list(),
+        alpha=0.7,
+        s=10,
+        picker=5,
+    )
 
     add_legend_below_axes(ax, keys, bottom_pad=0.15)
 
@@ -285,44 +359,67 @@ def on_picked_flag_point(event):
     """
     global df, infobox
 
-    infobox.value = f"Zoom OFF & key = '{event.mouseevent.key}'. Point with index = {event.ind} selected."
+    infobox.value = (
+        f"Zoom OFF & key = '{event.mouseevent.key}'. "
+        f"Point with index = {event.ind} selected."
+    )
+
     if ax.get_navigate_mode() is None:
         if keys.get(event.mouseevent.key):
             flag = keys[event.mouseevent.key]["flag"]
             color = keys[event.mouseevent.key]["color"]
+
             df[event.ind, flags] = flag
             df[event.ind, colors] = color
+
             sc.set_color(df[colors].to_list())
             fig.canvas.draw_idle()
         else:
-            infobox.value = f"Zoom OFF & point picked, but key '{event.mouseevent.key}' not assigned."
+            infobox.value = (
+                f"Zoom OFF & point picked, but key "
+                f"'{event.mouseevent.key}' not assigned."
+            )
 
 
 def on_key_pressed_flag_points(event):
     global df, variable, infobox
 
     infobox.value = f"Zoom ON & key = '{event.key}' pressed."
+
     if ax.get_navigate_mode() == "ZOOM":
         if keys.get(event.key):
             flag = keys[event.key]["flag"]
             color = keys[event.key]["color"]
             meaning = keys[event.key]["meaning"]
+
             infobox.value = f"flag = {flag} ({meaning})"
             zoom_xlim = ax.get_xlim()
-            zoom_xlim = [matplotlib.dates.num2date(x, tz=None).replace(tzinfo=None) for x in zoom_xlim]
+            zoom_xlim = [
+                matplotlib.dates.num2date(x, tz=None).replace(tzinfo=None)
+                for x in zoom_xlim
+            ]
             zoom_ylim = ax.get_ylim()
+
             condition = (
                 (pl.col(dtm).dt.replace_time_zone(None) > zoom_xlim[0])
                 & (pl.col(dtm).dt.replace_time_zone(None) < zoom_xlim[1])
                 & (pl.col(variable) > zoom_ylim[0])
                 & (pl.col(variable) < zoom_ylim[1])
             )
+
             df = df.with_columns(
                 [
-                    pl.when(condition).then(pl.lit(color)).otherwise(pl.col(colors)).alias(colors),
-                    pl.when(condition).then(pl.lit(flag)).otherwise(pl.col(flags)).alias(flags),
+                    pl.when(condition)
+                    .then(pl.lit(color))
+                    .otherwise(pl.col(colors))
+                    .alias(colors),
+                    pl.when(condition)
+                    .then(pl.lit(flag))
+                    .otherwise(pl.col(flags))
+                    .alias(flags),
                 ]
             )
+
             sc.set_color(df[colors].to_list())
             fig.canvas.draw_idle()
         else:
@@ -360,6 +457,7 @@ def on_clicked_save_data(event):
             if f_col_name in df.columns:
                 df = df.drop(f_col_name)
             df = df.rename({flags: f_col_name})
+
         if colors in df.columns:
             df = df.drop(colors)
 
@@ -370,8 +468,15 @@ def on_clicked_save_data(event):
 
     if new_file_on_save:
         if source_file.exists():
-            infobox.value = f"'{source_file.name}' exists already. A unique name will be created."
-            source_file = source_file.with_name(f"{source_file.stem}-{datetime.now().strftime('%Y%m%d%H%M%S')}{source_file.suffix}")
+            infobox.value = (
+                f"'{source_file.name}' exists already. "
+                "A unique name will be created."
+            )
+            source_file = source_file.with_name(
+                f"{source_file.stem}-"
+                f"{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                f"{source_file.suffix}"
+            )
 
     source_file.parent.mkdir(parents=True, exist_ok=True)
     infobox.value = f"Saving to '{source_file}'."
@@ -387,11 +492,13 @@ def on_clicked_save_data(event):
         fig.canvas.draw_idle()
     except Exception:
         pass
+
     return
 
 
 def ez_flag_data(design: int = 2, width: int = 10, height: int = 5):
-    global file_chooser, dropdown_variable_select, button_save_data, infobox, layout, fig, ax
+    global file_chooser, dropdown_variable_select, button_save_data
+    global infobox, layout, fig, ax
 
     fig = plt.figure(figsize=(width, height))
     ax = fig.subplots()
@@ -403,18 +510,46 @@ def ez_flag_data(design: int = 2, width: int = 10, height: int = 5):
         filter_pattern="*.parquet",
         layout=Layout(width="700px"),
     )
-    dropdown_variable_select = Dropdown(value=None, options=[], description="Variable")
-    button_save_data = Button(description="Save data", layout=Layout(width="80px"))
+
+    dropdown_variable_select = Dropdown(
+        value=None,
+        options=[("— select variable —", None)],
+        description="Variable",
+    )
+
+    button_save_data = Button(
+        description="Save data",
+        layout=Layout(width="80px"),
+    )
 
     if design == 1:
         infobox = Text(description="NB", layout=Layout(width="700px"))
-        layout = VBox([file_chooser, dropdown_variable_select, infobox, button_save_data, Output()])
+        layout = VBox(
+            [
+                file_chooser,
+                dropdown_variable_select,
+                infobox,
+                button_save_data,
+                Output(),
+            ]
+        )
     else:
         infobox = Text(layout=Layout(width="800px"))
-        layout = VBox([file_chooser, dropdown_variable_select, HBox([button_save_data, infobox]), Output()])
+        layout = VBox(
+            [
+                file_chooser,
+                dropdown_variable_select,
+                HBox([button_save_data, infobox]),
+                Output(),
+            ]
+        )
 
     button_save_data.on_click(on_clicked_save_data)
-    dropdown_variable_select.observe(on_dropdown_value_selected, names="value")
+    dropdown_variable_select.observe(
+        on_dropdown_value_selected,
+        names="value",
+    )
+
     fig.canvas.mpl_connect("pick_event", on_picked_flag_point)
     fig.canvas.mpl_connect("key_press_event", on_key_pressed_flag_points)
 

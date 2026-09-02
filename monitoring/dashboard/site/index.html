@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>GAW Kenya data dashboard</title>
+  <link rel="stylesheet" href="assets/dashboard.css">
+  <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" defer></script>
+  <script src="assets/dashboard.js" defer></script>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">GAW Kenya</p>
+        <h1 id="page-title">Data dashboard</h1>
+        <p id="page-subtitle" class="subtitle">Current Level-1 parquet files</p>
+      </div>
+      <div class="snapshot" aria-label="Dashboard snapshot metadata">
+        <div><span>Period</span><strong id="snapshot-period">—</strong></div>
+        <div><span>Generated</span><strong id="snapshot-generated">—</strong></div>
+        <div><span>Data commit</span><strong id="snapshot-commit">—</strong></div>
+      </div>
+    </header>
+
+    <section class="controls card" aria-label="Dashboard controls">
+      <label>
+        <span>Station</span>
+        <select id="station-select"></select>
+      </label>
+      <label>
+        <span>Source</span>
+        <select id="source-select"></select>
+      </label>
+      <label>
+        <span>Variable</span>
+        <select id="variable-select"></select>
+      </label>
+    </section>
+
+    <section class="card table-card" aria-labelledby="summary-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="summary-heading">Availability summary</h2>
+          <p id="station-summary" class="muted"></p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="summary-table">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Source name</th>
+              <th>Latest entry</th>
+              <th class="numeric">Number of rows</th>
+              <th class="numeric">Expected number of rows</th>
+              <th class="numeric">Availability (%)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="empty-table" class="empty" hidden>No current Level-1 parquet variables were found for this station.</p>
+    </section>
+
+    <section class="card plot-card" aria-labelledby="plot-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="plot-heading">Time series</h2>
+          <p id="plot-source" class="muted"></p>
+        </div>
+      </div>
+      <div id="time-series" class="plot" role="img" aria-label="Selected Level-1 time series"></div>
+      <p id="empty-plot" class="empty" hidden>Select a source and variable to display a time series.</p>
+    </section>
+
+    <section id="errors-card" class="card errors-card" hidden aria-labelledby="errors-heading">
+      <h2 id="errors-heading">Build warnings</h2>
+      <ul id="errors-list"></ul>
+    </section>
+
+    <footer>
+      <span id="footer-source"></span>
+      <span>Plots use downsampled display data; statistics use the complete current parquet file.</span>
+    </footer>
+  </main>
+</body>
+</html>

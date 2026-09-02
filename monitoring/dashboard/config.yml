@@ -1,0 +1,61 @@
+dashboard:
+  title: GAW Kenya data dashboard
+  subtitle: Current Level-1 parquet files
+  level: level1
+  timezone: UTC
+  max_plot_points: 3000
+  cadence_sample_rows: 10000
+  source_repository: MeteoSwiss/gawkenyadata
+
+  # The Level-1 writer normally uses dtm. The remaining names are fallbacks
+  # for older or externally produced parquet files.
+  default_time_columns:
+    - dtm
+    - timestamp
+    - datetime
+    - date_time
+
+  # Numeric housekeeping / QA columns matching these expressions are not
+  # treated as plottable observation variables unless explicitly listed under
+  # a source override below.
+  exclude_columns:
+    - '(?i)^f_'
+    - '(?i)^flags?$'
+    - '(?i)^row_?id$'
+    - '(?i)^id$'
+    - '(?i)^checksum$'
+    - '(?i)^status$'
+    - '(?i)^serial(_?number)?$'
+    - '(?i)^year$'
+    - '(?i)^month$'
+    - '(?i)^day$'
+
+stations:
+  mkn:
+    label: MKN
+  nrb:
+    label: NRB
+  buc:
+    label: BUC
+
+# Optional source-specific overrides. Keys can be a file stem (applies at all
+# stations), a source id relative to the YYYY/MM directory, or
+# <station>/<source-id> for the most specific override.
+#
+# A cadence override is deliberately dashboard-specific. Do not reuse the
+# existing `expected:` values in mch-*.yml: those describe expected input
+# files, not necessarily the temporal resolution of observations inside the
+# parquet file.
+source_overrides: {}
+# Examples:
+# source_overrides:
+#   ae33:
+#     cadence: 1m
+#     time_column: dtm
+#   mkn/ae33:
+#     variables: [BC1, BC2, BC3, BC4, BC5, BC6]
+#   nrb/diagnostic-source:
+#     publish: false
+#   some-source:
+#     exclude_columns:
+#       - '(?i)^diagnostic_'
