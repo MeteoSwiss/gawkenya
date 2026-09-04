@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "title": "GAW Kenya data dashboard",
+  "subtitle": "Current Level-1 parquet files",
+  "level": "level1",
+  "timezone": "UTC",
+  "period": "2026-09",
+  "generated_at": "2026-09-04T13:12:47Z",
+  "source_repository": "MeteoSwiss/gawkenyadata",
+  "data_commit": "93baa8ed5082624521c022f9ebb32de2b6170061",
+  "generator_commit": "cc7230cf2a3d360035c31b477ae1805408304950",
+  "stations": [
+    {
+      "id": "mkn",
+      "label": "MKN",
+      "data_file": "data/mkn.json",
+      "file_count": 7,
+      "published_source_count": 7,
+      "variable_count": 271,
+      "error_count": 0
+    },
+    {
+      "id": "nrb",
+      "label": "NRB",
+      "data_file": "data/nrb.json",
+      "file_count": 15,
+      "published_source_count": 15,
+      "variable_count": 326,
+      "error_count": 0
+    },
+    {
+      "id": "buc",
+      "label": "BUC",
+      "data_file": "data/buc.json",
+      "file_count": 0,
+      "published_source_count": 0,
+      "variable_count": 0,
+      "error_count": 0
+    }
+  ],
+  "error_count": 0
+}

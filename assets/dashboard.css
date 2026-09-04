@@ -1,0 +1,132 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #17212b;
+  background: #f4f6f8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, select { font: inherit; }
+
+.page-shell {
+  width: min(1500px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.page-header {
+  display: flex;
+  gap: 32px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #52606d;
+}
+
+h1 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.8rem); line-height: 1.05; }
+h2 { margin: 0; font-size: 1.1rem; }
+.subtitle { margin: 8px 0 0; color: #52606d; }
+.muted { margin: 5px 0 0; color: #66737f; font-size: 0.9rem; }
+
+.snapshot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, auto));
+  gap: 8px;
+}
+.snapshot div {
+  padding: 9px 12px;
+  border: 1px solid #dce2e7;
+  border-radius: 8px;
+  background: #fff;
+}
+.snapshot span, .snapshot strong { display: block; }
+.snapshot span { color: #697681; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.snapshot strong { margin-top: 3px; font-size: 0.88rem; font-weight: 650; }
+
+.card {
+  border: 1px solid #dce2e7;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 33, 43, 0.04);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.controls label > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #52606d;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+select {
+  width: 100%;
+  padding: 9px 34px 9px 10px;
+  border: 1px solid #c8d0d8;
+  border-radius: 7px;
+  background: Canvas;
+  color: CanvasText;
+}
+select:focus { outline: 2px solid Highlight; outline-offset: 1px; }
+
+.table-card, .plot-card, .errors-card { margin-bottom: 16px; }
+.section-heading { display: flex; justify-content: space-between; padding: 16px 18px 12px; }
+.table-wrap { overflow-x: auto; border-top: 1px solid #e5e9ed; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th, td { padding: 10px 12px; border-bottom: 1px solid #edf0f2; text-align: left; white-space: nowrap; }
+th { position: sticky; top: 0; z-index: 1; background: #f8fafb; color: #4a5864; font-size: 0.76rem; letter-spacing: 0.02em; }
+th.numeric, td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: #f5f8fa; }
+tbody tr.selected { background: #edf4f8; }
+td.source { max-width: 520px; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; }
+
+.plot { width: 100%; min-height: 460px; border-top: 1px solid #e5e9ed; }
+.empty { margin: 0; padding: 24px 18px; color: #697681; border-top: 1px solid #e5e9ed; }
+.errors-card { padding: 16px 18px; }
+.errors-card ul { margin-bottom: 0; padding-left: 22px; }
+.errors-card li { margin: 6px 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; }
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 4px 2px;
+  color: #6c7781;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 850px) {
+  .page-header { align-items: flex-start; flex-direction: column; }
+  .snapshot { width: 100%; grid-template-columns: 1fr; }
+  .controls { grid-template-columns: 1fr; }
+  .page-shell { width: min(100% - 20px, 1500px); padding-top: 20px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { color: #e6edf3; background: #0d1117; }
+  .subtitle, .eyebrow, .muted, footer { color: #9ba8b4; }
+  .card, .snapshot div { background: #161b22; border-color: #30363d; }
+  .snapshot div { color: #e6edf3; }
+  .snapshot span { color: #9ba8b4; }
+  th { background: #1b222b; color: #b9c3cc; }
+  th, td, .table-wrap, .plot, .empty { border-color: #30363d; }
+  tbody tr:hover { background: #1b222b; }
+  tbody tr.selected { background: #202b36; }
+  select { border-color: #46505a; }
+}
