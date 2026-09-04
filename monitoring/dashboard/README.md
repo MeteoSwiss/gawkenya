@@ -21,20 +21,56 @@ The summary table contains one row per published variable with:
 - variable
 - source name (the parquet path relative to the `gawkenyadata` root)
 - latest entry
-- number of rows
+- number of physical rows
+- duplicate timestamps
 - expected number of rows
 - availability (%)
+
+Repeated timestamps are reported explicitly. Availability is based on the
+number of **unique non-null timestamps**, not on the physical parquet row count,
+so repeated records do not inflate availability. It is intentionally not capped
+at 100%; a value above 100% after de-duplication indicates that the configured
+or inferred cadence deserves inspection.
 
 Expected rows are calculated from the beginning of the current UTC month to the
 build time. Cadence comes from an explicit source override when configured;
 otherwise it is inferred as the median positive timestamp interval from the
-newest sample of timestamps. Availability is `number_rows / expected_rows *
-100` and is intentionally not capped at 100%, so an incorrect cadence or
-unexpected duplicate/faster observations remain visible.
+newest sample of timestamps.
 
 Statistics use the entire parquet file. Plot data are downsampled for browser
 display (`max_plot_points`, default 3000 per source), and the newest record is
-always included. Raw parquet files are never copied into the generated site.
+always included. If a timestamp is repeated, the last record is retained in the
+plot. Raw parquet files are never copied into the generated site.
+
+## Quality-flag colours
+
+The dashboard follows the same saved per-variable flag convention and colour
+mapping as `ez_flag_data.py`. For a variable named `x`, the builder looks for a
+flag column named `f_x` by default. Flag columns themselves are not offered as
+plottable variables.
+
+The plot uses coloured scatter points:
+
+| Flag | Meaning | Colour |
+|---:|---|---|
+| null / absent / other | unflagged | magenta |
+| 0 | valid | blue |
+| 1 | invalid | red |
+| 2 | uncertain | gray |
+| 3 | zero check | cyan |
+| 4 | span check | brown |
+
+If a source has no matching flag column, its plotted points are shown as
+unflagged (magenta). The flag-column prefix defaults to `f_` and can be changed
+globally with `dashboard.flag_prefix` or for a source with `flag_prefix`.
+Individual variables can also be mapped explicitly:
+
+```yaml
+source_overrides:
+  some-source:
+    flag_columns:
+      temperature: qc_temperature
+```
 
 ## Configuration
 
@@ -45,7 +81,7 @@ one of:
 - a source id relative to the monthly directory
 - `<station>/<source-id>`, e.g. `mkn/ae33`
 
-Supported source overrides are:
+Supported source overrides include:
 
 ```yaml
 source_overrides:

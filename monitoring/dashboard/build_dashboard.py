@@ -22,7 +22,7 @@ from typing import Any, Iterable
 import polars as pl
 import yaml
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 def parse_duration_seconds(value: Any) -> float | None:
@@ -245,19 +245,63 @@ def clean_number(value: Any) -> int | float | None:
     return numeric
 
 
+def clean_flag(value: Any) -> int | None:
+    """Return an integer quality flag when possible, otherwise None."""
+    if value is None:
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(numeric) or not numeric.is_integer():
+        return None
+    return int(numeric)
+
+
+def flag_columns_for_variables(
+    schema: dict[str, pl.DataType],
+    variables: list[str],
+    dashboard_config: dict[str, Any],
+    override: dict[str, Any],
+) -> dict[str, str]:
+    """Resolve saved per-variable quality flags (default: f_<variable>).
+
+    A source may override individual flag columns through `flag_columns` and/or
+    the prefix through `flag_prefix`. Missing flag columns are allowed; the
+    corresponding plotted points are treated as unflagged.
+    """
+    prefix = str(override.get("flag_prefix", dashboard_config.get("flag_prefix", "f_")))
+    explicit = override.get("flag_columns", {}) or {}
+    resolved: dict[str, str] = {}
+    for variable in variables:
+        candidate = str(explicit.get(variable, f"{prefix}{variable}"))
+        if candidate in schema:
+            resolved[variable] = candidate
+    return resolved
+
+
 def sample_series(
     lazy: pl.LazyFrame,
     time_expr: pl.Expr,
     variables: list[str],
+    flag_columns: dict[str, str],
     unique_timestamp_count: int,
     max_points: int,
-) -> tuple[list[str], dict[str, list[int | float | None]]]:
+) -> tuple[
+    list[str],
+    dict[str, list[int | float | None]],
+    dict[str, list[int | None]],
+]:
     if not variables or unique_timestamp_count <= 0:
-        return [], {name: [] for name in variables}
+        return [], {name: [] for name in variables}, {}
 
     stride = max(1, int(math.ceil(unique_timestamp_count / max(1, max_points))))
     projection = [time_expr]
     projection.extend(pl.col(name).cast(pl.Float64, strict=False).alias(name) for name in variables)
+    for variable, flag_column in flag_columns.items():
+        projection.append(
+            pl.col(flag_column).cast(pl.Float64, strict=False).alias(f"_flag__{variable}")
+        )
 
     # Level-1 sources are expected to have one observation record per timestamp.
     # If a file contains repeated timestamps, keep the last record for display.
@@ -288,9 +332,13 @@ def sample_series(
 
     # _dt is filtered non-null above, so x should have the same length as sampled.
     series: dict[str, list[int | float | None]] = {}
+    flags: dict[str, list[int | None]] = {}
     for name in variables:
         series[name] = [clean_number(value) for value in sampled.get_column(name).to_list()]
-    return x, series
+        flag_alias = f"_flag__{name}"
+        if flag_alias in sampled.columns:
+            flags[name] = [clean_flag(value) for value in sampled.get_column(flag_alias).to_list()]
+    return x, series, flags
 
 
 def build_source(
@@ -314,6 +362,7 @@ def build_source(
     time_column = find_time_column(schema, override, dashboard_config)
     time_expr = time_expression(time_column, schema[time_column])
     variables = select_variables(schema, time_column, dashboard_config, override)
+    flag_columns = flag_columns_for_variables(schema, variables, dashboard_config, override)
 
     row_count = int(lazy.select(pl.len().alias("n")).collect().item())
     time_lazy = lazy.select(time_expr).filter(pl.col("_dt").is_not_null())
@@ -344,10 +393,11 @@ def build_source(
     if expected_rows and expected_rows > 0:
         availability = (unique_timestamp_count / expected_rows) * 100.0
 
-    timestamps, series = sample_series(
+    timestamps, series, flags = sample_series(
         lazy,
         time_expr,
         variables,
+        flag_columns,
         unique_timestamp_count,
         int(dashboard_config.get("max_plot_points", 3000)),
     )
@@ -368,6 +418,8 @@ def build_source(
         "availability_pct": round(availability, 3) if availability is not None else None,
         "timestamps": timestamps,
         "variables": series,
+        "flags": flags,
+        "flag_columns": flag_columns,
     }
 
     summary = [

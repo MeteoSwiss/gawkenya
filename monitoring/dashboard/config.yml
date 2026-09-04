@@ -6,6 +6,8 @@ dashboard:
   max_plot_points: 3000
   cadence_sample_rows: 10000
   source_repository: MeteoSwiss/gawkenyadata
+  # Saved per-variable quality flags follow the ez_flag_data.py convention.
+  flag_prefix: f_
 
   # The Level-1 writer normally uses dtm. The remaining names are fallbacks
   # for older or externally produced parquet files.

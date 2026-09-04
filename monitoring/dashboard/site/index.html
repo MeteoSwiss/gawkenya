@@ -176,6 +176,25 @@ function selectSeries(sourceId, variable) {
   renderPlot();
 }
 
+const FLAG_STYLES = [
+  { value: 0, label: "0 – valid", color: "blue" },
+  { value: 1, label: "1 – invalid", color: "red" },
+  { value: 2, label: "2 – uncertain", color: "gray" },
+  { value: 3, label: "3 – zero check", color: "cyan" },
+  { value: 4, label: "4 – span check", color: "brown" },
+];
+const UNFLAGGED_STYLE = { value: null, label: "Unflagged / other", color: "magenta" };
+
+function normalizedFlag(value) {
+  const numeric = Number(value);
+  return value !== null && value !== undefined && Number.isInteger(numeric) ? numeric : null;
+}
+
+function flagStyle(value) {
+  const flag = normalizedFlag(value);
+  return FLAG_STYLES.find((item) => item.value === flag) ?? UNFLAGGED_STYLE;
+}
+
 function renderPlot() {
   const container = el("time-series");
   const empty = el("empty-plot");
@@ -197,7 +216,9 @@ function renderPlot() {
   const duplicateText = source.duplicate_timestamps
     ? `; ${formatInteger(source.duplicate_timestamps)} duplicate timestamp(s)`
     : "";
-  el("plot-source").textContent = `${source.source_name}${cadenceText}${duplicateText}`;
+  const flagColumn = source.flag_columns?.[state.variable];
+  const flagText = flagColumn ? `; flag ${flagColumn}` : "; no flag column";
+  el("plot-source").textContent = `${source.source_name}${cadenceText}${duplicateText}${flagText}`;
 
   if (!window.Plotly) {
     empty.hidden = false;
@@ -206,28 +227,45 @@ function renderPlot() {
     return;
   }
 
-  const trace = {
-    type: "scattergl",
-    mode: "lines",
-    x: source.timestamps,
-    y: values,
-    name: state.variable,
-    connectgaps: false,
-    hovertemplate: "%{x}<br>%{y}<extra></extra>",
-  };
+  const flags = source.flags?.[state.variable] ?? Array(values.length).fill(null);
+  const groups = new Map();
+  const styleOrder = [...FLAG_STYLES, UNFLAGGED_STYLE];
+  for (const style of styleOrder) groups.set(style.label, { style, x: [], y: [] });
+
+  for (let i = 0; i < values.length; i += 1) {
+    const style = flagStyle(flags[i]);
+    const group = groups.get(style.label);
+    group.x.push(source.timestamps[i]);
+    group.y.push(values[i]);
+  }
+
+  const traces = styleOrder
+    .map((style) => groups.get(style.label))
+    .filter((group) => group.x.length > 0)
+    .map((group) => ({
+      type: "scattergl",
+      mode: "markers",
+      x: group.x,
+      y: group.y,
+      name: group.style.label,
+      marker: { color: group.style.color, size: 6, opacity: 0.7 },
+      hovertemplate: `%{x}<br>%{y}<br>${group.style.label}<extra></extra>`,
+    }));
+
   const darkMode = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
   const layout = {
     template: darkMode ? "plotly_dark" : "plotly_white",
     margin: { l: 72, r: 28, t: 24, b: 68 },
     xaxis: { title: "Time (UTC)", type: "date", rangeslider: { visible: false } },
     yaxis: { title: state.variable, automargin: true },
-    hovermode: "x",
-    showlegend: false,
+    hovermode: "closest",
+    showlegend: true,
+    legend: { orientation: "h", y: 1.02, yanchor: "bottom", x: 0, xanchor: "left" },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
   };
   const config = { responsive: true, displaylogo: false, scrollZoom: true };
-  Plotly.react(container, [trace], layout, config);
+  Plotly.react(container, traces, layout, config);
 }
 
 function renderStationSummary() {
