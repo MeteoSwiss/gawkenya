@@ -22,7 +22,7 @@ from typing import Any, Iterable
 import polars as pl
 import yaml
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def parse_duration_seconds(value: Any) -> float | None:
@@ -249,23 +249,32 @@ def sample_series(
     lazy: pl.LazyFrame,
     time_expr: pl.Expr,
     variables: list[str],
-    row_count: int,
+    unique_timestamp_count: int,
     max_points: int,
 ) -> tuple[list[str], dict[str, list[int | float | None]]]:
-    if not variables or row_count <= 0:
+    if not variables or unique_timestamp_count <= 0:
         return [], {name: [] for name in variables}
 
-    stride = max(1, int(math.ceil(row_count / max(1, max_points))))
+    stride = max(1, int(math.ceil(unique_timestamp_count / max(1, max_points))))
     projection = [time_expr]
     projection.extend(pl.col(name).cast(pl.Float64, strict=False).alias(name) for name in variables)
-    source = lazy.select(projection).filter(pl.col("_dt").is_not_null())
+
+    # Level-1 sources are expected to have one observation record per timestamp.
+    # If a file contains repeated timestamps, keep the last record for display.
+    # The duplicate count is reported separately and availability is based on the
+    # number of unique timestamps, so duplicate records cannot inflate it.
+    source = (
+        lazy.select(projection)
+        .filter(pl.col("_dt").is_not_null())
+        .unique(subset=["_dt"], keep="last")
+        .sort("_dt")
+    )
 
     sampled = (
         source.with_row_index("_sample_row")
         .filter((pl.col("_sample_row") % stride) == 0)
         .drop("_sample_row")
         .collect()
-        .sort("_dt")
     )
 
     # Always include the newest observation, even when it falls between sampled rows.
@@ -308,7 +317,16 @@ def build_source(
 
     row_count = int(lazy.select(pl.len().alias("n")).collect().item())
     time_lazy = lazy.select(time_expr).filter(pl.col("_dt").is_not_null())
-    latest = time_lazy.select(pl.col("_dt").max()).collect().item()
+    time_stats = time_lazy.select(
+        pl.len().alias("timestamp_rows"),
+        pl.col("_dt").n_unique().alias("unique_timestamps"),
+        pl.col("_dt").max().alias("latest"),
+    ).collect().row(0, named=True)
+    timestamp_rows = int(time_stats["timestamp_rows"])
+    unique_timestamp_count = int(time_stats["unique_timestamps"])
+    duplicate_timestamp_count = max(0, timestamp_rows - unique_timestamp_count)
+    null_timestamp_count = max(0, row_count - timestamp_rows)
+    latest = time_stats["latest"]
 
     configured_cadence = parse_duration_seconds(override.get("cadence"))
     if configured_cadence is not None:
@@ -324,13 +342,13 @@ def build_source(
     expected_rows = expected_rows_for_month(now, cadence_seconds)
     availability = None
     if expected_rows and expected_rows > 0:
-        availability = (row_count / expected_rows) * 100.0
+        availability = (unique_timestamp_count / expected_rows) * 100.0
 
     timestamps, series = sample_series(
         lazy,
         time_expr,
         variables,
-        row_count,
+        unique_timestamp_count,
         int(dashboard_config.get("max_plot_points", 3000)),
     )
 
@@ -343,6 +361,9 @@ def build_source(
         "cadence_source": cadence_source,
         "latest_entry": iso_utc(latest),
         "number_rows": row_count,
+        "unique_timestamps": unique_timestamp_count,
+        "duplicate_timestamps": duplicate_timestamp_count,
+        "null_timestamps": null_timestamp_count,
         "expected_rows": expected_rows,
         "availability_pct": round(availability, 3) if availability is not None else None,
         "timestamps": timestamps,
@@ -356,6 +377,9 @@ def build_source(
             "source_name": source_name,
             "latest_entry": iso_utc(latest),
             "number_rows": row_count,
+            "unique_timestamps": unique_timestamp_count,
+            "duplicate_timestamps": duplicate_timestamp_count,
+            "null_timestamps": null_timestamp_count,
             "expected_rows": expected_rows,
             "availability_pct": round(availability, 3) if availability is not None else None,
         }
@@ -439,6 +463,18 @@ def build_dashboard(
     shutil.copytree(static_dir, output)
     (output / ".nojekyll").touch()
     (output / "data").mkdir(parents=True, exist_ok=True)
+
+    # Give static assets a generator-version query string. GitHub Pages may
+    # cache CSS/JS aggressively in browsers; changing the generator commit
+    # forces clients to retrieve updated front-end assets after a deployment.
+    asset_version = (generator_commit or str(SCHEMA_VERSION))[:12]
+    index_html_path = output / "index.html"
+    index_html_path.write_text(
+        index_html_path.read_text(encoding="utf-8").replace(
+            "__ASSET_VERSION__", asset_version
+        ),
+        encoding="utf-8",
+    )
 
     station_index: list[dict[str, Any]] = []
     total_errors = 0
