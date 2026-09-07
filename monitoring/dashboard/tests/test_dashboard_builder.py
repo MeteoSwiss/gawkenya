@@ -39,6 +39,8 @@ def test_build_dashboard_current_partition(tmp_path: Path):
             ],
             "BC1": [1.0, 2.0, 3.0, 4.0, 5.0],
             "BC2": [2.0, 3.0, 4.0, 5.0, 6.0],
+            "f_BC1": [None, 0, 1, 2, 3],
+            "f_BC2": [4, 4, 0, 0, 0],
             "status": [0, 0, 0, 0, 0],
         }
     )
@@ -54,7 +56,7 @@ dashboard:
   max_plot_points: 100
   cadence_sample_rows: 100
   default_time_columns: [dtm]
-  exclude_columns: ['(?i)^status$']
+  exclude_columns: ['(?i)^f_', '(?i)^status$']
 stations:
   mkn: {label: MKN}
 source_overrides: {}
@@ -88,11 +90,15 @@ source_overrides: {}
     assert source["unique_timestamps"] == 5
     assert source["duplicate_timestamps"] == 0
     assert source["null_timestamps"] == 0
+    assert source["available_slots"] == 5
     assert source["expected_rows"] == 5
     assert source["availability_pct"] == 100.0
     assert source["cadence_source"] == "median"
     assert source["cadence_seconds"] == 60.0
     assert set(source["variables"]) == {"BC1", "BC2"}
+    assert source["flag_columns"] == {"BC1": "f_BC1", "BC2": "f_BC2"}
+    assert source["flags"]["BC1"] == [None, 0, 1, 2, 3]
+    assert source["flags"]["BC2"] == [4, 4, 0, 0, 0]
     assert len(source["timestamps"]) == 5
 
 
@@ -111,6 +117,7 @@ def test_duplicate_timestamps_do_not_inflate_availability(tmp_path: Path):
                 datetime(2026, 8, 1, 0, 4, tzinfo=UTC),
             ],
             "BC1": [1.0, 2.0, 3.0, 30.0, 4.0, 5.0],
+            "f_BC1": [0, 0, 1, 2, 0, 0],
         }
     )
     frame.write_parquet(month / "ae33.parquet")
@@ -124,7 +131,7 @@ dashboard:
   max_plot_points: 100
   cadence_sample_rows: 100
   default_time_columns: [dtm]
-  exclude_columns: []
+  exclude_columns: ['(?i)^f_']
 stations:
   mkn: {label: MKN}
 source_overrides: {}
@@ -144,8 +151,118 @@ source_overrides: {}
     assert source["number_rows"] == 6
     assert source["unique_timestamps"] == 5
     assert source["duplicate_timestamps"] == 1
+    assert source["available_slots"] == 5
     assert source["expected_rows"] == 5
     assert source["availability_pct"] == 100.0
     assert len(source["timestamps"]) == 5
     duplicate_index = source["timestamps"].index("2026-08-01T00:02:00Z")
     assert source["variables"]["BC1"][duplicate_index] == 30.0
+    # The value and its saved flag are de-duplicated as one record; keep="last"
+    # therefore retains the second 00:02 observation and its flag value 2.
+    assert source["flags"]["BC1"][duplicate_index] == 2
+
+
+def test_distinct_oversampled_rows_do_not_inflate_availability(tmp_path: Path):
+    data_root = tmp_path / "gawkenyadata"
+    month = data_root / "level1" / "mkn" / "2026" / "08"
+    month.mkdir(parents=True)
+    frame = pl.DataFrame(
+        {
+            "dtm": [
+                datetime(2026, 8, 1, 0, 0, 0, tzinfo=UTC),
+                datetime(2026, 8, 1, 0, 0, 30, tzinfo=UTC),
+                datetime(2026, 8, 1, 0, 1, 0, tzinfo=UTC),
+                datetime(2026, 8, 1, 0, 1, 30, tzinfo=UTC),
+                datetime(2026, 8, 1, 0, 2, 0, tzinfo=UTC),
+            ],
+            "x": [1.0, 2.0, 3.0, 4.0, 5.0],
+        }
+    )
+    frame.write_parquet(month / "source.parquet")
+    config = tmp_path / "config.yml"
+    config.write_text(
+        """
+dashboard:
+  title: Test dashboard
+  level: level1
+  timezone: UTC
+  max_plot_points: 100
+  cadence_sample_rows: 100
+  default_time_columns: [dtm]
+  exclude_columns: []
+stations:
+  mkn: {label: MKN}
+source_overrides:
+  source:
+    cadence: 1m
+""",
+        encoding="utf-8",
+    )
+    output = tmp_path / "site"
+    build_dashboard(
+        data_root=data_root,
+        output=output,
+        config_path=config,
+        now=datetime(2026, 8, 1, 0, 2, 59, tzinfo=UTC),
+    )
+
+    station = json.loads((output / "data" / "mkn.json").read_text())
+    source = station["sources"]["source"]
+    assert source["number_rows"] == 5
+    assert source["unique_timestamps"] == 5
+    assert source["duplicate_timestamps"] == 0
+    assert source["available_slots"] == 3
+    assert source["expected_rows"] == 3
+    assert source["availability_pct"] == 100.0
+
+
+def test_plot_and_table_variables_can_be_configured_independently(tmp_path: Path):
+    data_root = tmp_path / "gawkenyadata"
+    month = data_root / "level1" / "mkn" / "2026" / "08"
+    month.mkdir(parents=True)
+    frame = pl.DataFrame(
+        {
+            "dtm": [
+                datetime(2026, 8, 1, 0, 0, tzinfo=UTC),
+                datetime(2026, 8, 1, 0, 1, tzinfo=UTC),
+            ],
+            "BC1": [1.0, 2.0],
+            "BC2": [3.0, 4.0],
+            "BC3": [5.0, 6.0],
+        }
+    )
+    frame.write_parquet(month / "ae33.parquet")
+    config = tmp_path / "config.yml"
+    config.write_text(
+        """
+dashboard:
+  title: Test dashboard
+  level: level1
+  timezone: UTC
+  max_plot_points: 100
+  cadence_sample_rows: 100
+  default_time_columns: [dtm]
+  exclude_columns: []
+stations:
+  mkn: {label: MKN}
+source_overrides:
+  ae33:
+    cadence: 1m
+    plot_variables: [BC1, BC2]
+    table_variables: [BC2]
+""",
+        encoding="utf-8",
+    )
+    output = tmp_path / "site"
+    build_dashboard(
+        data_root=data_root,
+        output=output,
+        config_path=config,
+        now=datetime(2026, 8, 1, 0, 1, tzinfo=UTC),
+    )
+
+    station = json.loads((output / "data" / "mkn.json").read_text())
+    source = station["sources"]["ae33"]
+    assert set(source["variables"]) == {"BC1", "BC2"}
+    assert source["table_variables"] == ["BC2"]
+    assert [row["variable"] for row in station["summary"]] == ["BC2"]

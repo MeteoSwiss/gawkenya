@@ -15,11 +15,9 @@ dashboard:
     - dtm
     - timestamp
     - datetime
-    - date_time
 
   # Numeric housekeeping / QA columns matching these expressions are not
-  # treated as plottable observation variables unless explicitly listed under
-  # a source override below.
+  # treated as observation variables unless explicitly selected below.
   exclude_columns:
     - '(?i)^f_'
     - '(?i)^flags?$'
@@ -40,24 +38,39 @@ stations:
   buc:
     label: BUC
 
-# Optional source-specific overrides. Keys can be a file stem (applies at all
-# stations), a source id relative to the YYYY/MM directory, or
-# <station>/<source-id> for the most specific override.
+# Optional source-specific overrides. Keys can be a file stem (all stations),
+# a source id relative to the YYYY/MM directory, or <station>/<source-id> for
+# the most specific override.
 #
-# A cadence override is deliberately dashboard-specific. Do not reuse the
-# existing `expected:` values in mch-*.yml: those describe expected input
-# files, not necessarily the temporal resolution of observations inside the
-# parquet file.
+# plot_variables controls which variables are exported to the public JSON and
+# offered in the plot selector. table_variables controls which variables get a
+# row in the summary table. If both are omitted, all automatically detected
+# numeric observation variables are used for both.
+#
+# The older `variables:` key is retained as a shorthand meaning "use this list
+# for both plot_variables and table_variables".
+#
+# A cadence override is dashboard-specific. It is strongly recommended for
+# operational sources with a known nominal sampling interval. Without it the
+# cadence is inferred from the median positive interval of the latest sample.
 source_overrides: {}
+
 # Examples:
 # source_overrides:
 #   ae33:
 #     cadence: 1m
 #     time_column: dtm
-#   mkn/ae33:
-#     variables: [BC1, BC2, BC3, BC4, BC5, BC6]
+#     plot_variables: [BC1, BC2, BC3, BC4, BC5, BC6]
+#     table_variables: [BC6]
+#
+#   mkn/tei49i:
+#     cadence: 1m
+#     plot_variables: [o3, sample_flow, pressure]
+#     table_variables: [o3]
+#
 #   nrb/diagnostic-source:
 #     publish: false
+#
 #   some-source:
 #     exclude_columns:
 #       - '(?i)^diagnostic_'

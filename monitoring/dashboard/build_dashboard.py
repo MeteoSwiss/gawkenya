@@ -22,7 +22,7 @@ from typing import Any, Iterable
 import polars as pl
 import yaml
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 def parse_duration_seconds(value: Any) -> float | None:
@@ -205,19 +205,12 @@ def excluded_column(name: str, patterns: Iterable[str]) -> bool:
     return any(re.search(pattern, name) for pattern in patterns)
 
 
-def select_variables(
+def auto_variables(
     schema: dict[str, pl.DataType],
     time_column: str,
     dashboard_config: dict[str, Any],
     override: dict[str, Any],
 ) -> list[str]:
-    explicit = override.get("variables")
-    if explicit is not None:
-        missing = [name for name in explicit if name not in schema]
-        if missing:
-            raise ValueError(f"Configured variable(s) not present: {', '.join(missing)}")
-        return [str(name) for name in explicit]
-
     patterns = list(dashboard_config.get("exclude_columns", []) or [])
     patterns.extend(override.get("exclude_columns", []) or [])
     variables: list[str] = []
@@ -227,6 +220,84 @@ def select_variables(
         if _is_numeric_dtype(dtype):
             variables.append(name)
     return variables
+
+
+def _configured_variables(
+    value: Any,
+    schema: dict[str, pl.DataType],
+    label: str,
+) -> list[str] | None:
+    if value is None:
+        return None
+    result = [str(name) for name in value]
+    missing = [name for name in result if name not in schema]
+    if missing:
+        raise ValueError(f"Configured {label} variable(s) not present: {', '.join(missing)}")
+    return result
+
+
+def select_variable_sets(
+    schema: dict[str, pl.DataType],
+    time_column: str,
+    dashboard_config: dict[str, Any],
+    override: dict[str, Any],
+) -> tuple[list[str], list[str]]:
+    """Return variables published for plots and variables listed in the table.
+
+    `variables` is retained as a backwards-compatible shorthand for setting
+    both lists.  If nothing is configured, all automatically detected numeric
+    observation variables are used for both.
+    """
+    automatic = auto_variables(schema, time_column, dashboard_config, override)
+    legacy = override.get("variables")
+    plot = _configured_variables(
+        override.get("plot_variables", legacy), schema, "plot"
+    )
+    table = _configured_variables(
+        override.get("table_variables", legacy), schema, "table"
+    )
+    if plot is None:
+        plot = list(automatic)
+    if table is None:
+        table = list(automatic)
+    return plot, table
+
+
+def observed_time_slots(
+    time_lazy: pl.LazyFrame,
+    now: datetime,
+    cadence_seconds: float | None,
+) -> int | None:
+    """Count occupied nominal cadence slots from month start through *now*.
+
+    Several distinct timestamps may legitimately fall inside one nominal slot
+    (for example burst/oversampled data).  Counting occupied slots instead of
+    raw or unique timestamps prevents such records from inflating availability
+    above 100 percent.
+    """
+    if not cadence_seconds or cadence_seconds <= 0:
+        return None
+    now = utc_datetime(now) or datetime.now(UTC)
+    month_start = datetime(now.year, now.month, 1, tzinfo=UTC)
+    frame = (
+        time_lazy
+        .filter((pl.col("_dt") >= pl.lit(month_start)) & (pl.col("_dt") <= pl.lit(now)))
+        .unique()
+        .collect()
+    )
+    slots: set[int] = set()
+    for value in frame.get_column("_dt").to_list():
+        stamp = utc_datetime(value)
+        if stamp is None:
+            continue
+        offset = (stamp - month_start).total_seconds()
+        if offset < 0:
+            continue
+        slots.add(int(math.floor(offset / cadence_seconds)))
+    expected = expected_rows_for_month(now, cadence_seconds)
+    if expected is None:
+        return None
+    return sum(1 for slot in slots if 0 <= slot < expected)
 
 
 def clean_number(value: Any) -> int | float | None:
@@ -305,8 +376,9 @@ def sample_series(
 
     # Level-1 sources are expected to have one observation record per timestamp.
     # If a file contains repeated timestamps, keep the last record for display.
-    # The duplicate count is reported separately and availability is based on the
-    # number of unique timestamps, so duplicate records cannot inflate it.
+    # The duplicate count is reported separately. Availability is computed from
+    # occupied nominal time slots, so repeated or oversampled records cannot
+    # inflate it.
     source = (
         lazy.select(projection)
         .filter(pl.col("_dt").is_not_null())
@@ -361,8 +433,12 @@ def build_source(
     schema = dict(schema_obj.items())
     time_column = find_time_column(schema, override, dashboard_config)
     time_expr = time_expression(time_column, schema[time_column])
-    variables = select_variables(schema, time_column, dashboard_config, override)
-    flag_columns = flag_columns_for_variables(schema, variables, dashboard_config, override)
+    plot_variables, table_variables = select_variable_sets(
+        schema, time_column, dashboard_config, override
+    )
+    flag_columns = flag_columns_for_variables(
+        schema, plot_variables, dashboard_config, override
+    )
 
     row_count = int(lazy.select(pl.len().alias("n")).collect().item())
     time_lazy = lazy.select(time_expr).filter(pl.col("_dt").is_not_null())
@@ -389,14 +465,15 @@ def build_source(
         cadence_source = "median"
 
     expected_rows = expected_rows_for_month(now, cadence_seconds)
+    available_slots = observed_time_slots(time_lazy, now, cadence_seconds)
     availability = None
-    if expected_rows and expected_rows > 0:
-        availability = (unique_timestamp_count / expected_rows) * 100.0
+    if expected_rows and expected_rows > 0 and available_slots is not None:
+        availability = (available_slots / expected_rows) * 100.0
 
     timestamps, series, flags = sample_series(
         lazy,
         time_expr,
-        variables,
+        plot_variables,
         flag_columns,
         unique_timestamp_count,
         int(dashboard_config.get("max_plot_points", 3000)),
@@ -414,10 +491,12 @@ def build_source(
         "unique_timestamps": unique_timestamp_count,
         "duplicate_timestamps": duplicate_timestamp_count,
         "null_timestamps": null_timestamp_count,
+        "available_slots": available_slots,
         "expected_rows": expected_rows,
         "availability_pct": round(availability, 3) if availability is not None else None,
         "timestamps": timestamps,
         "variables": series,
+        "table_variables": table_variables,
         "flags": flags,
         "flag_columns": flag_columns,
     }
@@ -432,10 +511,11 @@ def build_source(
             "unique_timestamps": unique_timestamp_count,
             "duplicate_timestamps": duplicate_timestamp_count,
             "null_timestamps": null_timestamp_count,
+            "available_slots": available_slots,
             "expected_rows": expected_rows,
             "availability_pct": round(availability, 3) if availability is not None else None,
         }
-        for variable in variables
+        for variable in table_variables
     ]
     return source_payload, summary
 
@@ -549,7 +629,8 @@ def build_dashboard(
                 "data_file": data_file,
                 "file_count": station_payload["file_count"],
                 "published_source_count": station_payload["published_source_count"],
-                "variable_count": len(station_payload["summary"]),
+                "variable_count": sum(len(source.get("variables", {})) for source in station_payload["sources"].values()),
+                "summary_row_count": len(station_payload["summary"]),
                 "error_count": len(station_payload["errors"]),
             }
         )
