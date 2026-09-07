@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>GAW Kenya data dashboard</title>
-  <link rel="stylesheet" href="assets/dashboard.css?v=a2552f75b408">
+  <link rel="stylesheet" href="assets/dashboard.css?v=c3ad2d2c1c89">
   <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" defer></script>
   <script defer>
 "use strict";
@@ -78,7 +78,6 @@ function renderTable() {
     const tr = document.createElement("tr");
     tr.dataset.sourceId = row.source_id;
     tr.dataset.variable = row.variable;
-    tr.tabIndex = 0;
     if (row.source_id === state.sourceId && row.variable === state.variable) tr.classList.add("selected");
 
     const values = [
@@ -93,6 +92,11 @@ function renderTable() {
           ? `${formatInteger(row.duplicate_timestamps)} row(s) have a timestamp already present in this file.`
           : "No repeated timestamps detected.",
       },
+      {
+        value: formatInteger(row.available_slots),
+        className: "numeric",
+        title: "Distinct nominal cadence slots containing at least one timestamp between month start and dashboard generation time.",
+      },
       { value: formatInteger(row.expected_rows), className: "numeric" },
       { value: formatPercent(row.availability_pct), className: "numeric" },
     ];
@@ -105,14 +109,18 @@ function renderTable() {
       tr.append(td);
     }
 
-    const activate = () => selectSeries(row.source_id, row.variable);
-    tr.addEventListener("click", activate);
-    tr.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        activate();
-      }
-    });
+    const isPlottable = Boolean(state.station?.sources?.[row.source_id]?.variables?.[row.variable]);
+    if (isPlottable) {
+      tr.tabIndex = 0;
+      const activate = () => selectSeries(row.source_id, row.variable);
+      tr.addEventListener("click", activate);
+      tr.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          activate();
+        }
+      });
+    }
     tbody.append(tr);
   }
 }
@@ -133,6 +141,7 @@ function renderErrors() {
 function sourceEntries() {
   const sources = state.station?.sources ?? {};
   return Object.values(sources)
+    .filter((source) => Object.keys(source.variables ?? {}).length > 0)
     .sort((a, b) => a.source_name.localeCompare(b.source_name))
     .map((source) => ({ value: source.source_id, label: source.source_name }));
 }
@@ -271,13 +280,15 @@ function renderPlot() {
 function renderStationSummary() {
   if (!state.station) return;
   const count = state.station.published_source_count;
-  const variables = state.station.summary.length;
+  const plotVariables = Object.values(state.station.sources ?? {})
+    .reduce((total, source) => total + Object.keys(source.variables ?? {}).length, 0);
+  const tableRows = state.station.summary.length;
   const duplicateCount = Object.values(state.station.sources ?? {})
     .reduce((total, source) => total + (source.duplicate_timestamps ?? 0), 0);
   const duplicateText = duplicateCount
     ? ` ${formatInteger(duplicateCount)} repeated timestamp(s) detected across the published sources.`
     : " No repeated timestamps detected.";
-  el("station-summary").textContent = `${count} current parquet source(s), ${variables} plottable variable row(s); partition ${state.station.partition}.${duplicateText}`;
+  el("station-summary").textContent = `${count} current parquet source(s), ${plotVariables} plottable variable(s), ${tableRows} summary row(s); partition ${state.station.partition}.${duplicateText}`;
 }
 
 async function changeStation(stationId) {
@@ -390,9 +401,10 @@ document.addEventListener("DOMContentLoaded", init);
               <th>Variable</th>
               <th>Source name</th>
               <th>Latest entry</th>
-              <th class="numeric">Number of rows</th>
+              <th class="numeric" title="Physical rows in the parquet file; this can exceed the nominal number of time slots for oversampled or irregular data.">Number of rows</th>
               <th class="numeric">Duplicate timestamps</th>
-              <th class="numeric">Expected number of rows</th>
+              <th class="numeric">Available time slots</th>
+              <th class="numeric">Expected time slots</th>
               <th class="numeric">Availability (%)</th>
             </tr>
           </thead>
@@ -409,7 +421,7 @@ document.addEventListener("DOMContentLoaded", init);
 
     <footer>
       <span id="footer-source"></span>
-      <span>Availability uses unique timestamps; plots keep the last record for repeated timestamps.</span>
+      <span>Availability uses occupied nominal cadence slots within the current month. Number of rows is the physical parquet row count and may be larger; plots keep the last record for repeated timestamps.</span>
     </footer>
   </main>
 </body>
