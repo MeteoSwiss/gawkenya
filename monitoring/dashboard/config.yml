@@ -53,7 +53,6 @@ stations:
 # A cadence override is dashboard-specific. It is strongly recommended for
 # operational sources with a known nominal sampling interval. Without it the
 # cadence is inferred from the median positive interval of the latest sample.
-source_overrides: {}
 
 # Examples:
 # source_overrides:
@@ -74,6 +73,7 @@ source_overrides: {}
 #   some-source:
 #     exclude_columns:
 #       - '(?i)^diagnostic_'
+source_overrides:
   mkn/ae33:
     cadence: 1m
     time_column: dtm
