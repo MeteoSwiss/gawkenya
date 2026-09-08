@@ -113,7 +113,7 @@ source_overrides: {}
   nrb/aurora3000:
     cadence: 1m
     plot_variables: [ssp1, ssp2, ssp3, sbsp1, sbsp2, sbsp3, pressure, major_state]
-    table_variables: [ssp1
+    table_variables: [ssp1]
   
   # inst:
   #   cadence: 1m
