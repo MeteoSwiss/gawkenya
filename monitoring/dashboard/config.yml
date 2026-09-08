@@ -74,3 +74,39 @@ source_overrides: {}
 #   some-source:
 #     exclude_columns:
 #       - '(?i)^diagnostic_'
+  mkn/ae33:
+    cadence: 1m
+    time_column: dtm
+    plot_variables: [BC1, BC2, BC3, BC4, BC5, BC6]
+    table_variables: [BC6]
+
+  mkn/tei49c:
+    cadence: 1m
+    plot_variables: [o3, cellai, cellbi, flowa, flowb, flags]
+    table_variables: [o3]
+
+  tei49i:
+    cadence: 1m
+    plot_variables: [o3, cellai, cellbi, flowa, flowb, flags]
+    table_variables: [o3]
+
+  fidas:
+    cadence: 1m
+    plot_variables: [60, 61, 62, 63, 64, 65]
+    table_variables: [60]
+
+  mkn/g2401:
+    cadence: 1m
+    plot_variables: [CO2_dry_sync, CH4_dry_sync, CO_sync, CavityPressure, CavityTemp, DasTemp, EtalonTemp, WarmBoxTemp, MPVPosition]
+    table_variables: [CO_sync, CH4_dry_sync]
+
+  mkn/ne300:
+    cadence: 1m
+    plot_variables: [2525000, 2525090, 5002]
+    table_variables: [2525000]
+
+  # inst:
+  #   cadence: 1m
+  #   plot_variables: []
+  #   table_variables: []
+  
