@@ -105,8 +105,17 @@ source_overrides: {}
     plot_variables: [2525000, 2525090, 5002]
     table_variables: [2525000]
 
+  nrb/ae31:
+    cadence: 1m
+    plot_variables: [UV370, IR880, IR950]
+    table_variables: [IR880]
+  
+  nrb/aurora3000:
+    cadence: 1m
+    plot_variables: [ssp1, ssp2, ssp3, sbsp1, sbsp2, sbsp3, pressure, major_state]
+    table_variables: [ssp1
+  
   # inst:
   #   cadence: 1m
   #   plot_variables: []
   #   table_variables: []
-  
