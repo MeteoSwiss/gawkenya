@@ -98,7 +98,7 @@ source_overrides:
   mkn/g2401:
     cadence: 1m
     plot_variables: [CO2_dry_sync, CH4_dry_sync, CO_sync, CavityPressure, CavityTemp, DasTemp, EtalonTemp, WarmBoxTemp, MPVPosition]
-    table_variables: [CO_sync, CH4_dry_sync]
+    table_variables: [CO2_dry_sync]
 
   mkn/ne300:
     cadence: 1m
@@ -114,6 +114,36 @@ source_overrides:
     cadence: 1m
     plot_variables: [ssp1, ssp2, ssp3, sbsp1, sbsp2, sbsp3, pressure, major_state]
     table_variables: [ssp1]
+  
+  meteo:
+    cadence: 10m
+    plot_variables: [tre200s0, ta2200s0, fkl010z0, da1010z0, rre150z0, gor000z0]
+    table_variables: [tre200s0, ta2200s0, fkl010z0]   # 2m Lufft, Rotronic, 10m Lufft
+  
+  hmp110-inlet:
+    cadence: 1m
+    plot_variables: [T, RH, Td]
+    table_variables: [T]
+  
+  mkn/hmp110-ae33:
+    cadence: 1m
+    plot_variables: [T, RH, Td]
+    table_variables: [T]
+  
+  nrb/hmp110-ae31:
+    cadence: 1m
+    plot_variables: [T, RH, Td]
+    table_variables: [T]
+  
+  nrb/avo-garden-roof:
+    cadence: 1m
+    plot_variables: [pm1, pm25_conc, pm10_conc, co2]
+    table_variables: [pm25_conc]
+  
+  nrb/avo-garden-instant:
+    cadence: 1m
+    plot_variables: [pm1, pm25_conc, pm10_conc, co2]
+    table_variables: [pm25_conc]
   
   # inst:
   #   cadence: 1m
