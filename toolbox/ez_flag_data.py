@@ -74,6 +74,110 @@ def _order_key_items(keys: dict[str, dict[str, Any]]) -> list[tuple[str, dict[st
     return items
 
 
+
+def _linked_ae33_variable(variable_name: str | None) -> str | None:
+    """Return the linked AE33 variable for BCn <-> bn_abs."""
+    if variable_name is None:
+        return None
+
+    for channel in range(1, 8):
+        bc = f"BC{channel}"
+        absorption = f"b{channel}_abs"
+        if variable_name == bc:
+            return absorption
+        if variable_name == absorption:
+            return bc
+
+    return None
+
+
+def expand_linked_flags(variables: str | list[str] | tuple[str, ...]) -> list[str]:
+    """Expand flag targets so AE33 BCn and bn_abs are always coupled."""
+    requested = [variables] if isinstance(variables, str) else list(variables)
+    expanded: list[str] = []
+
+    for variable_name in requested:
+        if variable_name not in expanded:
+            expanded.append(variable_name)
+
+        linked = _linked_ae33_variable(variable_name)
+        if linked is not None and linked not in expanded:
+            expanded.append(linked)
+
+    return expanded
+
+
+def apply_flag_at_timestamps(
+    frame: pl.DataFrame,
+    variables: str | list[str] | tuple[str, ...],
+    timestamps: list[datetime],
+    flag: int | None,
+    *,
+    dtm_col: str = dtm,
+    expand_links: bool = True,
+) -> pl.DataFrame:
+    """Apply a flag at timestamps, optionally expanding AE33 linked variables."""
+    if not timestamps:
+        return frame
+
+    targets = expand_linked_flags(variables) if expand_links else (
+        [variables] if isinstance(variables, str) else list(variables)
+    )
+
+    expressions: list[pl.Expr] = []
+    for variable_name in targets:
+        if variable_name not in frame.columns:
+            continue
+
+        flag_column = f"{flag_col_prefix}{variable_name}"
+        current = (
+            pl.col(flag_column)
+            if flag_column in frame.columns
+            else pl.lit(None, dtype=pl.Int8)
+        )
+        expressions.append(
+            pl.when(pl.col(dtm_col).is_in(timestamps))
+            .then(pl.lit(flag, dtype=pl.Int8))
+            .otherwise(current)
+            .alias(flag_column)
+        )
+
+    return frame.with_columns(expressions) if expressions else frame
+
+
+def _active_flag_source(frame: pl.DataFrame, variable_name: str) -> str | None:
+    """Return the best existing flag column for a selected variable."""
+    own_flag = f"{flag_col_prefix}{variable_name}"
+    if own_flag in frame.columns:
+        return own_flag
+
+    linked = _linked_ae33_variable(variable_name)
+    if linked is None:
+        return None
+
+    linked_flag = f"{flag_col_prefix}{linked}"
+    return linked_flag if linked_flag in frame.columns else None
+
+
+def _synchronize_ae33_flags(
+    frame: pl.DataFrame,
+    edited_variable: str | None,
+) -> pl.DataFrame:
+    """Synchronize one AE33 flag pair, using the edited member as authority."""
+    linked = _linked_ae33_variable(edited_variable)
+    if edited_variable is None or linked is None:
+        return frame
+    if edited_variable not in frame.columns or linked not in frame.columns:
+        return frame
+
+    source = f"{flag_col_prefix}{edited_variable}"
+    target = f"{flag_col_prefix}{linked}"
+    if source not in frame.columns:
+        return frame
+
+    return frame.with_columns(pl.col(source).alias(target))
+
+
 def add_legend_below_axes(
     ax,
     keys: dict[str, dict[str, Any]],
@@ -317,9 +421,16 @@ def on_dropdown_value_selected(change):
     if flags in df.columns and old is not None:
         df = df.rename({flags: f"{flag_col_prefix}{old}"})
 
-    # Bring selected variable's flags into the plotting alias
-    if f_variable in df.columns:
-        df = df.rename({f_variable: flags})
+    # Bring selected variable's flags into the plotting alias. For a linked
+    # AE33 variable, reuse its counterpart's flags when its own flag column
+    # does not yet exist.
+    flag_source = _active_flag_source(df, variable)
+    if flag_source is not None:
+        if flag_source == f_variable:
+            df = df.rename({f_variable: flags})
+        else:
+            df = df.with_columns(pl.col(flag_source).alias(flags))
+
         if colors in df.columns:
             for k in keys.keys():
                 if keys[k]["flag"] is not None:
@@ -372,6 +483,18 @@ def on_picked_flag_point(event):
             df[event.ind, flags] = flag
             df[event.ind, colors] = color
 
+            linked = _linked_ae33_variable(variable)
+            if linked is not None and linked in df.columns:
+                indices = [int(index) for index in event.ind]
+                timestamps = df.get_column(dtm).gather(indices).to_list()
+                df = apply_flag_at_timestamps(
+                    df,
+                    linked,
+                    timestamps,
+                    flag,
+                    expand_links=False,
+                )
+
             sc.set_color(df[colors].to_list())
             fig.canvas.draw_idle()
         else:
@@ -407,6 +530,10 @@ def on_key_pressed_flag_points(event):
                 & (pl.col(variable) < zoom_ylim[1])
             )
 
+            selected_timestamps = (
+                df.filter(condition).get_column(dtm).to_list()
+            )
+
             df = df.with_columns(
                 [
                     pl.when(condition)
@@ -419,6 +546,16 @@ def on_key_pressed_flag_points(event):
                     .alias(flags),
                 ]
             )
+
+            linked = _linked_ae33_variable(variable)
+            if linked is not None and linked in df.columns:
+                df = apply_flag_at_timestamps(
+                    df,
+                    linked,
+                    selected_timestamps,
+                    flag,
+                    expand_links=False,
+                )
 
             sc.set_color(df[colors].to_list())
             fig.canvas.draw_idle()
@@ -460,6 +597,8 @@ def on_clicked_save_data(event):
 
         if colors in df.columns:
             df = df.drop(colors)
+
+        df = _synchronize_ae33_flags(df, variable)
 
     source_file = _selected_path_from_filechooser(file_chooser)
     if not source_file:

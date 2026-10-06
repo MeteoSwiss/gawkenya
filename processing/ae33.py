@@ -17,6 +17,130 @@ from processing.instrument import Instrument
 from toolbox.utils import pl_simplify_dtypes
 
 
+DEFAULT_AE33_CONFIG_PATH = (
+    Path(__file__).resolve().parents[1] / "config" / "instruments" / "ae33.yml"
+)
+
+
+def load_ae33_config(path: Path | None = None) -> dict[str, Any]:
+    """Load the standard AE33 scientific-processing configuration.
+
+    Args:
+        path: Optional alternative YAML path. If omitted, load
+            ``config/instruments/ae33.yml`` from the repository.
+
+    Returns:
+        Parsed AE33 configuration mapping.
+
+    Raises:
+        FileNotFoundError: If the configuration file does not exist.
+        ValueError: If the YAML root is not a mapping.
+    """
+    config_path = path or DEFAULT_AE33_CONFIG_PATH
+    if not config_path.is_file():
+        raise FileNotFoundError(f"AE33 configuration not found: {config_path}")
+
+    loaded = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, Mapping):
+        raise ValueError(f"AE33 configuration must be a mapping: {config_path}")
+
+    return dict(loaded)
+
+
+def add_absorption_coefficients(
+    df: pl.DataFrame,
+    config: Mapping[str, Any] | None = None,
+) -> pl.DataFrame:
+    """Add AE33 absorption coefficients and propagate existing BC flags.
+
+    The calculation is mandatory for AE33 Level-1 processing, while the
+    scientific coefficients remain configurable in
+    ``config/instruments/ae33.yml``.
+
+    The stored BC channels are in ng/m3. With SG in m2/g, division by 1000
+    converts the result to Mm-1:
+
+        b_abs [Mm-1] = BC [ng/m3] * SG [m2/g] / H* / 1000
+
+    If ``f_BCn`` exists, ``f_bn_abs`` is created or replaced as an exact copy.
+    If ``f_BCn`` does not exist, no absorption flag column is created.
+
+    Args:
+        df: AE33 dataframe containing any subset of BC1 ... BC7.
+        config: AE33 processing configuration. If omitted, the standard
+            repository configuration is loaded automatically.
+
+    Returns:
+        Dataframe with the available b1_abs ... b7_abs columns and coupled
+        flag columns added or replaced.
+
+    Raises:
+        ValueError: If the absorption-correction configuration is missing or
+            invalid.
+    """
+    active_config = load_ae33_config() if config is None else config
+
+    correction = active_config.get("absorption_correction")
+    if not isinstance(correction, Mapping):
+        raise ValueError("AE33 config requires an absorption_correction mapping.")
+
+    filter_type = correction.get("filter_type")
+    if not isinstance(filter_type, str) or not filter_type.strip():
+        raise ValueError("AE33 absorption_correction.filter_type must be defined.")
+
+    if correction.get("bc_unit") != "ng/m3":
+        raise ValueError("AE33 absorption_correction.bc_unit must be 'ng/m3'.")
+    if correction.get("output_unit") != "Mm-1":
+        raise ValueError("AE33 absorption_correction.output_unit must be 'Mm-1'.")
+
+    try:
+        h_star = float(correction["h_star"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(
+            "AE33 absorption_correction.h_star must be a positive number."
+        ) from exc
+    if not math.isfinite(h_star) or h_star <= 0.0:
+        raise ValueError(
+            "AE33 absorption_correction.h_star must be a positive finite number."
+        )
+
+    sg_values = correction.get("sg_m2_g")
+    if not isinstance(sg_values, Mapping):
+        raise ValueError("AE33 absorption_correction.sg_m2_g must be a mapping.")
+
+    expressions: list[pl.Expr] = []
+    for channel in range(1, 8):
+        bc = f"BC{channel}"
+        absorption = f"b{channel}_abs"
+        bc_flag = f"f_{bc}"
+        absorption_flag = f"f_{absorption}"
+
+        if bc in df.columns:
+            try:
+                sg = float(sg_values[bc])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Missing or invalid AE33 SG coefficient for {bc}."
+                ) from exc
+            if not math.isfinite(sg) or sg <= 0.0:
+                raise ValueError(
+                    f"AE33 SG coefficient for {bc} must be a positive finite number."
+                )
+
+            expressions.append(
+                (
+                    pl.col(bc).cast(pl.Float64)
+                    * pl.lit(sg)
+                    / pl.lit(h_star)
+                    / pl.lit(1000.0)
+                ).alias(absorption)
+            )
+
+        if bc_flag in df.columns:
+            expressions.append(pl.col(bc_flag).alias(absorption_flag))
+
+    return df.with_columns(expressions) if expressions else df
+
 class AE33(Instrument):
     """Processor for AE33 aethalometer data files.
 
@@ -156,8 +280,17 @@ class AE33(Instrument):
         7.19,
     )
 
-    def __init__(self, log_file: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        config: Mapping[str, Any] | None = None,
+        log_file: Optional[str] = None,
+    ) -> None:
         super().__init__(name="ae33", log_file=log_file)
+        self.config = (
+            dict(config)
+            if config is not None
+            else load_ae33_config()
+        )
 
     def should_process_file(self, path: Path) -> bool:
         """Return whether ``path`` is an AE33 measurement file."""
@@ -204,14 +337,32 @@ class AE33(Instrument):
             return zf.read(member), member
 
     @staticmethod
-    def _first_csv_record(raw: bytes) -> list[str]:
-        """Return the first non-empty, non-comment CSV record."""
+    def _first_data_line(raw: bytes) -> str:
+        """Return the first non-empty, non-comment data line."""
         text = raw.decode("utf-8-sig", errors="replace")
         for line in text.splitlines():
-            if not line.strip() or line.lstrip().startswith("#"):
-                continue
-            return [value.strip() for value in next(csv.reader([line]))]
-        return []
+            if line.strip() and not line.lstrip().startswith("#"):
+                return line
+        return ""
+
+    @classmethod
+    def _detect_separator(cls, raw: bytes) -> str:
+        """Detect the AE33 field separator used by legacy and current files."""
+        line = cls._first_data_line(raw)
+        if not line:
+            return ","
+        return "|" if line.count("|") > line.count(",") else ","
+
+    @classmethod
+    def _first_csv_record(cls, raw: bytes, separator: str = ",") -> list[str]:
+        """Return the first non-empty, non-comment delimited record."""
+        line = cls._first_data_line(raw)
+        if not line:
+            return []
+        return [
+            value.strip()
+            for value in next(csv.reader([line], delimiter=separator))
+        ]
 
     def _canonical_columns(self) -> list[str]:
         return [column.format(dtm=self.dtm) for column in self._COLS_TEMPLATE]
@@ -290,6 +441,7 @@ class AE33(Instrument):
                 normalized = normalized.rename({legacy: canonical})
 
         normalized = self._parse_dtm(normalized)
+        normalized = add_absorption_coefficients(normalized, self.config)
         return pl_simplify_dtypes(normalized)
 
     def extract_to_dataframe(self, path: Path) -> tuple[pl.DataFrame, str | None]:
@@ -306,7 +458,8 @@ class AE33(Instrument):
                 )
 
             raw, member = self._read_bytes_zip_or_file(path)
-            first_record = self._first_csv_record(raw)
+            separator = self._detect_separator(raw)
+            first_record = self._first_csv_record(raw, separator)
             has_header = bool(first_record and first_record[0] == "Inst_SN")
 
             if has_header:
@@ -336,7 +489,7 @@ class AE33(Instrument):
             df = pl.read_csv(
                 source=io.BytesIO(raw),
                 has_header=has_header,
-                separator=",",
+                separator=separator,
                 comment_prefix="#",
                 new_columns=new_columns,
                 schema_overrides=schema_overrides,
@@ -816,24 +969,24 @@ class AE33(Instrument):
                     "description": (
                         "temperature, K, Location=control board, Matrix=instrument"
                     ),
-                    "missing": "9999.9",
-                    "format": ".1f",
+                    "missing": "9999.99",
+                    "format": ".2f",
                 },
                 {
                     "short_name": "temp_supply",
                     "description": (
                         "temperature, K, Location=power supply board, Matrix=instrument"
                     ),
-                    "missing": "9999.9",
-                    "format": ".1f",
+                    "missing": "9999.99",
+                    "format": ".2f",
                 },
                 {
                     "short_name": "temp_led",
                     "description": (
                         "temperature, K, Location=LED board, Matrix=instrument"
                     ),
-                    "missing": "9999.9",
-                    "format": ".1f",
+                    "missing": "9999.99",
+                    "format": ".2f",
                 },
                 {
                     "short_name": "status_inst",
@@ -1131,7 +1284,7 @@ class AE33(Instrument):
             ("Matrix", "aerosol"),
             ("Laboratory code", laboratory["code"]),
             ("Instrument type", "filter_absorption_photometer"),
-            ("Instrument name", instrument["name"]),("Instrument name", instrument["name"]),
+            ("Instrument name", instrument["name"]),
             ("Instrument manufacturer", instrument["manufacturer"]),
             ("Instrument model", instrument["model"]),
             ("Instrument serial number", instrument["serial_number"]),
@@ -1205,7 +1358,7 @@ class AE33(Instrument):
                 continue
             if str(value) == "" and key != "Component":
                 continue
-            lines.append(f"{key + ':':<30} {value}")
+            lines.append(f"{key + ':':<30}{value}")
 
         originators = submission["originators"]
         submitters = submission["submitters"]
@@ -1214,10 +1367,10 @@ class AE33(Instrument):
                 "submission.originators and submission.submitters must be lists."
             )
         lines.extend(
-            f"{'Originator:':<30} {originator}" for originator in originators
+            f"{'Originator:':<30}{originator}" for originator in originators
         )
         lines.extend(
-            f"{'Submitter:':<30} {submitter}" for submitter in submitters
+            f"{'Submitter:':<30}{submitter}" for submitter in submitters
         )
 
         acknowledgement = submission.get(
@@ -1337,11 +1490,14 @@ class AE33(Instrument):
         if isinstance(value, datetime):
             start = cls._as_utc_datetime(value, "DateTime_1")
         elif value is not None:
-            try:
-                start = datetime.strptime(str(value), cls._DTM_FORMAT).replace(
-                    tzinfo=UTC
-                )
-            except ValueError:
+            start = None
+            for fmt in cls._DTM_FORMATS:
+                try:
+                    start = datetime.strptime(str(value), fmt).replace(tzinfo=UTC)
+                    break
+                except ValueError:
+                    continue
+            if start is None:
                 start = end - timedelta(seconds=sample_seconds)
         else:
             start = end - timedelta(seconds=sample_seconds)

@@ -11,6 +11,7 @@ from processing.ae33 import AE33
 
 
 FIXTURE = Path(__file__).parent / "data" / "ae33-2026092305.zip"
+ABSORPTION_COLUMNS = [f"b{channel}_abs" for channel in range(1, 8)]
 
 
 def _fixture_header_and_first_row() -> tuple[list[str], list[str]]:
@@ -22,14 +23,19 @@ def _fixture_header_and_first_row() -> tuple[list[str], list[str]]:
     return header, row
 
 
+def _expected_level1_columns(processor: AE33) -> list[str]:
+    """Return the raw canonical AE33 schema plus intrinsic Level-1 products."""
+    return processor._canonical_columns() + ABSORPTION_COLUMNS
+
+
 def test_new_pydaq_zip_is_parsed_to_canonical_schema() -> None:
     processor = AE33()
 
     df, error = processor.extract_to_dataframe(FIXTURE)
 
     assert error is None
-    assert df.shape == (60, 74)
-    assert df.columns == processor._canonical_columns()
+    assert df.shape == (60, 81)
+    assert df.columns == _expected_level1_columns(processor)
     assert df.schema[processor.dtm] == pl.Datetime("us", "UTC")
     assert df.get_column(processor.dtm)[0] == datetime(2026, 9, 23, 5, 0, tzinfo=UTC)
     assert df.get_column(processor.dtm)[-1] == datetime(2026, 9, 23, 5, 59, tzinfo=UTC)
@@ -50,6 +56,9 @@ def test_new_pydaq_zip_is_parsed_to_canonical_schema() -> None:
     assert first["TapeAdvCount"] == 517
     assert first["TapeAdvLeft"] == 139
 
+    for channel in range(1, 8):
+        assert f"b{channel}_abs" in df.columns
+
 
 def test_legacy_headerless_data_and_timestamp_remain_supported(tmp_path: Path) -> None:
     processor = AE33()
@@ -63,7 +72,7 @@ def test_legacy_headerless_data_and_timestamp_remain_supported(tmp_path: Path) -
 
     assert error is None
     assert df.height == 1
-    assert df.columns == processor._canonical_columns()
+    assert df.columns == _expected_level1_columns(processor)
     assert df.get_column(processor.dtm)[0] == datetime(2026, 9, 23, 5, 0, tzinfo=UTC)
     assert "unclear_2" not in df.columns
     assert "Pres" not in df.columns
@@ -88,7 +97,7 @@ def test_headered_legacy_aliases_are_normalized(tmp_path: Path) -> None:
 
     assert error is None
     assert df.height == 1
-    assert df.columns == processor._canonical_columns()
+    assert df.columns == _expected_level1_columns(processor)
     assert df.get_column("Pressure")[0] == 101325.0
     assert df.get_column("TapeAdvLeft")[0] == 139
 

@@ -1,0 +1,18 @@
+# AE33 scientific processing configuration.
+#
+# The absorption calculation is mandatory for Level-1 processing; these
+# coefficients remain configurable so scientific updates do not require
+# changes to Python code.
+absorption_correction:
+  filter_type: M8060
+  h_star: 1.76
+  bc_unit: ng/m3
+  output_unit: Mm-1
+  sg_m2_g:
+    BC1: 18.47
+    BC2: 14.54
+    BC3: 13.14
+    BC4: 11.58
+    BC5: 10.35
+    BC6: 7.77
+    BC7: 7.19
