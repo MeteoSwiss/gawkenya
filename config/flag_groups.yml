@@ -1,0 +1,45 @@
+root_dir: /product_data/data/pay/Kenya/git/gawkenyadata
+
+# Selecting either member of a group for flagging applies the same flag to
+# every member at the selected timestamp(s).
+flag_groups:
+  ae33:
+    - BC1
+    - b1_abs
+  # ae33_bc2:
+    - BC2
+    - b2_abs
+  # ae33_bc3:
+    - BC3
+    - b3_abs
+  # ae33_bc4:
+    - BC4
+    - b4_abs
+  # ae33_bc5:
+    - BC5
+    - b5_abs
+  # ae33_bc6:
+    - BC6
+    - b6_abs
+  # ae33_bc7:
+    - BC7
+    - b7_abs
+  fidas:
+    - '60'
+    - '61'
+    - '62'
+    - '63'
+    - '64'
+    - '65'
+
+
+# Profiles are selected by parquet basename. The UI can explicitly update
+# these defaults with its "Save as defaults" button.
+profiles:
+  ae33:
+    match: ae33.parquet
+    plot:
+      - BC6
+      - b6_abs
+    flag:
+      - BC6

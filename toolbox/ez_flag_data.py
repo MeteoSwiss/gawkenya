@@ -19,6 +19,13 @@ from IPython.display import display
 from ipywidgets import Button, HBox, Layout, Output, Text, VBox
 from ipywidgets.widgets import Dropdown
 
+from toolbox.flag_links import (
+    FlagGroups,
+    active_flag_source,
+    expand_linked_variables,
+    load_flag_groups,
+    synchronize_group_from_variable,
+)
 from toolbox.utils import pl_simplify_dtypes
 
 # ---------------------------------------------------------------------
@@ -49,6 +56,10 @@ keys: dict[str, dict[str, Any]] = {
 flag_col_prefix = "f_"
 new_file_on_save = False
 
+# Reloaded whenever ez_flag_data() is started, so edits to the YAML take effect
+# without restarting the Python kernel.
+linked_flag_groups: FlagGroups = load_flag_groups()
+
 # variables to be excluded from variable select dropdown
 excl_vars_general = (dtm, "source", "_color_", "_flag_", "f_None")
 excl_vars_ae33 = ("Inst_SN", "DateTime_1", "unclear", "DateTime_2")
@@ -75,36 +86,12 @@ def _order_key_items(keys: dict[str, dict[str, Any]]) -> list[tuple[str, dict[st
 
 
 
-def _linked_ae33_variable(variable_name: str | None) -> str | None:
-    """Return the linked AE33 variable for BCn <-> bn_abs."""
-    if variable_name is None:
-        return None
 
-    for channel in range(1, 8):
-        bc = f"BC{channel}"
-        absorption = f"b{channel}_abs"
-        if variable_name == bc:
-            return absorption
-        if variable_name == absorption:
-            return bc
-
-    return None
-
-
-def expand_linked_flags(variables: str | list[str] | tuple[str, ...]) -> list[str]:
-    """Expand flag targets so AE33 BCn and bn_abs are always coupled."""
-    requested = [variables] if isinstance(variables, str) else list(variables)
-    expanded: list[str] = []
-
-    for variable_name in requested:
-        if variable_name not in expanded:
-            expanded.append(variable_name)
-
-        linked = _linked_ae33_variable(variable_name)
-        if linked is not None and linked not in expanded:
-            expanded.append(linked)
-
-    return expanded
+def expand_linked_flags(
+    variables: str | list[str] | tuple[str, ...],
+) -> list[str]:
+    """Expand requested variables using configured symmetric flag groups."""
+    return expand_linked_variables(variables, linked_flag_groups)
 
 
 def apply_flag_at_timestamps(
@@ -116,12 +103,14 @@ def apply_flag_at_timestamps(
     dtm_col: str = dtm,
     expand_links: bool = True,
 ) -> pl.DataFrame:
-    """Apply a flag at timestamps, optionally expanding AE33 linked variables."""
+    """Apply a flag at timestamps and optionally propagate linked variables."""
     if not timestamps:
         return frame
 
-    targets = expand_linked_flags(variables) if expand_links else (
-        [variables] if isinstance(variables, str) else list(variables)
+    targets = (
+        expand_linked_flags(variables)
+        if expand_links
+        else ([variables] if isinstance(variables, str) else list(variables))
     )
 
     expressions: list[pl.Expr] = []
@@ -146,36 +135,26 @@ def apply_flag_at_timestamps(
 
 
 def _active_flag_source(frame: pl.DataFrame, variable_name: str) -> str | None:
-    """Return the best existing flag column for a selected variable."""
-    own_flag = f"{flag_col_prefix}{variable_name}"
-    if own_flag in frame.columns:
-        return own_flag
-
-    linked = _linked_ae33_variable(variable_name)
-    if linked is None:
-        return None
-
-    linked_flag = f"{flag_col_prefix}{linked}"
-    return linked_flag if linked_flag in frame.columns else None
+    """Return the selected variable's own or configured linked flag column."""
+    return active_flag_source(
+        frame,
+        variable_name,
+        linked_flag_groups,
+        flag_prefix=flag_col_prefix,
+    )
 
 
-def _synchronize_ae33_flags(
+def _synchronize_linked_flags(
     frame: pl.DataFrame,
     edited_variable: str | None,
 ) -> pl.DataFrame:
-    """Synchronize one AE33 flag pair, using the edited member as authority."""
-    linked = _linked_ae33_variable(edited_variable)
-    if edited_variable is None or linked is None:
-        return frame
-    if edited_variable not in frame.columns or linked not in frame.columns:
-        return frame
-
-    source = f"{flag_col_prefix}{edited_variable}"
-    target = f"{flag_col_prefix}{linked}"
-    if source not in frame.columns:
-        return frame
-
-    return frame.with_columns(pl.col(source).alias(target))
+    """Make the edited variable authoritative for its configured flag group."""
+    return synchronize_group_from_variable(
+        frame,
+        edited_variable,
+        linked_flag_groups,
+        flag_prefix=flag_col_prefix,
+    )
 
 
 def add_legend_below_axes(
@@ -483,13 +462,17 @@ def on_picked_flag_point(event):
             df[event.ind, flags] = flag
             df[event.ind, colors] = color
 
-            linked = _linked_ae33_variable(variable)
-            if linked is not None and linked in df.columns:
-                indices = [int(index) for index in event.ind]
-                timestamps = df.get_column(dtm).gather(indices).to_list()
+            indices = [int(index) for index in event.ind]
+            timestamps = df.get_column(dtm).gather(indices).to_list()
+            linked_targets = [
+                target
+                for target in expand_linked_flags(variable)
+                if target != variable and target in df.columns
+            ]
+            if linked_targets:
                 df = apply_flag_at_timestamps(
                     df,
-                    linked,
+                    linked_targets,
                     timestamps,
                     flag,
                     expand_links=False,
@@ -547,11 +530,15 @@ def on_key_pressed_flag_points(event):
                 ]
             )
 
-            linked = _linked_ae33_variable(variable)
-            if linked is not None and linked in df.columns:
+            linked_targets = [
+                target
+                for target in expand_linked_flags(variable)
+                if target != variable and target in df.columns
+            ]
+            if linked_targets:
                 df = apply_flag_at_timestamps(
                     df,
-                    linked,
+                    linked_targets,
                     selected_timestamps,
                     flag,
                     expand_links=False,
@@ -598,7 +585,7 @@ def on_clicked_save_data(event):
         if colors in df.columns:
             df = df.drop(colors)
 
-        df = _synchronize_ae33_flags(df, variable)
+        df = _synchronize_linked_flags(df, variable)
 
     source_file = _selected_path_from_filechooser(file_chooser)
     if not source_file:
@@ -637,7 +624,9 @@ def on_clicked_save_data(event):
 
 def ez_flag_data(design: int = 2, width: int = 10, height: int = 5):
     global file_chooser, dropdown_variable_select, button_save_data
-    global infobox, layout, fig, ax
+    global infobox, layout, fig, ax, linked_flag_groups
+
+    linked_flag_groups = load_flag_groups()
 
     fig = plt.figure(figsize=(width, height))
     ax = fig.subplots()
