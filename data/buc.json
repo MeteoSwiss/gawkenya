@@ -1,8 +1,8 @@
 {
   "station": "buc",
   "label": "BUC",
-  "period": "2026-09",
-  "partition": "level1/buc/2026/09",
+  "period": "2026-10",
+  "partition": "level1/buc/2026/10",
   "file_count": 0,
   "published_source_count": 0,
   "summary": [],

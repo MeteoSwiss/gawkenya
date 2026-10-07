@@ -4,11 +4,11 @@
   "subtitle": "Current Level-1 parquet files",
   "level": "level1",
   "timezone": "UTC",
-  "period": "2026-09",
-  "generated_at": "2026-09-24T14:54:39Z",
+  "period": "2026-10",
+  "generated_at": "2026-10-07T13:02:40Z",
   "source_repository": "MeteoSwiss/gawkenyadata",
-  "data_commit": "492f77be57eda5b5d02d32fdbe305da9ab385863",
-  "generator_commit": "55a491d77f008c0cba68bedee71cf9bf664fb3e3",
+  "data_commit": "14ccdf8cbc62481c77b7b70fab7ab17e6987595e",
+  "generator_commit": "e341dcdb27ad628c5b9bdb5f6b48a90729978de3",
   "stations": [
     {
       "id": "mkn",
