@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Aggregate level 1 parquet files into yearly level 2 parquet products.
 
 The tool reads the ``level2`` block from a station YAML configuration and
@@ -22,6 +20,18 @@ Dry-run example (the default)::
         --root /product_data/data/pay/Kenya/git/gawkenyadata \
         --station-config mch-mkn.yml
 
+
+``--root`` may point to the gawkenyadata repository root, its ``level1``
+directory, or the selected station directory below ``level1``. For example,
+these three paths are equivalent for station ``mkn``::
+
+    /product_data/data/pay/Kenya/git/gawkenyadata
+    /product_data/data/pay/Kenya/git/gawkenyadata/level1
+    /product_data/data/pay/Kenya/git/gawkenyadata/level1/mkn
+
+The path is normalized internally back to the gawkenyadata root so Level 2
+outputs always go below ``<gawkenyadata>/level2/<station>``.
+
 For a multi-section config such as ``mch-nrb.yml``::
 
     python compile_level1_to_level2_files.py \
@@ -29,7 +39,7 @@ For a multi-section config such as ``mch-nrb.yml``::
         --station-config mch-nrb.yml \
         --config-section nrb-aq
 
-Write the planned parquet products only after inspecting the dry run::
+Write the planned Parquet products only after inspecting the dry run::
 
     python compile_level1_to_level2_files.py \
         --root /product_data/data/pay/Kenya/git/gawkenyadata \
@@ -38,8 +48,55 @@ Write the planned parquet products only after inspecting the dry run::
 
 The default dry run still reads and aggregates the data so that the reported
 row counts, valid-value statistics, and planned output files are the same checks
-performed by a write run. Only ``--write`` creates or overwrites parquet files.
+performed by a write run. Only ``--write`` creates or overwrites files. Parquet
+is always the canonical output; ``--csv`` additionally writes plain CSV and
+``--zip`` additionally writes ZIP-compressed CSV (``.csv.zip``). Parquet itself
+is never ZIP-compressed.
+
+IMPORTANT: Level 2 products are regenerated from Level 1. Existing Level 2
+files are not merged back into the new product. In particular, any interactive
+or manually assigned Level 2 ``f_*`` flag columns in an existing target are
+lost when ``--write`` overwrites that target. Level 1 flags are still used to
+decide which Level 1 observations enter each aggregate, but Level 2 flags must
+be assigned again after regeneration. Optional CSV/ZIP exports produced by this
+command are representations of the newly regenerated Level 2 dataframe and
+therefore do not preserve old Level 2 flags either.
+
+For instruments configured with ``reporting_condition_correction``, selected
+concentration-like variables are normalized in memory from the row-specific
+reporting pressure and temperature to a configured target condition before
+validity filtering and aggregation. The Level 1 Parquet data are never changed.
+For the AE33, the instrument manual defines ``Pressure`` and ``Temperature`` as
+the conditions used to report flow. A typical target is 101325 Pa and 0 degC.
+The compiler applies the ideal-gas conversion
+
+    value_target = value_reported * (P_target / P_reported)
+                   * ((T_reported + 273.15) / (T_target + 273.15))
+
+only to explicitly listed concentration-like variables (for example BC1 ...
+BC7 and b1_abs ... b7_abs). If the reporting ``Pressure`` and ``Temperature``
+columns themselves are configured as Level 2 output variables, they are not
+averaged at their original reporting condition: after the concentration
+correction they are standardized in memory to ``P_target`` and ``T_target`` as
+well. Thus an AE33 Level 2 product normalized to 101325 Pa and 0 degC reports
+``Pressure = 101325`` and ``Temperature = 0`` for valid source rows. The
+original Level 1 values remain unchanged and are still used to calculate the
+correction factor.
+
+Every run with reporting-condition normalization enabled emits an audit line
+showing the source pressure/temperature range, the correction-factor range, and
+the number of rows already at target, corrected, or invalid. After each
+aggregation the compiler verifies that any exported reporting Pressure and
+Temperature columns equal the configured target; a mismatch is a hard error.
+
+Rows already at the target condition receive a factor of 1. Rows with missing
+or physically invalid reporting pressure/temperature cannot be standardized;
+the affected concentration values and, when exported, the standardized
+Pressure/Temperature values are set to null in the in-memory Level 2 build and
+therefore do not contribute to the aggregate or its ``n_*`` count.
 """
+
+from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass, field
@@ -50,6 +107,7 @@ import logging
 import math
 import re
 import sys
+import zipfile
 from typing import Any, Literal, TextIO
 
 import polars as pl
@@ -72,6 +130,17 @@ class AggregationSpec:
     label: GroupLabel
     closed: ClosedInterval
     default_method: str
+
+
+@dataclass(frozen=True)
+class ReportingConditionCorrection:
+    """Normalize selected variables to a target reporting condition."""
+
+    pressure_column: str
+    temperature_column: str
+    target_pressure_pa: float
+    target_temperature_c: float
+    columns: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -123,6 +192,7 @@ class InstrumentSpec:
     source_parquet: str | None = None
     flag_mode: str | None = None
     flag_prefix: str | None = None
+    reporting_condition_correction: ReportingConditionCorrection | None = None
 
 
 @dataclass(frozen=True)
@@ -132,6 +202,21 @@ class StationConfig:
     station: str
     defaults: Defaults
     instruments: dict[str, InstrumentSpec]
+
+
+@dataclass(frozen=True)
+class ReportingConditionStats:
+    """Audit statistics for one reporting-condition normalization."""
+
+    already_target: int
+    corrected: int
+    invalid: int
+    source_pressure_min_pa: float | None
+    source_pressure_max_pa: float | None
+    source_temperature_min_c: float | None
+    source_temperature_max_c: float | None
+    factor_min: float | None
+    factor_max: float | None
 
 
 @dataclass(frozen=True)
@@ -156,10 +241,19 @@ class JobStats:
     resolved_columns: int = 0
     missing_columns: tuple[str, ...] = ()
     values: dict[str, ValueStats] = field(default_factory=dict)
+    reporting_condition_stats: ReportingConditionStats | None = None
     aggregate_rows: dict[Frequency, int] = field(default_factory=dict)
+    # output_paths remains the canonical Parquet mapping for compatibility.
     output_paths: dict[Frequency, Path] = field(default_factory=dict)
+    csv_paths: dict[Frequency, Path] = field(default_factory=dict)
+    zip_paths: dict[Frequency, Path] = field(default_factory=dict)
     existing_outputs: set[Frequency] = field(default_factory=set)
+    existing_csv_outputs: set[Frequency] = field(default_factory=set)
+    existing_zip_outputs: set[Frequency] = field(default_factory=set)
+    existing_level2_flags: dict[Frequency, tuple[str, ...]] = field(default_factory=dict)
     written_outputs: set[Frequency] = field(default_factory=set)
+    written_csv_outputs: set[Frequency] = field(default_factory=set)
+    written_zip_outputs: set[Frequency] = field(default_factory=set)
     skipped_reason: str | None = None
     error: str | None = None
 
@@ -177,6 +271,8 @@ class RunStats:
     """Statistics for one complete CLI invocation."""
 
     write: bool = False
+    csv: bool = False
+    zip_csv: bool = False
     jobs: list[JobStats] = field(default_factory=list)
 
     @property
@@ -257,7 +353,22 @@ def _default_level2_block() -> dict[str, Any]:
             },
             "ae33/data": {
                 "source_parquet": "ae33",
-                "columns": ["BC1", "BC2", "BC3", "BC4", "BC5", "BC6"],
+                "columns": [
+                    "BC1", "BC2", "BC3", "BC4", "BC5", "BC6", "BC7",
+                    "b1_abs", "b2_abs", "b3_abs", "b4_abs", "b5_abs",
+                    "b6_abs", "b7_abs", "Pressure", "Temperature",
+                ],
+                "reporting_condition_correction": {
+                    "pressure_column": "Pressure",
+                    "temperature_column": "Temperature",
+                    "target_pressure_pa": 101325,
+                    "target_temperature_c": 0.0,
+                    "columns": [
+                        "BC1", "BC2", "BC3", "BC4", "BC5", "BC6", "BC7",
+                        "b1_abs", "b2_abs", "b3_abs", "b4_abs", "b5_abs",
+                        "b6_abs", "b7_abs",
+                    ],
+                },
             },
             "fidas": {"columns": ["PM1", "PM2.5", "PM4", "PM10"]},
         },
@@ -373,6 +484,82 @@ def _validate_column_names(instrument_name: str, columns: list[ColumnSpec]) -> N
         )
 
 
+
+def _parse_reporting_condition_correction(
+    raw: Any,
+    *,
+    instrument_name: str,
+    columns: list[ColumnSpec],
+) -> ReportingConditionCorrection | None:
+    """Parse an optional reporting-condition normalization mapping."""
+
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting_condition_correction must be a mapping."
+        )
+
+    pressure_column = raw.get("pressure_column", "Pressure")
+    temperature_column = raw.get("temperature_column", "Temperature")
+    if not isinstance(pressure_column, str) or not pressure_column:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting condition pressure_column must be a non-empty string."
+        )
+    if not isinstance(temperature_column, str) or not temperature_column:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting condition temperature_column must be a non-empty string."
+        )
+
+    try:
+        target_pressure_pa = float(raw.get("target_pressure_pa", 101325.0))
+        target_temperature_c = float(raw.get("target_temperature_c", 0.0))
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting-condition targets must be numeric."
+        ) from exc
+
+    if not math.isfinite(target_pressure_pa) or target_pressure_pa <= 0.0:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' target_pressure_pa must be > 0."
+        )
+    if not math.isfinite(target_temperature_c) or target_temperature_c <= -273.15:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' target_temperature_c must be above absolute zero."
+        )
+
+    correction_columns = raw.get("columns")
+    if not isinstance(correction_columns, list) or not correction_columns:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting_condition_correction must define a non-empty columns list."
+        )
+    if not all(isinstance(name, str) and name for name in correction_columns):
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting-condition columns must be non-empty strings."
+        )
+
+    configured_names = {column.name for column in columns}
+    unknown = sorted(set(correction_columns) - configured_names)
+    if unknown:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting-condition columns are not configured Level 2 variables: {unknown}"
+        )
+    if pressure_column in correction_columns or temperature_column in correction_columns:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' reporting pressure/temperature columns "
+            "must not appear in reporting_condition_correction.columns; configure "
+            "them as ordinary Level 2 output columns instead, and they will be "
+            "standardized automatically."
+        )
+
+    return ReportingConditionCorrection(
+        pressure_column=pressure_column,
+        temperature_column=temperature_column,
+        target_pressure_pa=target_pressure_pa,
+        target_temperature_c=target_temperature_c,
+        columns=tuple(dict.fromkeys(correction_columns)),
+    )
+
 def load_station_config(path: Path, config_section: str | None = None) -> StationConfig:
     """Load and validate embedded level 2 settings from a station YAML file."""
 
@@ -463,15 +650,61 @@ def load_station_config(path: Path, config_section: str | None = None) -> Statio
                 f"Instrument '{instrument_name}' has an invalid source_parquet; expected a non-empty string."
             )
 
+        reporting_condition_correction = _parse_reporting_condition_correction(
+            instrument_raw.get("reporting_condition_correction"),
+            instrument_name=instrument_name,
+            columns=columns,
+        )
+
         instruments[instrument_name] = InstrumentSpec(
             name=instrument_name,
             columns=tuple(columns),
             source_parquet=source_parquet.strip() if isinstance(source_parquet, str) else None,
             flag_mode=instrument_flags.get("mode"),
             flag_prefix=instrument_flags.get("prefix"),
+            reporting_condition_correction=reporting_condition_correction,
         )
 
     return StationConfig(station=station, defaults=defaults, instruments=instruments)
+
+
+def resolve_data_root(root: Path, station: str) -> Path:
+    """Normalize supported ``--root`` forms to the gawkenyadata root.
+
+    ``--root`` may identify the gawkenyadata repository root, the repository's
+    ``level1`` directory, or the selected station directory below ``level1``.
+
+    Args:
+        root: User-supplied root path.
+        station: Station identifier from the Level 2 configuration.
+
+    Returns:
+        Canonical gawkenyadata repository root.
+
+    Raises:
+        FileNotFoundError: If ``root`` does not exist or cannot be interpreted
+            as one of the supported directory levels.
+    """
+    candidate = root.expanduser()
+
+    if not candidate.exists():
+        raise FileNotFoundError(f"Root path does not exist: {candidate}")
+    if not candidate.is_dir():
+        raise FileNotFoundError(f"Root path is not a directory: {candidate}")
+
+    if (candidate / "level1").is_dir():
+        return candidate
+
+    if candidate.name == "level1":
+        return candidate.parent
+
+    if candidate.name == station and candidate.parent.name == "level1":
+        return candidate.parent.parent
+
+    raise FileNotFoundError(
+        "Could not interpret --root. Expected the gawkenyadata root, its "
+        f"level1 directory, or level1/{station}; got: {candidate}"
+    )
 
 
 def discover_years(level1_root: Path, station: str) -> list[int]:
@@ -688,6 +921,33 @@ def _load_level1_frame(
 
     resolved: dict[str, tuple[str, str | None]] = {}
     needed_columns = {actual_datetime}
+    reporting_renames: dict[str, str] = {}
+    correction = instrument.reporting_condition_correction
+    if correction is not None:
+        actual_pressure = _resolve_available_column(
+            correction.pressure_column, available_columns
+        )
+        actual_temperature = _resolve_available_column(
+            correction.temperature_column, available_columns
+        )
+        if actual_pressure is None or actual_temperature is None:
+            missing = [
+                name
+                for name, actual in (
+                    (correction.pressure_column, actual_pressure),
+                    (correction.temperature_column, actual_temperature),
+                )
+                if actual is None
+            ]
+            raise ConfigError(
+                f"Reporting-condition correction for '{instrument.name}' requires "
+                f"missing Level 1 column(s): {', '.join(missing)}"
+            )
+        needed_columns.update({actual_pressure, actual_temperature})
+        if actual_pressure != correction.pressure_column:
+            reporting_renames[actual_pressure] = correction.pressure_column
+        if actual_temperature != correction.temperature_column:
+            reporting_renames[actual_temperature] = correction.temperature_column
     for column in instrument.columns:
         actual_value = _resolve_available_column(column.name, available_columns)
         if actual_value is None:
@@ -707,8 +967,18 @@ def _load_level1_frame(
         return pl.DataFrame(), {}
 
     df = scan.select(sorted(needed_columns)).collect()
+    renames = dict(reporting_renames)
     if actual_datetime != defaults.datetime_column:
-        df = df.rename({actual_datetime: defaults.datetime_column})
+        renames[actual_datetime] = defaults.datetime_column
+    if renames:
+        df = df.rename(renames)
+        resolved = {
+            source_name: (
+                renames.get(actual_value, actual_value),
+                renames.get(actual_flag, actual_flag) if actual_flag is not None else None,
+            )
+            for source_name, (actual_value, actual_flag) in resolved.items()
+        }
 
     if df.is_empty():
         return df, resolved
@@ -717,6 +987,143 @@ def _load_level1_frame(
     df = df.filter(pl.col(defaults.datetime_column).is_not_null()).sort(defaults.datetime_column)
     return df, resolved
 
+
+
+def _apply_reporting_condition_correction(
+    df: pl.DataFrame,
+    resolved: dict[str, tuple[str, str | None]],
+    instrument: InstrumentSpec,
+) -> tuple[pl.DataFrame, ReportingConditionStats | None]:
+    """Normalize selected variables to the configured reporting condition.
+
+    Concentration-like variables listed in
+    ``reporting_condition_correction.columns`` are multiplied by the
+    row-specific ideal-gas correction factor. If the configured reporting
+    pressure and temperature columns are themselves Level 2 output variables,
+    their in-memory values are replaced by the configured target pressure and
+    temperature for rows with valid reporting conditions. This keeps the Level
+    2 metadata consistent with the condition to which the concentrations were
+    normalized.
+
+    The original pressure/temperature values are used to compute the correction
+    factor before they are replaced. Source Level 1 Parquet files are never
+    modified.
+    """
+
+    correction = instrument.reporting_condition_correction
+    if correction is None or df.is_empty():
+        return df, None
+
+    pressure = pl.col(correction.pressure_column).cast(pl.Float64, strict=False)
+    temperature_c = pl.col(correction.temperature_column).cast(pl.Float64, strict=False)
+    conditions_valid = (
+        pressure.is_not_null()
+        & temperature_c.is_not_null()
+        & pressure.is_finite()
+        & temperature_c.is_finite()
+        & (pressure > 0.0)
+        & (temperature_c > -273.15)
+    )
+
+    at_target = (
+        conditions_valid
+        & ((pressure - correction.target_pressure_pa).abs() <= 0.5)
+        & ((temperature_c - correction.target_temperature_c).abs() <= 0.01)
+    )
+    factor = (
+        pl.lit(correction.target_pressure_pa)
+        / pressure
+        * ((temperature_c + 273.15) / pl.lit(correction.target_temperature_c + 273.15))
+    )
+
+    expressions: list[pl.Expr] = []
+    for source_name in correction.columns:
+        names = resolved.get(source_name)
+        if names is None:
+            continue
+        actual_value, _ = names
+        expressions.append(
+            pl.when(conditions_valid & pl.col(actual_value).is_not_null())
+            .then(pl.col(actual_value).cast(pl.Float64, strict=False) * factor)
+            .otherwise(None)
+            .alias(actual_value)
+        )
+
+    # Pressure and Temperature describe the reporting condition used by the
+    # AE33, not ambient meteorology. If they are configured as Level 2 output
+    # variables, report the target condition alongside the corrected
+    # concentrations. Polars evaluates these expressions against the original
+    # dataframe, so the factor above still uses the unmodified Level 1 values.
+    pressure_names = resolved.get(correction.pressure_column)
+    if pressure_names is not None:
+        actual_pressure_value, _ = pressure_names
+        expressions.append(
+            pl.when(conditions_valid)
+            .then(pl.lit(correction.target_pressure_pa))
+            .otherwise(None)
+            .alias(actual_pressure_value)
+        )
+
+    temperature_names = resolved.get(correction.temperature_column)
+    if temperature_names is not None:
+        actual_temperature_value, _ = temperature_names
+        expressions.append(
+            pl.when(conditions_valid)
+            .then(pl.lit(correction.target_temperature_c))
+            .otherwise(None)
+            .alias(actual_temperature_value)
+        )
+
+    audit = df.select(
+        [
+            at_target.sum().alias("already_target"),
+            (conditions_valid & ~at_target).sum().alias("corrected"),
+            (~conditions_valid).sum().alias("invalid"),
+            pl.when(conditions_valid)
+            .then(pressure)
+            .otherwise(None)
+            .min()
+            .alias("source_pressure_min_pa"),
+            pl.when(conditions_valid)
+            .then(pressure)
+            .otherwise(None)
+            .max()
+            .alias("source_pressure_max_pa"),
+            pl.when(conditions_valid)
+            .then(temperature_c)
+            .otherwise(None)
+            .min()
+            .alias("source_temperature_min_c"),
+            pl.when(conditions_valid)
+            .then(temperature_c)
+            .otherwise(None)
+            .max()
+            .alias("source_temperature_max_c"),
+            pl.when(conditions_valid)
+            .then(factor)
+            .otherwise(None)
+            .min()
+            .alias("factor_min"),
+            pl.when(conditions_valid)
+            .then(factor)
+            .otherwise(None)
+            .max()
+            .alias("factor_max"),
+        ]
+    ).row(0, named=True)
+    stats = ReportingConditionStats(
+        already_target=int(audit["already_target"] or 0),
+        corrected=int(audit["corrected"] or 0),
+        invalid=int(audit["invalid"] or 0),
+        source_pressure_min_pa=audit["source_pressure_min_pa"],
+        source_pressure_max_pa=audit["source_pressure_max_pa"],
+        source_temperature_min_c=audit["source_temperature_min_c"],
+        source_temperature_max_c=audit["source_temperature_max_c"],
+        factor_min=audit["factor_min"],
+        factor_max=audit["factor_max"],
+    )
+
+    return (df.with_columns(expressions) if expressions else df), stats
 
 def _aggregate_loaded_frame(
     df: pl.DataFrame,
@@ -788,6 +1195,136 @@ def _aggregate_loaded_frame(
     return out.select(selected)
 
 
+
+def _output_name_for_source(
+    instrument: InstrumentSpec,
+    source_name: str,
+) -> str | None:
+    """Return the Level 2 output name for one configured source variable."""
+
+    for column in instrument.columns:
+        if column.name == source_name:
+            return column.output_name
+    return None
+
+
+def _verified_constant_range(
+    df: pl.DataFrame,
+    column_name: str,
+    expected: float,
+    *,
+    tolerance: float,
+    label: str,
+    frequency: Frequency,
+    instrument_name: str,
+) -> tuple[float, float] | None:
+    """Verify every non-null output value equals the expected constant."""
+
+    if column_name not in df.columns:
+        return None
+
+    values = df.select(
+        [
+            pl.col(column_name).drop_nulls().min().alias("minimum"),
+            pl.col(column_name).drop_nulls().max().alias("maximum"),
+        ]
+    ).row(0, named=True)
+    minimum = values["minimum"]
+    maximum = values["maximum"]
+    if minimum is None or maximum is None:
+        return None
+
+    minimum_f = float(minimum)
+    maximum_f = float(maximum)
+    if (
+        abs(minimum_f - expected) > tolerance
+        or abs(maximum_f - expected) > tolerance
+    ):
+        raise RuntimeError(
+            f"Reporting-condition verification failed for {instrument_name} "
+            f"{frequency}: {label} expected {expected}, observed "
+            f"{minimum_f} .. {maximum_f}."
+        )
+    return minimum_f, maximum_f
+
+
+def _verify_reporting_condition_aggregate(
+    df: pl.DataFrame,
+    instrument: InstrumentSpec,
+    frequency: Frequency,
+) -> None:
+    """Fail if exported reporting P/T do not match the configured target."""
+
+    correction = instrument.reporting_condition_correction
+    if correction is None or df.is_empty():
+        return
+
+    pressure_output = _output_name_for_source(
+        instrument, correction.pressure_column
+    )
+    temperature_output = _output_name_for_source(
+        instrument, correction.temperature_column
+    )
+
+    pressure_range = (
+        _verified_constant_range(
+            df,
+            pressure_output,
+            correction.target_pressure_pa,
+            tolerance=0.5,
+            label="pressure",
+            frequency=frequency,
+            instrument_name=instrument.name,
+        )
+        if pressure_output is not None
+        else None
+    )
+    temperature_range = (
+        _verified_constant_range(
+            df,
+            temperature_output,
+            correction.target_temperature_c,
+            tolerance=0.01,
+            label="temperature",
+            frequency=frequency,
+            instrument_name=instrument.name,
+        )
+        if temperature_output is not None
+        else None
+    )
+
+    details: list[str] = []
+    if pressure_output is not None:
+        details.append(
+            f"{pressure_output}="
+            + (
+                "all-null"
+                if pressure_range is None
+                else f"{pressure_range[0]:.3f}..{pressure_range[1]:.3f} Pa"
+            )
+        )
+    if temperature_output is not None:
+        details.append(
+            f"{temperature_output}="
+            + (
+                "all-null"
+                if temperature_range is None
+                else f"{temperature_range[0]:.3f}..{temperature_range[1]:.3f} degC"
+            )
+        )
+
+    if details:
+        LOGGER.info(
+            "VERIFIED  reporting condition instrument=%s frequency=%s "
+            "target=(%.1f Pa, %.2f degC) %s",
+            instrument.name,
+            frequency,
+            correction.target_pressure_pa,
+            correction.target_temperature_c,
+            " ".join(details),
+        )
+
+
 def build_aggregate_dataframe(
     files: list[Path],
     defaults: Defaults,
@@ -802,7 +1339,11 @@ def build_aggregate_dataframe(
     """
 
     df, resolved = _load_level1_frame(files, defaults, instrument)
-    return _aggregate_loaded_frame(df, resolved, defaults, instrument, frequency)
+    df, _ = _apply_reporting_condition_correction(df, resolved, instrument)
+    out = _aggregate_loaded_frame(df, resolved, defaults, instrument, frequency)
+    if out is not None:
+        _verify_reporting_condition_aggregate(out, instrument, frequency)
+    return out
 
 def build_hourly_dataframe(
     files: list[Path],
@@ -885,11 +1426,74 @@ def output_path(
     )
 
 
+
+def existing_level2_flag_columns(path: Path) -> tuple[str, ...]:
+    """Return existing Level 2 ``f_*`` columns that a rebuild would discard."""
+
+    if not path.exists():
+        return ()
+    try:
+        names = pl.scan_parquet(path).collect_schema().names()
+    except Exception as exc:
+        LOGGER.warning("Could not inspect existing Level 2 schema %s: %s", path, exc)
+        return ()
+    return tuple(name for name in names if name.startswith("f_"))
+
 def write_parquet(df: pl.DataFrame, path: Path, compression: ParquetCompression) -> None:
     """Write one parquet file, creating the target directory first."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     df.write_parquet(path, compression=compression)
+
+
+def csv_output_path(parquet_path: Path) -> Path:
+    """Return the CSV sibling of a Level 2 Parquet path."""
+
+    return parquet_path.with_suffix(".csv")
+
+
+def zip_output_path(parquet_path: Path) -> Path:
+    """Return the ZIP-compressed CSV sibling of a Level 2 Parquet path."""
+
+    csv_path = csv_output_path(parquet_path)
+    return csv_path.with_name(f"{csv_path.name}.zip")
+
+
+def write_csv(df: pl.DataFrame, path: Path) -> None:
+    """Write one CSV export, creating the target directory first."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.write_csv(path)
+
+
+def write_csv_zip(
+    df: pl.DataFrame,
+    path: Path,
+    *,
+    csv_name: str,
+    source_csv: Path | None = None,
+) -> None:
+    """Write a ZIP archive containing exactly one CSV export.
+
+    If ``source_csv`` is supplied, that already-written CSV is archived.
+    Otherwise the dataframe is serialized directly into the archive so
+    ``--zip`` does not require an uncompressed CSV to be left on disk.
+    """
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(
+        path,
+        mode="w",
+        compression=zipfile.ZIP_DEFLATED,
+        compresslevel=6,
+    ) as archive:
+        if source_csv is not None:
+            archive.write(source_csv, arcname=csv_name)
+        else:
+            csv_text = df.write_csv()
+            if csv_text is None:
+                raise RuntimeError("Polars did not return CSV text for in-memory export.")
+            archive.writestr(csv_name, csv_text)
 
 
 def _source_bytes(files: list[Path]) -> int:
@@ -944,6 +1548,12 @@ def _collect_value_stats(
     }
 
 
+def _format_optional_number(value: float | None, decimals: int) -> str:
+    """Format an optional floating-point audit value."""
+
+    return "n/a" if value is None else f"{float(value):.{decimals}f}"
+
+
 def _format_bytes(size: int) -> str:
     """Return a compact IEC byte-size string."""
 
@@ -994,6 +1604,25 @@ def _log_job_stats(job: JobStats) -> None:
             name,
             _format_validity(stats.valid, stats.available),
         )
+    if job.reporting_condition_stats is not None:
+        condition_stats = job.reporting_condition_stats
+        LOGGER.info(
+            "Reporting-condition normalization ACTIVE station=%s instrument=%s year=%s "
+            "already_target=%s corrected=%s invalid=%s "
+            "source_P=%s..%s Pa source_T=%s..%s degC factor=%s..%s",
+            job.station,
+            job.instrument,
+            job.year,
+            f"{condition_stats.already_target:,}",
+            f"{condition_stats.corrected:,}",
+            f"{condition_stats.invalid:,}",
+            _format_optional_number(condition_stats.source_pressure_min_pa, 2),
+            _format_optional_number(condition_stats.source_pressure_max_pa, 2),
+            _format_optional_number(condition_stats.source_temperature_min_c, 3),
+            _format_optional_number(condition_stats.source_temperature_max_c, 3),
+            _format_optional_number(condition_stats.factor_min, 6),
+            _format_optional_number(condition_stats.factor_max, 6),
+        )
     if job.missing_columns:
         LOGGER.warning(
             "Missing configured columns for station=%s instrument=%s year=%s: %s",
@@ -1012,6 +1641,8 @@ def _process_station_instrument_year(
     year: int,
     *,
     write: bool,
+    export_csv: bool = False,
+    zip_csv: bool = False,
 ) -> JobStats:
     """Build one instrument/year and return detailed statistics."""
 
@@ -1029,6 +1660,24 @@ def _process_station_instrument_year(
         _log_job_stats(job)
         return job
 
+    if (
+        instrument.reporting_condition_correction is None
+        and (
+            instrument.name.casefold().startswith("ae33")
+            or (instrument.source_parquet or "").casefold().startswith("ae33")
+        )
+        and any(
+            column.name in {"Pressure", "Temperature"}
+            for column in instrument.columns
+        )
+    ):
+        LOGGER.warning(
+            "AE33 reporting-condition normalization is NOT configured for %s. "
+            "Pressure/Temperature and concentration values will be aggregated unchanged. "
+            "Add reporting_condition_correction to the instrument config.",
+            instrument.name,
+        )
+
     level1_df, resolved = _load_level1_frame(files, defaults, instrument)
     job.level1_rows = level1_df.height
     job.resolved_columns = len(resolved)
@@ -1044,6 +1693,9 @@ def _process_station_instrument_year(
         _log_job_stats(job)
         return job
 
+    level1_df, job.reporting_condition_stats = _apply_reporting_condition_correction(
+        level1_df, resolved, instrument
+    )
     job.values = _collect_value_stats(level1_df, resolved, defaults, instrument)
     _log_job_stats(job)
 
@@ -1068,30 +1720,96 @@ def _process_station_instrument_year(
             )
             continue
 
+        _verify_reporting_condition_aggregate(
+            aggregated,
+            instrument,
+            frequency,
+        )
+
         path = output_path(root, station, instrument.name, frequency, year)
+        csv_path = csv_output_path(path)
+        zipped_csv_path = zip_output_path(path)
         job.aggregate_rows[frequency] = aggregated.height
         job.output_paths[frequency] = path
         if path.exists():
             job.existing_outputs.add(frequency)
+            existing_flags = existing_level2_flag_columns(path)
+            if existing_flags:
+                job.existing_level2_flags[frequency] = existing_flags
+                LOGGER.warning(
+                    "Existing Level 2 flags will be discarded by regeneration: %s -> %s",
+                    path,
+                    ", ".join(existing_flags),
+                )
+        if export_csv:
+            job.csv_paths[frequency] = csv_path
+            if csv_path.exists():
+                job.existing_csv_outputs.add(frequency)
+        if zip_csv:
+            job.zip_paths[frequency] = zipped_csv_path
+            if zipped_csv_path.exists():
+                job.existing_zip_outputs.add(frequency)
 
         if not write:
             LOGGER.info(
-                "WOULD     %s rows=%s -> %s%s",
+                "WOULD     parquet %-7s rows=%s -> %s%s",
                 frequency,
                 f"{aggregated.height:,}",
                 path,
                 " (overwrite)" if path.exists() else "",
             )
+            if export_csv:
+                LOGGER.info(
+                    "WOULD     csv     %-7s rows=%s -> %s%s",
+                    frequency,
+                    f"{aggregated.height:,}",
+                    csv_path,
+                    " (overwrite)" if csv_path.exists() else "",
+                )
+            if zip_csv:
+                LOGGER.info(
+                    "WOULD     csv.zip %-7s rows=%s -> %s%s",
+                    frequency,
+                    f"{aggregated.height:,}",
+                    zipped_csv_path,
+                    " (overwrite)" if zipped_csv_path.exists() else "",
+                )
             continue
 
+        # Parquet is canonical and is always written on a real write run.
         write_parquet(aggregated, path, defaults.parquet_compression)
         job.written_outputs.add(frequency)
         LOGGER.info(
-            "WRITTEN   %s rows=%s -> %s",
+            "WRITTEN   parquet %-7s rows=%s -> %s",
             frequency,
             f"{aggregated.height:,}",
             path,
         )
+
+        if export_csv:
+            write_csv(aggregated, csv_path)
+            job.written_csv_outputs.add(frequency)
+            LOGGER.info(
+                "WRITTEN   csv     %-7s rows=%s -> %s",
+                frequency,
+                f"{aggregated.height:,}",
+                csv_path,
+            )
+
+        if zip_csv:
+            write_csv_zip(
+                aggregated,
+                zipped_csv_path,
+                csv_name=csv_path.name,
+                source_csv=csv_path if export_csv else None,
+            )
+            job.written_zip_outputs.add(frequency)
+            LOGGER.info(
+                "WRITTEN   csv.zip %-7s rows=%s -> %s",
+                frequency,
+                f"{aggregated.height:,}",
+                zipped_csv_path,
+            )
 
     return job
 
@@ -1104,8 +1822,14 @@ def process_station_instrument_year(
     year: int,
     *,
     write: bool = False,
+    csv: bool = False,
+    zip_csv: bool = False,
 ) -> dict[Frequency, Path]:
     """Build configured Level 2 cadences for one instrument/year.
+
+    Existing Level 2 targets are regenerated, not merged. Therefore any
+    pre-existing Level 2 ``f_*`` flag columns are discarded on a write run and
+    must be assigned again after regeneration.
 
     Args:
         root: gawkenyadata repository root.
@@ -1113,8 +1837,10 @@ def process_station_instrument_year(
         defaults: Resolved Level 2 defaults.
         instrument: Instrument specification.
         year: Four-digit year.
-        write: If true, write or overwrite the planned parquet outputs. The
-            default is a dry run.
+        write: If true, write or overwrite the planned outputs. Parquet is
+            always written. The default is a dry run.
+        csv: Also export uncompressed CSV siblings.
+        zip_csv: Also export ZIP-compressed CSV siblings. This never zips Parquet.
 
     Returns:
         Mapping of output cadence to planned/written output path. In the default
@@ -1128,6 +1854,8 @@ def process_station_instrument_year(
         instrument,
         year,
         write=write,
+        export_csv=csv,
+        zip_csv=zip_csv,
     )
     return job.output_paths
 
@@ -1146,9 +1874,38 @@ def print_summary(stats: RunStats) -> None:
     missing_columns = sum(len(job.missing_columns) for job in jobs)
     available_values = sum(job.available_values for job in jobs)
     valid_values = sum(job.valid_values for job in jobs)
-    planned_outputs = sum(len(job.output_paths) for job in jobs)
-    written_outputs = sum(len(job.written_outputs) for job in jobs)
-    existing_outputs = sum(len(job.existing_outputs) for job in jobs)
+    parquet_planned = sum(len(job.output_paths) for job in jobs)
+    csv_planned = sum(len(job.csv_paths) for job in jobs)
+    zip_planned = sum(len(job.zip_paths) for job in jobs)
+    planned_outputs = parquet_planned + csv_planned + zip_planned
+
+    parquet_written = sum(len(job.written_outputs) for job in jobs)
+    csv_written = sum(len(job.written_csv_outputs) for job in jobs)
+    zip_written = sum(len(job.written_zip_outputs) for job in jobs)
+    written_outputs = parquet_written + csv_written + zip_written
+
+    parquet_existing = sum(len(job.existing_outputs) for job in jobs)
+    csv_existing = sum(len(job.existing_csv_outputs) for job in jobs)
+    zip_existing = sum(len(job.existing_zip_outputs) for job in jobs)
+    existing_outputs = parquet_existing + csv_existing + zip_existing
+    condition_already_target = sum(
+        job.reporting_condition_stats.already_target
+        for job in jobs
+        if job.reporting_condition_stats is not None
+    )
+    condition_corrected = sum(
+        job.reporting_condition_stats.corrected
+        for job in jobs
+        if job.reporting_condition_stats is not None
+    )
+    condition_invalid = sum(
+        job.reporting_condition_stats.invalid
+        for job in jobs
+        if job.reporting_condition_stats is not None
+    )
+    existing_level2_flag_columns_count = sum(
+        len(columns) for job in jobs for columns in job.existing_level2_flags.values()
+    )
 
     print()
     print("Summary")
@@ -1164,14 +1921,35 @@ def print_summary(stats: RunStats) -> None:
     print(f"Resolved variables       : {resolved_columns:,}")
     print(f"Missing variables        : {missing_columns:,}")
     print(f"Valid / available values : {_format_validity(valid_values, available_values)}")
+    if condition_already_target or condition_corrected or condition_invalid:
+        print(
+            "Reporting conditions     : "
+            f"target={condition_already_target:,}, "
+            f"corrected={condition_corrected:,}, invalid={condition_invalid:,}"
+        )
+    if existing_level2_flag_columns_count:
+        print(
+            "Existing L2 flags at risk: "
+            f"{existing_level2_flag_columns_count:,} column(s) will be discarded on write"
+        )
     for frequency in FREQUENCIES:
         rows = sum(job.aggregate_rows.get(frequency, 0) for job in jobs)
         outputs = sum(frequency in job.output_paths for job in jobs)
         print(f"{frequency.capitalize():<25}: {rows:,} rows in {outputs:,} file(s)")
     if not stats.write:
+        print(f"Parquet planned          : {parquet_planned:,}")
+        if stats.csv:
+            print(f"CSV planned              : {csv_planned:,}")
+        if stats.zip_csv:
+            print(f"CSV ZIP planned          : {zip_planned:,}")
         print(f"Outputs planned          : {planned_outputs:,}")
         print(f"Would overwrite          : {existing_outputs:,}")
     else:
+        print(f"Parquet written          : {parquet_written:,}")
+        if stats.csv:
+            print(f"CSV written              : {csv_written:,}")
+        if stats.zip_csv:
+            print(f"CSV ZIP written          : {zip_written:,}")
         print(f"Outputs written          : {written_outputs:,}")
         print(f"Existing overwritten     : {existing_outputs:,}")
     print(f"Errors                   : {stats.errors:,}")
@@ -1185,6 +1963,8 @@ def run(
     year: int | None = None,
     *,
     write: bool = False,
+    csv: bool = False,
+    zip_csv: bool = False,
 ) -> RunStats:
     """Run the Level 1 -> Level 2 aggregation workflow and return statistics."""
 
@@ -1192,6 +1972,7 @@ def run(
     defaults = station_cfg.defaults
     station = station_cfg.station
 
+    root = resolve_data_root(root, station)
     level1_root = root / "level1"
     if not level1_root.exists():
         raise FileNotFoundError(f"Missing level1 directory: {level1_root}")
@@ -1207,7 +1988,7 @@ def run(
     else:
         instruments = list(station_cfg.instruments.values())
 
-    stats = RunStats(write=write)
+    stats = RunStats(write=write, csv=csv, zip_csv=zip_csv)
     if not years:
         LOGGER.info("No years found for station=%s", station)
         return stats
@@ -1222,6 +2003,8 @@ def run(
                     instrument=instrument,
                     year=one_year,
                     write=write,
+                    export_csv=csv,
+                    zip_csv=zip_csv,
                 )
             except Exception as exc:
                 job = JobStats(
@@ -1248,7 +2031,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, help="Path to the gawkenyadata repository root.")
+    parser.add_argument(
+        "--root",
+        type=Path,
+        help=(
+            "Path to the gawkenyadata root, its level1 directory, or the "
+            "selected station directory below level1."
+        ),
+    )
     parser.add_argument(
         "--station-config",
         type=Path,
@@ -1271,8 +2061,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--write",
         action="store_true",
         help=(
-            "Write or overwrite the planned Level 2 parquet files. Without this "
-            "flag the command is a dry run and changes no data files."
+            "Write or overwrite the planned Level 2 files. Parquet is always "
+            "written. Existing Level 2 f_* flags are NOT preserved because the "
+            "product is regenerated from Level 1. Without this flag the command "
+            "is a dry run."
+        ),
+    )
+    parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Also export an uncompressed CSV sibling for every Parquet product.",
+    )
+    parser.add_argument(
+        "--zip",
+        dest="zip_csv",
+        action="store_true",
+        help=(
+            "Also export a ZIP-compressed CSV (.csv.zip) for every Parquet product. "
+            "Parquet files are never ZIP-compressed; --zip does not require --csv."
         ),
     )
     parser.add_argument(
@@ -1371,6 +2177,8 @@ def _run_cli(args: argparse.Namespace) -> int:
         instrument_name=args.instrument,
         year=args.year,
         write=args.write,
+        csv=args.csv,
+        zip_csv=args.zip_csv,
     )
     print_summary(stats)
     return 2 if stats.errors else 0
