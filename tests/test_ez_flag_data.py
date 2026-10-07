@@ -7,6 +7,24 @@ import polars as pl
 import toolbox.ez_flag_data as ez
 
 
+EXPECTED_AE33_GROUP = {
+    "BC1",
+    "b1_abs",
+    "BC2",
+    "b2_abs",
+    "BC3",
+    "b3_abs",
+    "BC4",
+    "b4_abs",
+    "BC5",
+    "b5_abs",
+    "BC6",
+    "b6_abs",
+    "BC7",
+    "b7_abs",
+}
+
+
 def _frame() -> pl.DataFrame:
     start = datetime(2026, 10, 6, 10, 0, tzinfo=UTC)
     return pl.DataFrame(
@@ -21,11 +39,11 @@ def _frame() -> pl.DataFrame:
 
 
 def test_expand_linked_flags_from_bc() -> None:
-    assert ez.expand_linked_flags("BC1") == ["BC1", "b1_abs"]
+    assert set(ez.expand_linked_flags("BC1")) == EXPECTED_AE33_GROUP
 
 
 def test_expand_linked_flags_from_absorption() -> None:
-    assert ez.expand_linked_flags("b1_abs") == ["b1_abs", "BC1"]
+    assert set(ez.expand_linked_flags("b1_abs")) == EXPECTED_AE33_GROUP
 
 
 def test_expand_linked_flags_leaves_unrelated_variable_alone() -> None:

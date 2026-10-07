@@ -5,7 +5,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from toolbox.flag_links import (
+from toolbox.flag_groups import (
     active_flag_source,
     expand_linked_variables,
     load_flag_groups,

@@ -611,7 +611,7 @@ def filtre_top_ozone_SOMORA(mydate,alti):
 def GetDobson(mydate):
     val = np.nan
     log.WriteLog(mydate, 'INFO', 'GetDobson: try to find Total ozone from Dobson 062 table')
-    dataset = pd.read_csv(config.dobclim,sep="\s+",skipinitialspace=True,na_values='0.00000')
+    dataset = pd.read_csv(config.dobclim,sep=r"\s+",skipinitialspace=True,na_values='0.00000')
     sel = dataset.loc[dataset['yyyymmdd'] == int(mydate[0:8])]
     sel = sel.reset_index(drop=True)
 
@@ -627,7 +627,7 @@ def GetSatTot(mydate,loc):
 
     file = config.sattotaro if (loc == 'Arosa') else config.sattotpay
 
-    dataset = pd.read_csv(file, sep='\s+', skiprows=2)
+    dataset = pd.read_csv(file, sep=r'\s+', skiprows=2)
     sel = dataset.loc[(dataset['Date'] == int(mydate[0:8])) & (dataset['hr'] == int(mydate[8:10]))]
     sel = sel.reset_index(drop=True)
     if (len(sel) > 0):

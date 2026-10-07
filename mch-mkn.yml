@@ -105,7 +105,7 @@ level2:
         - flowa
         - flowb
         - pres
-    ae33/data:
+    ae33:
       source_parquet: ae33
       columns:
         - BC1
@@ -114,6 +114,14 @@ level2:
         - BC4
         - BC5
         - BC6
+        - BC7
+        - b1_abs
+        - b2_abs
+        - b3_abs
+        - b4_abs
+        - b5_abs
+        - b6_abs
+        - b7_abs
     fidas:
       columns:
         - "60"

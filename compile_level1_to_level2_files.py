@@ -1,86 +1,67 @@
 from __future__ import annotations
 
-"""Collect and aggregate level 1 parquet files into level 2 parquet files.
+"""Aggregate level 1 parquet files into yearly level 2 parquet products.
 
-This utility crawls a ``gawkenyadata`` repository that follows a level 1 layout
-such as either::
+The tool reads the ``level2`` block from a station YAML configuration and
+creates hourly, daily, and/or monthly products. Each configured value column is
+accompanied by ``n_<column>``: the number of non-null Level 1 observations that
+passed the same flag-validity rule used for the aggregate itself.
 
-    gawkenyadata/
-      level1/
-        nrb/
-          2026/
-            03/
-              49i/
-                *.parquet
-              ae31/
-                *.parquet
+By default, values are valid when their matching flag is ``0`` or null because
+``accept_null_flags`` defaults to true. Set ``accept_null_flags: false`` for a
+strict ``flag == 0`` rule. If no flag column exists, non-null values are used
+and counted.
 
-or flat monthly parquet files such as::
+All cadences are aggregated directly from Level 1. Daily and monthly products
+are therefore not averages of already aggregated hourly values; medians, sums,
+circular means, and valid-observation counts retain their Level 1 semantics.
 
-    gawkenyadata/
-      level1/
-        mkn/
-          2022/
-            11/
-              ae33.parquet
-              g2401.parquet
+Dry-run example (the default)::
 
-and writes yearly level 2 parquet files to::
+    python compile_level1_to_level2_files.py \
+        --root /product_data/data/pay/Kenya/git/gawkenyadata \
+        --station-config mch-mkn.yml
 
-    gawkenyadata/
-      level2/
-        nrb/
-          2026/
-            nrb_49i_hourly_2026.parquet
-            nrb_49i_daily_2026.parquet
+For a multi-section config such as ``mch-nrb.yml``::
 
-The level 2 rules are read from the station configuration YAML. For a single-
-station file such as ``mch-mkn.yml``, the ``level2`` block can live at the top
-level. For multi-block files such as ``mch-nrb.yml``, the ``level2`` block can
-live inside a section such as ``nrb-aq`` and be selected with
-``--config-section nrb-aq``.
+    python compile_level1_to_level2_files.py \
+        --root /product_data/data/pay/Kenya/git/gawkenyadata \
+        --station-config mch-nrb.yml \
+        --config-section nrb-aq
 
-Only configured columns are kept. A value is considered valid when the
-associated flag column is either ``0`` or null. When no flag column exists,
-non-null values are accepted.
+Write the planned parquet products only after inspecting the dry run::
 
-Daily aggregates are computed from the hourly aggregates, not directly from the
-raw level 1 files.
+    python compile_level1_to_level2_files.py \
+        --root /product_data/data/pay/Kenya/git/gawkenyadata \
+        --station-config mch-mkn.yml \
+        --write
 
-Example calls:
-    Build MKN level 2 files using the embedded ``level2`` block::
-
-        python compile_level1_to_level2_files.py             --root /product_data/data/pay/Kenya/git/gawkenyadata             --station-config mch-mkn.yml
-
-    Build Nairobi air-quality level 2 files from the ``nrb-aq`` section::
-
-        python compile_level1_to_level2_files.py             --root /product_data/data/pay/Kenya/git/gawkenyadata             --station-config mch-nrb.yml             --config-section nrb-aq
-
-    Restrict processing to one configured instrument::
-
-        python compile_level1_to_level2_files.py             --root /product_data/data/pay/Kenya/git/gawkenyadata             --station-config mch-nrb.yml             --config-section nrb-aq             --instrument ae31
-
-    Restrict processing to one year::
-
-        python compile_level1_to_level2_files.py             --root /product_data/data/pay/Kenya/git/gawkenyadata             --station-config mch-mkn.yml             --year 2025
+The default dry run still reads and aggregates the data so that the reported
+row counts, valid-value statistics, and planned output files are the same checks
+performed by a write run. Only ``--write`` creates or overwrites parquet files.
 """
 
-from dataclasses import dataclass
+from contextlib import redirect_stderr, redirect_stdout
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 import argparse
 import logging
 import math
-from typing import Any, Literal
+import re
+import sys
+from typing import Any, Literal, TextIO
 
 import polars as pl
 import yaml
 
 LOGGER = logging.getLogger("collect_level2")
 
-
 GroupLabel = Literal["left", "right", "datapoint"]
 ClosedInterval = Literal["left", "right", "both", "none"]
 ParquetCompression = Literal["lz4", "uncompressed", "snappy", "gzip", "brotli", "zstd"]
+Frequency = Literal["hourly", "daily", "monthly"]
+FREQUENCIES: tuple[Frequency, ...] = ("hourly", "daily", "monthly")
 
 
 @dataclass(frozen=True)
@@ -106,48 +87,36 @@ class Defaults:
     flag_prefix: str
     write_hourly: bool
     write_daily: bool
+    write_monthly: bool
     hourly: AggregationSpec
     daily: AggregationSpec
+    monthly: AggregationSpec
 
 
 @dataclass(frozen=True)
 class ColumnSpec:
-    """One configured output column for an instrument.
-
-    Attributes:
-        name: Source column name in the level 1 parquet file.
-        output_name: Column name to use in level 2 output. Defaults to ``name``.
-        hourly_method: Hourly aggregation method.
-        daily_method: Daily aggregation method.
-        flag_column: Explicit flag column. If not given, the global flag rules
-            are used to infer the flag column.
-
-    Example:
-        ``ColumnSpec(name="precip", output_name="precip", hourly_method="sum",
-        daily_method="sum", flag_column="f_precip")``
-    """
+    """One configured output column for an instrument."""
 
     name: str
     output_name: str
     hourly_method: str
     daily_method: str
+    monthly_method: str
     flag_column: str | None
+
+    def method_for(self, frequency: Frequency) -> str:
+        """Return the configured aggregation method for ``frequency``."""
+
+        if frequency == "hourly":
+            return self.hourly_method
+        if frequency == "daily":
+            return self.daily_method
+        return self.monthly_method
 
 
 @dataclass(frozen=True)
 class InstrumentSpec:
-    """Configuration for one instrument.
-
-    Attributes:
-        name: Logical instrument key from the station config, for example
-            ``ae33/data``.
-        columns: Selected output columns for level 2.
-        source_parquet: Optional monthly parquet stem to look for under
-            ``level1/<station>/<year>/<month>``. When omitted, the loader tries
-            the full instrument key and its basename.
-        flag_mode: Optional instrument-specific flag mode override.
-        flag_prefix: Optional instrument-specific flag prefix override.
-    """
+    """Configuration for one instrument."""
 
     name: str
     columns: tuple[ColumnSpec, ...]
@@ -158,17 +127,67 @@ class InstrumentSpec:
 
 @dataclass(frozen=True)
 class StationConfig:
-    """Resolved station configuration for level 2 processing.
-
-    Attributes:
-        station: Station code such as ``mkn`` or ``nrb``.
-        defaults: Global level 2 defaults.
-        instruments: Configured instruments.
-    """
+    """Resolved station configuration for level 2 processing."""
 
     station: str
     defaults: Defaults
     instruments: dict[str, InstrumentSpec]
+
+
+@dataclass(frozen=True)
+class ValueStats:
+    """Level 1 availability/validity statistics for one output variable."""
+
+    available: int
+    valid: int
+
+
+@dataclass
+class JobStats:
+    """Statistics for one station/instrument/year aggregation job."""
+
+    station: str
+    instrument: str
+    year: int
+    source_files: int = 0
+    source_bytes: int = 0
+    level1_rows: int = 0
+    configured_columns: int = 0
+    resolved_columns: int = 0
+    missing_columns: tuple[str, ...] = ()
+    values: dict[str, ValueStats] = field(default_factory=dict)
+    aggregate_rows: dict[Frequency, int] = field(default_factory=dict)
+    output_paths: dict[Frequency, Path] = field(default_factory=dict)
+    existing_outputs: set[Frequency] = field(default_factory=set)
+    written_outputs: set[Frequency] = field(default_factory=set)
+    skipped_reason: str | None = None
+    error: str | None = None
+
+    @property
+    def available_values(self) -> int:
+        return sum(item.available for item in self.values.values())
+
+    @property
+    def valid_values(self) -> int:
+        return sum(item.valid for item in self.values.values())
+
+
+@dataclass
+class RunStats:
+    """Statistics for one complete CLI invocation."""
+
+    write: bool = False
+    jobs: list[JobStats] = field(default_factory=list)
+
+    @property
+    def dry_run(self) -> bool:
+        """Whether the run is non-writing."""
+
+        return not self.write
+
+    @property
+    def errors(self) -> int:
+        return sum(job.error is not None for job in self.jobs)
 
 
 class ConfigError(ValueError):
@@ -176,51 +195,44 @@ class ConfigError(ValueError):
 
 
 def setup_logging(verbose: bool = False) -> None:
-    """Configure console logging.
-
-    Args:
-        verbose: If true, enable DEBUG logging.
-
-    Example:
-        ``setup_logging(verbose=True)``
-    """
+    """Configure console logging."""
 
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        force=True,
     )
 
 
 def _parse_group_label(raw: Any) -> GroupLabel:
-    """Validate a Polars dynamic-group label value."""
-
     if raw in ("left", "right", "datapoint"):
         return raw
     raise ConfigError(f"Unsupported group_by_dynamic label: {raw!r}")
 
 
 def _parse_closed_interval(raw: Any) -> ClosedInterval:
-    """Validate a Polars dynamic-group closed value."""
-
     if raw in ("left", "right", "both", "none"):
         return raw
     raise ConfigError(f"Unsupported group_by_dynamic closed value: {raw!r}")
 
 
 def _parse_parquet_compression(raw: Any) -> ParquetCompression:
-    """Validate a parquet compression codec."""
-
     if raw in ("lz4", "uncompressed", "snappy", "gzip", "brotli", "zstd"):
         return raw
     raise ConfigError(f"Unsupported parquet compression: {raw!r}")
 
 
-def _default_level2_block() -> dict[str, Any]:
-    """Return a default ``level2`` mapping.
+def _default_aggregation(every: str) -> dict[str, Any]:
+    return {
+        "default": "mean",
+        "every": every,
+        "label": "left",
+        "closed": "left",
+    }
 
-    Returns:
-        Starter level 2 configuration for embedding in station YAML files.
-    """
+
+def _default_level2_block() -> dict[str, Any]:
+    """Return a starter ``level2`` mapping."""
 
     return {
         "station": "station_code",
@@ -229,36 +241,19 @@ def _default_level2_block() -> dict[str, Any]:
         "valid_flag_value": 0,
         "accept_null_flags": True,
         "parquet_compression": "zstd",
-        "output": {"hourly": True, "daily": True},
+        "output": {"hourly": True, "daily": True, "monthly": True},
         "flags": {"mode": "per_column_prefix", "prefix": "f_"},
         "aggregation": {
-            "hourly": {
-                "default": "mean",
-                "every": "1h",
-                "label": "left",
-                "closed": "left",
-            },
-            "daily": {
-                "default": "mean",
-                "every": "1d",
-                "label": "left",
-                "closed": "left",
-            },
+            "hourly": _default_aggregation("1h"),
+            "daily": _default_aggregation("1d"),
+            "monthly": _default_aggregation("1mo"),
         },
         "instruments": {
             "tei49c": {"columns": ["O3"]},
             "tei49i": {"columns": ["O3"]},
             "49i": {"columns": ["O3"]},
             "ae31": {
-                "columns": [
-                    "UV370",
-                    "B470",
-                    "G520",
-                    "Y590",
-                    "R660",
-                    "IR880",
-                    "IR950",
-                ]
+                "columns": ["UV370", "B470", "G520", "Y590", "R660", "IR880", "IR950"]
             },
             "ae33/data": {
                 "source_parquet": "ae33",
@@ -270,17 +265,7 @@ def _default_level2_block() -> dict[str, Any]:
 
 
 def write_example_station_config(path: Path, section: str | None = None) -> None:
-    """Write a starter station configuration with an embedded ``level2`` block.
-
-    Args:
-        path: Target YAML path.
-        section: Optional section name. When given, the ``level2`` block is
-            placed inside that section.
-
-    Example:
-        ``write_example_station_config(Path("mch-mkn.yml"))``
-        ``write_example_station_config(Path("mch-nrb.yml"), section="nrb-aq")``
-    """
+    """Write a starter station configuration with an embedded ``level2`` block."""
 
     payload: dict[str, Any]
     if section is None:
@@ -293,24 +278,103 @@ def write_example_station_config(path: Path, section: str | None = None) -> None
         yaml.safe_dump(payload, handle, sort_keys=False, allow_unicode=True)
 
 
+def _resolve_level2_scope(
+    raw: dict[str, Any],
+    path: Path,
+    config_section: str | None,
+) -> dict[str, Any]:
+    if config_section is not None:
+        scope = raw.get(config_section)
+        if not isinstance(scope, dict):
+            raise ConfigError(
+                f"Section '{config_section}' was not found or is not a mapping in {path}."
+            )
+        return scope
+
+    if isinstance(raw.get("level2"), dict):
+        return raw
+
+    candidates = [
+        name
+        for name, value in raw.items()
+        if isinstance(value, dict) and isinstance(value.get("level2"), dict)
+    ]
+    if len(candidates) == 1:
+        return raw[candidates[0]]
+    if len(candidates) > 1:
+        raise ConfigError(
+            f"Multiple sections contain a level2 block in {path}; use --config-section."
+        )
+    raise ConfigError(
+        f"No level2 block found in {path}. Add one at the top level or select a section with --config-section."
+    )
+
+
+def _parse_aggregation_spec(raw: dict[str, Any], default_every: str) -> AggregationSpec:
+    return AggregationSpec(
+        every=raw.get("every", default_every),
+        label=_parse_group_label(raw.get("label", "left")),
+        closed=_parse_closed_interval(raw.get("closed", "left")),
+        default_method=raw.get("default", "mean"),
+    )
+
+
+def _parse_column_spec(raw: Any, defaults: Defaults) -> ColumnSpec:
+    if isinstance(raw, str):
+        return ColumnSpec(
+            name=raw,
+            output_name=raw,
+            hourly_method=defaults.hourly.default_method,
+            daily_method=defaults.daily.default_method,
+            monthly_method=defaults.monthly.default_method,
+            flag_column=None,
+        )
+
+    if not isinstance(raw, dict):
+        raise ConfigError(f"Column entry must be a string or dictionary, got {type(raw)!r}.")
+
+    name = raw.get("name")
+    if not isinstance(name, str) or not name:
+        raise ConfigError("Expanded column entries require a non-empty 'name'.")
+
+    output_name = raw.get("rename", name)
+    if not isinstance(output_name, str) or not output_name:
+        raise ConfigError(f"Column '{name}' has an invalid rename value.")
+
+    flag_column = raw.get("flag_column")
+    if flag_column is not None and (not isinstance(flag_column, str) or not flag_column):
+        raise ConfigError(f"Column '{name}' has an invalid flag_column value.")
+
+    agg_raw = raw.get("agg", {}) or {}
+    if not isinstance(agg_raw, dict):
+        raise ConfigError(f"Column '{name}' agg must be a mapping.")
+
+    return ColumnSpec(
+        name=name,
+        output_name=output_name,
+        hourly_method=agg_raw.get("hourly", defaults.hourly.default_method),
+        daily_method=agg_raw.get("daily", defaults.daily.default_method),
+        monthly_method=agg_raw.get("monthly", defaults.monthly.default_method),
+        flag_column=flag_column,
+    )
+
+
+def _validate_column_names(instrument_name: str, columns: list[ColumnSpec]) -> None:
+    output_names = [column.output_name for column in columns]
+    if len(output_names) != len(set(output_names)):
+        raise ConfigError(f"Instrument '{instrument_name}' contains duplicate output column names.")
+
+    value_names = set(output_names)
+    count_names = {valid_count_column(name) for name in output_names}
+    collisions = value_names & count_names
+    if collisions:
+        raise ConfigError(
+            f"Instrument '{instrument_name}' has value/count name collisions: {sorted(collisions)}"
+        )
+
+
 def load_station_config(path: Path, config_section: str | None = None) -> StationConfig:
-    """Load and validate embedded level 2 settings from a station YAML file.
-
-    Args:
-        path: Path to a station configuration file such as ``mch-mkn.yml``.
-        config_section: Optional top-level section containing the ``level2``
-            block, for example ``nrb-aq``.
-
-    Returns:
-        Resolved ``StationConfig``.
-
-    Raises:
-        ConfigError: If the configuration is invalid.
-
-    Example:
-        ``cfg = load_station_config(Path("mch-mkn.yml"))``
-        ``cfg = load_station_config(Path("mch-nrb.yml"), config_section="nrb-aq")``
-    """
+    """Load and validate embedded level 2 settings from a station YAML file."""
 
     with path.open("r", encoding="utf-8") as handle:
         raw = yaml.safe_load(handle) or {}
@@ -331,33 +395,43 @@ def load_station_config(path: Path, config_section: str | None = None) -> Statio
     aggregation_raw = level2_raw.get("aggregation", {}) or {}
     flags_raw = level2_raw.get("flags", {}) or {}
     output_raw = level2_raw.get("output", {}) or {}
+    if not isinstance(aggregation_raw, dict):
+        raise ConfigError("level2.aggregation must be a mapping.")
+    if not isinstance(flags_raw, dict):
+        raise ConfigError("level2.flags must be a mapping.")
+    if not isinstance(output_raw, dict):
+        raise ConfigError("level2.output must be a mapping.")
 
     hourly_raw = aggregation_raw.get("hourly", {}) or {}
     daily_raw = aggregation_raw.get("daily", {}) or {}
+    monthly_raw = aggregation_raw.get("monthly", {}) or {}
+    if not all(isinstance(item, dict) for item in (hourly_raw, daily_raw, monthly_raw)):
+        raise ConfigError("Each level2 aggregation cadence must be a mapping.")
 
     defaults = Defaults(
         datetime_column=level2_raw.get("datetime_column", "dtm"),
         timezone=level2_raw.get("timezone"),
         valid_flag_value=level2_raw.get("valid_flag_value", 0),
         accept_null_flags=bool(level2_raw.get("accept_null_flags", True)),
-        parquet_compression=_parse_parquet_compression(level2_raw.get("parquet_compression", "zstd")),
+        parquet_compression=_parse_parquet_compression(
+            level2_raw.get("parquet_compression", "zstd")
+        ),
         flag_mode=flags_raw.get("mode", "per_column_prefix"),
         flag_prefix=flags_raw.get("prefix", "f_"),
         write_hourly=bool(output_raw.get("hourly", True)),
         write_daily=bool(output_raw.get("daily", True)),
-        hourly=AggregationSpec(
-            every=hourly_raw.get("every", "1h"),
-            label=_parse_group_label(hourly_raw.get("label", "left")),
-            closed=_parse_closed_interval(hourly_raw.get("closed", "left")),
-            default_method=hourly_raw.get("default", "mean"),
-        ),
-        daily=AggregationSpec(
-            every=daily_raw.get("every", "1d"),
-            label=_parse_group_label(daily_raw.get("label", "left")),
-            closed=_parse_closed_interval(daily_raw.get("closed", "left")),
-            default_method=daily_raw.get("default", "mean"),
-        ),
+        write_monthly=bool(output_raw.get("monthly", True)),
+        hourly=_parse_aggregation_spec(hourly_raw, "1h"),
+        daily=_parse_aggregation_spec(daily_raw, "1d"),
+        monthly=_parse_aggregation_spec(monthly_raw, "1mo"),
     )
+
+    if not isinstance(defaults.datetime_column, str) or not defaults.datetime_column:
+        raise ConfigError("level2.datetime_column must be a non-empty string.")
+    if defaults.timezone is not None and not isinstance(defaults.timezone, str):
+        raise ConfigError("level2.timezone must be a string or null.")
+    if not isinstance(defaults.flag_prefix, str):
+        raise ConfigError("level2.flags.prefix must be a string.")
 
     instruments_raw = level2_raw.get("instruments")
     if not isinstance(instruments_raw, dict) or not instruments_raw:
@@ -367,21 +441,24 @@ def load_station_config(path: Path, config_section: str | None = None) -> Statio
     for instrument_name, instrument_raw in instruments_raw.items():
         if not isinstance(instrument_name, str) or not instrument_name:
             raise ConfigError("Instrument names in level2.instruments must be non-empty strings.")
-
         if not isinstance(instrument_raw, dict):
             raise ConfigError(f"Instrument '{instrument_name}' must map to a dictionary.")
 
         instrument_flags = instrument_raw.get("flags", {}) or {}
+        if not isinstance(instrument_flags, dict):
+            raise ConfigError(f"Instrument '{instrument_name}' flags must be a mapping.")
+
         columns_raw = instrument_raw.get("columns")
         if not isinstance(columns_raw, list) or not columns_raw:
             raise ConfigError(f"Instrument '{instrument_name}' must define a non-empty columns list.")
 
-        columns: list[ColumnSpec] = []
-        for column_raw in columns_raw:
-            columns.append(_parse_column_spec(column_raw, defaults))
+        columns = [_parse_column_spec(column_raw, defaults) for column_raw in columns_raw]
+        _validate_column_names(instrument_name, columns)
 
         source_parquet = instrument_raw.get("source_parquet")
-        if source_parquet is not None and (not isinstance(source_parquet, str) or not source_parquet.strip()):
+        if source_parquet is not None and (
+            not isinstance(source_parquet, str) or not source_parquet.strip()
+        ):
             raise ConfigError(
                 f"Instrument '{instrument_name}' has an invalid source_parquet; expected a non-empty string."
             )
@@ -397,159 +474,39 @@ def load_station_config(path: Path, config_section: str | None = None) -> Statio
     return StationConfig(station=station, defaults=defaults, instruments=instruments)
 
 
-def _resolve_level2_scope(
-    raw: dict[str, Any],
-    path: Path,
-    config_section: str | None,
-) -> dict[str, Any]:
-    """Resolve the YAML scope that contains the ``level2`` mapping.
-
-    Args:
-        raw: Full YAML mapping.
-        path: Source configuration path.
-        config_section: Optional top-level section name.
-
-    Returns:
-        Mapping that contains ``level2``.
-
-    Raises:
-        ConfigError: If the scope cannot be resolved unambiguously.
-    """
-
-    if config_section is not None:
-        scope = raw.get(config_section)
-        if not isinstance(scope, dict):
-            raise ConfigError(
-                f"Section '{config_section}' was not found or is not a mapping in {path}."
-            )
-        return scope
-
-    if isinstance(raw.get("level2"), dict):
-        return raw
-
-    candidate_sections = [
-        name for name, value in raw.items() if isinstance(value, dict) and isinstance(value.get("level2"), dict)
-    ]
-    if len(candidate_sections) == 1:
-        return raw[candidate_sections[0]]
-    if len(candidate_sections) > 1:
-        raise ConfigError(
-            f"Multiple sections contain a level2 block in {path}; use --config-section."
-        )
-
-    raise ConfigError(
-        f"No level2 block found in {path}. Add one at the top level or select a section with --config-section."
-    )
-
-
-def _parse_column_spec(raw: Any, defaults: Defaults) -> ColumnSpec:
-    """Parse one configured column specification.
-
-    Args:
-        raw: Raw YAML value for one item in ``columns``.
-        defaults: Global defaults.
-
-    Returns:
-        Normalized ``ColumnSpec``.
-    """
-
-    if isinstance(raw, str):
-        return ColumnSpec(
-            name=raw,
-            output_name=raw,
-            hourly_method=defaults.hourly.default_method,
-            daily_method=defaults.daily.default_method,
-            flag_column=None,
-        )
-
-    if not isinstance(raw, dict):
-        raise ConfigError(f"Column entry must be a string or dictionary, got {type(raw)!r}.")
-
-    name = raw.get("name")
-    if not isinstance(name, str) or not name:
-        raise ConfigError("Expanded column entries require a non-empty 'name'.")
-
-    agg_raw = raw.get("agg", {}) or {}
-    return ColumnSpec(
-        name=name,
-        output_name=raw.get("rename", name),
-        hourly_method=agg_raw.get("hourly", defaults.hourly.default_method),
-        daily_method=agg_raw.get("daily", defaults.daily.default_method),
-        flag_column=raw.get("flag_column"),
-    )
-
-
 def discover_years(level1_root: Path, station: str) -> list[int]:
-    """Discover available years for one station.
-
-    Args:
-        level1_root: Path to ``level1``.
-        station: Station code such as ``nrb``.
-
-    Returns:
-        Sorted integer years.
-    """
+    """Discover available years for one station."""
 
     station_root = level1_root / station
-    years: list[int] = []
     if not station_root.exists():
-        return years
-
-    for path in station_root.iterdir():
-        if path.is_dir() and path.name.isdigit():
-            years.append(int(path.name))
-    return sorted(years)
+        return []
+    return sorted(
+        int(path.name)
+        for path in station_root.iterdir()
+        if path.is_dir() and path.name.isdigit()
+    )
 
 
 def source_parquet_candidates(instrument: InstrumentSpec) -> tuple[str, ...]:
-    """Return candidate monthly parquet stems for one configured instrument.
-
-    The explicit ``source_parquet`` value takes precedence. When it is omitted,
-    the loader tries both the full instrument key and its basename.
-
-    Args:
-        instrument: Instrument configuration.
-
-    Returns:
-        Candidate monthly parquet stems in priority order.
-
-    Example:
-        ``source_parquet_candidates(instruments["ae33/data"])``
-    """
+    """Return candidate monthly parquet stems for one configured instrument."""
 
     if instrument.source_parquet:
         return (instrument.source_parquet,)
 
-    candidates: list[str] = [instrument.name]
+    candidates = [instrument.name]
     basename = Path(instrument.name).name
     if basename not in candidates:
         candidates.append(basename)
     return tuple(candidates)
 
 
-def parquet_files_for(level1_root: Path, station: str, instrument: InstrumentSpec, year: int) -> list[Path]:
-    """Return all parquet files for one station, instrument, and year.
-
-    Supports both layouts:
-
-    1. Flat monthly files such as
-       ``level1/<station>/<year>/<month>/<source>.parquet``
-
-    2. Instrument subdirectories such as
-       ``level1/<station>/<year>/<month>/<instrument>/**/*.parquet``
-
-    Args:
-        level1_root: Path to ``level1``.
-        station: Station code.
-        instrument: Instrument configuration.
-        year: Four-digit year.
-
-    Returns:
-        Sorted parquet paths.
-
-    Example:
-        ``files = parquet_files_for(level1_root, "mkn", instruments["ae33/data"], 2022)``
-    """
+def parquet_files_for(
+    level1_root: Path,
+    station: str,
+    instrument: InstrumentSpec,
+    year: int,
+) -> list[Path]:
+    """Return all parquet files for one station, instrument, and year."""
 
     year_root = level1_root / station / str(year)
     if not year_root.exists():
@@ -557,7 +514,6 @@ def parquet_files_for(level1_root: Path, station: str, instrument: InstrumentSpe
 
     paths: list[Path] = []
     candidates = source_parquet_candidates(instrument)
-
     for month_root in sorted(path for path in year_root.iterdir() if path.is_dir()):
         for candidate in candidates:
             direct_file = month_root / f"{candidate}.parquet"
@@ -571,73 +527,41 @@ def parquet_files_for(level1_root: Path, station: str, instrument: InstrumentSpe
     return sorted(set(paths))
 
 
+def _resolve_available_column(name: str, available_columns: set[str]) -> str | None:
+    """Resolve a column name case-insensitively against available columns."""
+
+    lookup = {column.casefold(): column for column in available_columns}
+    return lookup.get(name.casefold())
+
+
 def resolve_flag_column(
     column: ColumnSpec,
     instrument: InstrumentSpec,
     defaults: Defaults,
     available_columns: set[str],
 ) -> str | None:
-    """Resolve the flag column for one value column.
-
-    Args:
-        column: Column definition.
-        instrument: Instrument configuration.
-        defaults: Global defaults.
-        available_columns: Columns present in the input parquet files.
-
-    Returns:
-        A flag column name or ``None`` if no suitable flag column exists.
-    """
+    """Resolve the flag column for one value column, case-insensitively."""
 
     if column.flag_column:
-        return column.flag_column if column.flag_column in available_columns else None
+        return _resolve_available_column(column.flag_column, available_columns)
 
     flag_mode = instrument.flag_mode or defaults.flag_mode
     if flag_mode == "per_column_prefix":
         prefix = instrument.flag_prefix or defaults.flag_prefix
-        candidate = f"{prefix}{column.name}"
-        return candidate if candidate in available_columns else None
-
+        return _resolve_available_column(f"{prefix}{column.name}", available_columns)
     if flag_mode == "none":
         return None
-
     raise ConfigError(f"Unsupported flag mode: {flag_mode!r}")
 
 
-def _safe_timestamp_expr(datetime_column: str, timezone: str | None) -> pl.Expr:
-    """Return an expression that converts the datetime column to Polars datetime.
+def valid_count_column(output_name: str) -> str:
+    """Return the output name for a valid-observation count column."""
 
-    Args:
-        datetime_column: Name of the timestamp column.
-        timezone: Optional target timezone.
-
-    Returns:
-        Polars expression.
-    """
-
-    expr = pl.col(datetime_column)
-    if timezone:
-        return expr.str.to_datetime(strict=False).dt.replace_time_zone(timezone)
-    return expr.str.to_datetime(strict=False)
+    return f"n_{output_name}"
 
 
 def _aggregation_expr(method: str, column_name: str, output_name: str) -> pl.Expr:
-    """Build one Polars aggregation expression.
-
-    Supported methods are ``mean``, ``sum``, ``median``, ``min``, ``max``,
-    ``first``, ``last``, and ``circular_mean``.
-
-    Args:
-        method: Aggregation method.
-        column_name: Source column name.
-        output_name: Output column name.
-
-    Returns:
-        Aggregation expression.
-
-    Raises:
-        ConfigError: If the method is unsupported.
-    """
+    """Build one Polars aggregation expression."""
 
     series = pl.col(column_name)
     method_lower = method.lower()
@@ -653,9 +577,9 @@ def _aggregation_expr(method: str, column_name: str, output_name: str) -> pl.Exp
     if method_lower == "max":
         return series.max().alias(output_name)
     if method_lower == "first":
-        return series.first().alias(output_name)
+        return series.drop_nulls().first().alias(output_name)
     if method_lower == "last":
-        return series.last().alias(output_name)
+        return series.drop_nulls().last().alias(output_name)
     if method_lower == "circular_mean":
         radians = series * math.pi / 180.0
         return (
@@ -677,288 +601,499 @@ def _aggregation_expr(method: str, column_name: str, output_name: str) -> pl.Exp
     raise ConfigError(f"Unsupported aggregation method: {method!r}")
 
 
-from pathlib import Path
-
-import polars as pl
-
-
-def _resolve_available_column(name: str, available_columns: set[str]) -> str | None:
-    """Resolve a column name case-insensitively against available columns."""
-    lookup = {column.lower(): column for column in available_columns}
-    return lookup.get(name.lower())
+def _spec_for(defaults: Defaults, frequency: Frequency) -> AggregationSpec:
+    if frequency == "hourly":
+        return defaults.hourly
+    if frequency == "daily":
+        return defaults.daily
+    return defaults.monthly
 
 
-def build_hourly_dataframe(
+def _write_enabled(defaults: Defaults, frequency: Frequency) -> bool:
+    if frequency == "hourly":
+        return defaults.write_hourly
+    if frequency == "daily":
+        return defaults.write_daily
+    return defaults.write_monthly
+
+
+def _normalize_datetime(df: pl.DataFrame, defaults: Defaults) -> pl.DataFrame:
+    """Normalize the configured timestamp column to a Polars Datetime."""
+
+    name = defaults.datetime_column
+    dtype = df.schema[name]
+
+    if dtype == pl.Utf8:
+        expr = pl.col(name).str.to_datetime(strict=False)
+        df = df.with_columns(expr.alias(name))
+        dtype = df.schema[name]
+    elif dtype == pl.Date:
+        df = df.with_columns(pl.col(name).cast(pl.Datetime("us")).alias(name))
+        dtype = df.schema[name]
+
+    if not str(dtype).startswith("Datetime"):
+        raise ConfigError(f"Column '{name}' cannot be interpreted as datetime (dtype={dtype}).")
+
+    if defaults.timezone:
+        time_zone = getattr(dtype, "time_zone", None)
+        if time_zone:
+            df = df.with_columns(pl.col(name).dt.convert_time_zone(defaults.timezone))
+        else:
+            df = df.with_columns(pl.col(name).dt.replace_time_zone(defaults.timezone))
+
+    return df
+
+
+def _valid_condition(value_column: str, flag_column: str | None, defaults: Defaults) -> pl.Expr:
+    """Return the validity expression used for both aggregation and counts."""
+
+    condition = pl.col(value_column).is_not_null()
+    if flag_column is None:
+        return condition
+
+    flag = pl.col(flag_column)
+    flag_numeric = flag.cast(pl.Float64, strict=False)
+    flag_valid = flag_numeric == float(defaults.valid_flag_value)
+    if defaults.accept_null_flags:
+        flag_valid = flag.is_null() | flag_valid
+    return condition & flag_valid
+
+
+def _load_level1_frame(
     files: list[Path],
     defaults: Defaults,
     instrument: InstrumentSpec,
-) -> pl.DataFrame | None:
-    """Build one yearly hourly dataframe from level 1 parquet files.
+) -> tuple[pl.DataFrame, dict[str, tuple[str, str | None]]]:
+    """Read only required Level 1 columns and resolve value/flag names."""
 
-    Args:
-        files: Parquet files for one station, instrument, and year.
-        defaults: Global defaults.
-        instrument: Instrument configuration.
-
-    Returns:
-        Hourly dataframe or ``None`` when no usable input exists.
-
-    Example:
-        ``hourly_df = build_hourly_dataframe(files, defaults, instruments["49i"])``
-    """
     if not files:
-        return None
+        return pl.DataFrame(), {}
 
     scan = pl.scan_parquet(
         [str(path) for path in files],
-        cast_options=pl.ScanCastOptions(
-            integer_cast="upcast",
-            float_cast="upcast",
-        ),
+        cast_options=pl.ScanCastOptions(integer_cast="upcast", float_cast="upcast"),
         missing_columns="insert",
         extra_columns="ignore",
     )
-
     available_columns = set(scan.collect_schema().names())
 
-    actual_datetime_column = _resolve_available_column(defaults.datetime_column, available_columns)
-    if actual_datetime_column is None:
+    actual_datetime = _resolve_available_column(defaults.datetime_column, available_columns)
+    if actual_datetime is None:
         LOGGER.warning(
-            "Skipping %s because %s is missing.",
+            "Skipping %s because timestamp column %s is missing.",
             instrument.name,
             defaults.datetime_column,
         )
-        return None
+        return pl.DataFrame(), {}
 
-    alias_exprs: list[pl.Expr] = []
-    if actual_datetime_column != defaults.datetime_column:
-        alias_exprs.append(pl.col(actual_datetime_column).alias(defaults.datetime_column))
-
-    needed_columns: set[str] = {actual_datetime_column}
-    resolved_flags: dict[str, str | None] = {}
-
+    resolved: dict[str, tuple[str, str | None]] = {}
+    needed_columns = {actual_datetime}
     for column in instrument.columns:
-        actual_column_name = _resolve_available_column(column.name, available_columns)
-        if actual_column_name is None:
+        actual_value = _resolve_available_column(column.name, available_columns)
+        if actual_value is None:
             LOGGER.warning(
                 "Input is missing configured column %s for %s.",
                 column.name,
                 instrument.name,
             )
             continue
+        actual_flag = resolve_flag_column(column, instrument, defaults, available_columns)
+        resolved[column.name] = (actual_value, actual_flag)
+        needed_columns.add(actual_value)
+        if actual_flag is not None:
+            needed_columns.add(actual_flag)
 
-        needed_columns.add(actual_column_name)
+    if not resolved:
+        return pl.DataFrame(), {}
 
-        if actual_column_name != column.name:
-            alias_exprs.append(pl.col(actual_column_name).alias(column.name))
-
-        resolved_flag = resolve_flag_column(column, instrument, defaults, available_columns)
-        resolved_flags[column.name] = resolved_flag
-        if resolved_flag:
-            needed_columns.add(resolved_flag)
-
-    selected_columns = sorted(needed_columns)
-    df = scan.select(selected_columns).collect()
-
-    if alias_exprs:
-        df = df.with_columns(alias_exprs)
-
-    if defaults.datetime_column not in df.columns:
-        return None
+    df = scan.select(sorted(needed_columns)).collect()
+    if actual_datetime != defaults.datetime_column:
+        df = df.rename({actual_datetime: defaults.datetime_column})
 
     if df.is_empty():
+        return df, resolved
+
+    df = _normalize_datetime(df, defaults)
+    df = df.filter(pl.col(defaults.datetime_column).is_not_null()).sort(defaults.datetime_column)
+    return df, resolved
+
+
+def _aggregate_loaded_frame(
+    df: pl.DataFrame,
+    resolved: dict[str, tuple[str, str | None]],
+    defaults: Defaults,
+    instrument: InstrumentSpec,
+    frequency: Frequency,
+) -> pl.DataFrame | None:
+    """Aggregate an already loaded Level 1 frame to one cadence."""
+
+    if df.is_empty() or not resolved:
         return None
-
-    dt_series = df.get_column(defaults.datetime_column)
-    if dt_series.dtype == pl.Utf8:
-        dt_expr = _safe_timestamp_expr(defaults.datetime_column, defaults.timezone)
-        df = df.with_columns(dt_expr.alias(defaults.datetime_column))
-    elif defaults.timezone and str(dt_series.dtype).startswith("Datetime"):
-        try:
-            df = df.with_columns(
-                pl.col(defaults.datetime_column).dt.convert_time_zone(defaults.timezone)
-            )
-        except Exception:
-            pass
-
-    df = df.sort(defaults.datetime_column)
-
-    # Normalize integer flag columns after scan/collect as an extra safeguard.
-    flag_casts = {
-        name: pl.Int32
-        for name, dtype in df.schema.items()
-        if name.startswith("f_") and dtype.is_integer()
-    }
-    if flag_casts:
-        df = df.cast(flag_casts, strict=False)
 
     cleaned_exprs: list[pl.Expr] = []
     aggregation_exprs: list[pl.Expr] = []
+    output_pairs: list[tuple[str, str]] = []
 
     for column in instrument.columns:
-        if column.name not in df.columns:
+        names = resolved.get(column.name)
+        if names is None:
             continue
-
-        flag_column = resolved_flags.get(column.name)
-        valid_condition = pl.col(column.name).is_not_null()
-        if flag_column and flag_column in df.columns:
-            if defaults.accept_null_flags:
-                valid_condition = valid_condition & (
-                    pl.col(flag_column).is_null()
-                    | (pl.col(flag_column) == defaults.valid_flag_value)
-                )
-            else:
-                valid_condition = valid_condition & (
-                    pl.col(flag_column) == defaults.valid_flag_value
-                )
-
+        actual_value, actual_flag = names
+        valid = _valid_condition(actual_value, actual_flag, defaults)
         clean_name = f"__clean__{column.output_name}"
+        count_name = valid_count_column(column.output_name)
+
         cleaned_exprs.append(
-            pl.when(valid_condition)
-            .then(pl.col(column.name))
-            .otherwise(None)
-            .alias(clean_name)
+            pl.when(valid).then(pl.col(actual_value)).otherwise(None).alias(clean_name)
         )
-        aggregation_exprs.append(
-            _aggregation_expr(column.hourly_method, clean_name, column.output_name)
+        aggregation_exprs.extend(
+            [
+                _aggregation_expr(column.method_for(frequency), clean_name, column.output_name),
+                valid.sum().cast(pl.UInt32).alias(count_name),
+            ]
         )
+        output_pairs.append((column.output_name, count_name))
 
     if not aggregation_exprs:
         return None
 
-    df = df.with_columns(cleaned_exprs)
-
-    hourly = (
-        df.group_by_dynamic(
+    working = df.with_columns(cleaned_exprs)
+    spec = _spec_for(defaults, frequency)
+    out = (
+        working.group_by_dynamic(
             index_column=defaults.datetime_column,
-            every=defaults.hourly.every,
-            label=defaults.hourly.label,
-            closed=defaults.hourly.closed,
+            every=spec.every,
+            label=spec.label,
+            closed=spec.closed,
         )
         .agg(aggregation_exprs)
         .sort(defaults.datetime_column)
     )
 
-    selected = [defaults.datetime_column] + [
-        column.output_name
-        for column in instrument.columns
-        if column.output_name in hourly.columns
-    ]
-    return hourly.select(selected)
+    # In particular, Polars sum() can yield 0 for an all-null group. All
+    # aggregate values must be null when no valid Level 1 observation existed.
+    out = out.with_columns(
+        [
+            pl.when(pl.col(count_name) > 0)
+            .then(pl.col(value_name))
+            .otherwise(None)
+            .alias(value_name)
+            for value_name, count_name in output_pairs
+        ]
+    )
+
+    selected = [defaults.datetime_column]
+    for value_name, count_name in output_pairs:
+        selected.extend([value_name, count_name])
+    return out.select(selected)
+
+
+def build_aggregate_dataframe(
+    files: list[Path],
+    defaults: Defaults,
+    instrument: InstrumentSpec,
+    frequency: Frequency,
+) -> pl.DataFrame | None:
+    """Aggregate Level 1 files directly to one requested cadence.
+
+    Each output value column is paired with ``n_<output_name>``. The count is
+    the number of non-null Level 1 values admitted by the exact same validity
+    condition as the aggregate.
+    """
+
+    df, resolved = _load_level1_frame(files, defaults, instrument)
+    return _aggregate_loaded_frame(df, resolved, defaults, instrument, frequency)
+
+def build_hourly_dataframe(
+    files: list[Path],
+    defaults: Defaults,
+    instrument: InstrumentSpec,
+) -> pl.DataFrame | None:
+    """Backward-compatible helper for direct Level 1 -> hourly aggregation."""
+
+    return build_aggregate_dataframe(files, defaults, instrument, "hourly")
+
 
 def build_daily_dataframe(
     hourly_df: pl.DataFrame,
     defaults: Defaults,
     instrument: InstrumentSpec,
 ) -> pl.DataFrame | None:
-    """Build one daily dataframe from the hourly dataframe.
+    """Legacy helper to aggregate an already-hourly frame to daily values.
 
-    Args:
-        hourly_df: Hourly level 2 dataframe.
-        defaults: Global defaults.
-        instrument: Instrument configuration.
-
-    Returns:
-        Daily dataframe or ``None``.
-
-    Example:
-        ``daily_df = build_daily_dataframe(hourly_df, defaults, instruments["49i"])``
+    The command-line workflow no longer uses this helper: daily products are
+    built directly from Level 1 to preserve exact aggregation semantics. This
+    helper remains for imports that relied on the previous public function.
+    Existing ``n_<column>`` counts are summed into each day.
     """
 
     if hourly_df.is_empty():
         return None
 
-    aggregation_exprs: list[pl.Expr] = []
+    exprs: list[pl.Expr] = []
+    selected = [defaults.datetime_column]
     for column in instrument.columns:
-        if column.output_name not in hourly_df.columns:
+        value_name = column.output_name
+        if value_name not in hourly_df.columns:
             continue
-        aggregation_exprs.append(
-            _aggregation_expr(column.daily_method, column.output_name, column.output_name)
-        )
+        count_name = valid_count_column(value_name)
+        exprs.append(_aggregation_expr(column.daily_method, value_name, value_name))
+        if count_name in hourly_df.columns:
+            exprs.append(pl.col(count_name).sum().cast(pl.UInt32).alias(count_name))
+            selected.extend([value_name, count_name])
+        else:
+            selected.append(value_name)
 
-    if not aggregation_exprs:
+    if not exprs:
         return None
 
-    daily = (
-        hourly_df.group_by_dynamic(
+    out = (
+        hourly_df.sort(defaults.datetime_column)
+        .group_by_dynamic(
             index_column=defaults.datetime_column,
             every=defaults.daily.every,
             label=defaults.daily.label,
             closed=defaults.daily.closed,
         )
-        .agg(aggregation_exprs)
+        .agg(exprs)
         .sort(defaults.datetime_column)
     )
-
-    selected = [defaults.datetime_column] + [
-        column.output_name for column in instrument.columns if column.output_name in daily.columns
-    ]
-    return daily.select(selected)
+    return out.select([name for name in selected if name in out.columns])
 
 
 def _station_year_output_dir(root: Path, station: str, year: int) -> Path:
-    """Return the yearly station directory under ``level2``.
-
-    Args:
-        root: Repo root.
-        station: Station code.
-        year: Four-digit year.
-
-    Returns:
-        Base yearly output directory for the station.
-    """
-
     return root / "level2" / station / str(year)
 
 
 def _instrument_output_stem(instrument: str) -> str:
-    """Return a filesystem-safe file stem for an instrument name.
-
-    Args:
-        instrument: Instrument folder path, possibly containing ``/``.
-
-    Returns:
-        Safe file stem.
-    """
-
     return instrument.replace("/", "-")
 
 
-def output_path(root: Path, station: str, instrument: str, frequency: str, year: int) -> Path:
-    """Return the target parquet path for one level 2 output file.
-
-    Args:
-        root: Repo root.
-        station: Station code.
-        instrument: Instrument folder path.
-        frequency: ``hourly`` or ``daily``.
-        year: Four-digit year.
-
-    Returns:
-        Output parquet path under ``level2/<station>/<year>``.
-
-    Example:
-        ``path = output_path(root, "nrb", "49i", "hourly", 2026)``
-    """
+def output_path(
+    root: Path,
+    station: str,
+    instrument: str,
+    frequency: Frequency,
+    year: int,
+) -> Path:
+    """Return a yearly level 2 parquet output path."""
 
     safe_instrument = _instrument_output_stem(instrument)
-    return _station_year_output_dir(root, station, year) / f"{station}_{safe_instrument}_{frequency}_{year}.parquet"
+    return (
+        _station_year_output_dir(root, station, year)
+        / f"{station}_{safe_instrument}_{frequency}_{year}.parquet"
+    )
 
 
 def write_parquet(df: pl.DataFrame, path: Path, compression: ParquetCompression) -> None:
-    """Write one parquet file, creating the target directory first.
-
-    Args:
-        df: Output dataframe.
-        path: Target parquet path.
-        compression: Parquet compression codec.
-
-    Example:
-        ``write_parquet(df, path, compression="zstd")``
-    """
+    """Write one parquet file, creating the target directory first."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     df.write_parquet(path, compression=compression)
+
+
+def _source_bytes(files: list[Path]) -> int:
+    """Return the total size of discovered source parquet files."""
+
+    total = 0
+    for path in files:
+        try:
+            total += path.stat().st_size
+        except OSError:
+            pass
+    return total
+
+
+def _collect_value_stats(
+    df: pl.DataFrame,
+    resolved: dict[str, tuple[str, str | None]],
+    defaults: Defaults,
+    instrument: InstrumentSpec,
+) -> dict[str, ValueStats]:
+    """Count non-null available and flag-valid Level 1 values per variable."""
+
+    exprs: list[pl.Expr] = []
+    names: list[tuple[str, str, str]] = []
+    for index, column in enumerate(instrument.columns):
+        resolved_names = resolved.get(column.name)
+        if resolved_names is None:
+            continue
+        actual_value, actual_flag = resolved_names
+        available_name = f"__available_{index}"
+        valid_name = f"__valid_{index}"
+        exprs.extend(
+            [
+                pl.col(actual_value).is_not_null().sum().alias(available_name),
+                _valid_condition(actual_value, actual_flag, defaults)
+                .sum()
+                .alias(valid_name),
+            ]
+        )
+        names.append((column.output_name, available_name, valid_name))
+
+    if not exprs:
+        return {}
+
+    counts = df.select(exprs).row(0, named=True)
+    return {
+        output_name: ValueStats(
+            available=int(counts[available_name] or 0),
+            valid=int(counts[valid_name] or 0),
+        )
+        for output_name, available_name, valid_name in names
+    }
+
+
+def _format_bytes(size: int) -> str:
+    """Return a compact IEC byte-size string."""
+
+    value = float(size)
+    for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+        if value < 1024.0 or unit == "TiB":
+            return f"{value:.0f} {unit}" if unit == "B" else f"{value:.2f} {unit}"
+        value /= 1024.0
+    return f"{size} B"
+
+
+def _format_validity(valid: int, available: int) -> str:
+    """Format a valid/available count and percentage."""
+
+    if available == 0:
+        return f"{valid:,}/{available:,}"
+    return f"{valid:,}/{available:,} ({100.0 * valid / available:.1f}%)"
+
+
+def _log_job_stats(job: JobStats) -> None:
+    """Log concise per-job statistics; variable detail is DEBUG-level."""
+
+    if job.error is not None:
+        return
+    if job.skipped_reason is not None:
+        LOGGER.info(
+            "Skipped station=%s instrument=%s year=%s: %s",
+            job.station,
+            job.instrument,
+            job.year,
+            job.skipped_reason,
+        )
+        return
+
+    LOGGER.info(
+        "Level1 station=%s instrument=%s year=%s files=%s rows=%s data=%s valid=%s",
+        job.station,
+        job.instrument,
+        job.year,
+        job.source_files,
+        f"{job.level1_rows:,}",
+        _format_bytes(job.source_bytes),
+        _format_validity(job.valid_values, job.available_values),
+    )
+    for name, stats in job.values.items():
+        LOGGER.debug(
+            "  %s: valid/available=%s",
+            name,
+            _format_validity(stats.valid, stats.available),
+        )
+    if job.missing_columns:
+        LOGGER.warning(
+            "Missing configured columns for station=%s instrument=%s year=%s: %s",
+            job.station,
+            job.instrument,
+            job.year,
+            ", ".join(job.missing_columns),
+        )
+
+
+def _process_station_instrument_year(
+    root: Path,
+    station: str,
+    defaults: Defaults,
+    instrument: InstrumentSpec,
+    year: int,
+    *,
+    write: bool,
+) -> JobStats:
+    """Build one instrument/year and return detailed statistics."""
+
+    job = JobStats(
+        station=station,
+        instrument=instrument.name,
+        year=year,
+        configured_columns=len(instrument.columns),
+    )
+    files = parquet_files_for(root / "level1", station, instrument, year)
+    job.source_files = len(files)
+    job.source_bytes = _source_bytes(files)
+    if not files:
+        job.skipped_reason = "no Level 1 parquet files found"
+        _log_job_stats(job)
+        return job
+
+    level1_df, resolved = _load_level1_frame(files, defaults, instrument)
+    job.level1_rows = level1_df.height
+    job.resolved_columns = len(resolved)
+    job.missing_columns = tuple(
+        column.name for column in instrument.columns if column.name not in resolved
+    )
+    if level1_df.is_empty():
+        job.skipped_reason = "Level 1 input contains no usable timestamped rows"
+        _log_job_stats(job)
+        return job
+    if not resolved:
+        job.skipped_reason = "none of the configured variables were found"
+        _log_job_stats(job)
+        return job
+
+    job.values = _collect_value_stats(level1_df, resolved, defaults, instrument)
+    _log_job_stats(job)
+
+    for frequency in FREQUENCIES:
+        if not _write_enabled(defaults, frequency):
+            continue
+
+        aggregated = _aggregate_loaded_frame(
+            level1_df,
+            resolved,
+            defaults,
+            instrument,
+            frequency,
+        )
+        if aggregated is None or aggregated.is_empty():
+            LOGGER.info(
+                "No usable %s output for station=%s instrument=%s year=%s",
+                frequency,
+                station,
+                instrument.name,
+                year,
+            )
+            continue
+
+        path = output_path(root, station, instrument.name, frequency, year)
+        job.aggregate_rows[frequency] = aggregated.height
+        job.output_paths[frequency] = path
+        if path.exists():
+            job.existing_outputs.add(frequency)
+
+        if not write:
+            LOGGER.info(
+                "WOULD     %s rows=%s -> %s%s",
+                frequency,
+                f"{aggregated.height:,}",
+                path,
+                " (overwrite)" if path.exists() else "",
+            )
+            continue
+
+        write_parquet(aggregated, path, defaults.parquet_compression)
+        job.written_outputs.add(frequency)
+        LOGGER.info(
+            "WRITTEN   %s rows=%s -> %s",
+            frequency,
+            f"{aggregated.height:,}",
+            path,
+        )
+
+    return job
 
 
 def process_station_instrument_year(
@@ -967,56 +1102,79 @@ def process_station_instrument_year(
     defaults: Defaults,
     instrument: InstrumentSpec,
     year: int,
-) -> tuple[Path | None, Path | None]:
-    """Build and write level 2 files for one station, instrument, and year.
+    *,
+    write: bool = False,
+) -> dict[Frequency, Path]:
+    """Build configured Level 2 cadences for one instrument/year.
 
     Args:
-        root: Repo root containing ``level1`` and ``level2``.
+        root: gawkenyadata repository root.
         station: Station code.
-        defaults: Global defaults.
-        instrument: Instrument definition.
+        defaults: Resolved Level 2 defaults.
+        instrument: Instrument specification.
         year: Four-digit year.
+        write: If true, write or overwrite the planned parquet outputs. The
+            default is a dry run.
 
     Returns:
-        Tuple ``(hourly_path, daily_path)``. Each element may be ``None``.
-
-    Example:
-        ``process_station_instrument_year(root, "mkn", defaults, instruments["ae33/data"], 2022)``
+        Mapping of output cadence to planned/written output path. In the default
+        dry-run mode, paths are returned even though the files are not created.
     """
 
-    files = parquet_files_for(root / "level1", station, instrument, year)
-    if not files:
-        LOGGER.info("No level1 parquet files for station=%s instrument=%s year=%s", station, instrument.name, year)
-        return None, None
-
-    LOGGER.info(
-        "Processing station=%s instrument=%s year=%s from %s parquet files",
+    job = _process_station_instrument_year(
+        root,
         station,
-        instrument.name,
+        defaults,
+        instrument,
         year,
-        len(files),
+        write=write,
     )
+    return job.output_paths
 
-    hourly_path: Path | None = None
-    daily_path: Path | None = None
 
-    hourly_df = build_hourly_dataframe(files, defaults, instrument)
-    if hourly_df is None or hourly_df.is_empty():
-        LOGGER.info("No usable hourly output for station=%s instrument=%s year=%s", station, instrument.name, year)
-        return None, None
+def print_summary(stats: RunStats) -> None:
+    """Print an AE33-housekeeping-style end-of-run summary."""
 
-    if defaults.write_hourly:
-        hourly_path = output_path(root, station, instrument.name, "hourly", year)
-        write_parquet(hourly_df, hourly_path, defaults.parquet_compression)
+    jobs = stats.jobs
+    processed = [job for job in jobs if job.error is None and job.skipped_reason is None]
+    skipped = [job for job in jobs if job.skipped_reason is not None]
+    source_files = sum(job.source_files for job in jobs)
+    source_bytes = sum(job.source_bytes for job in jobs)
+    level1_rows = sum(job.level1_rows for job in jobs)
+    configured_columns = sum(job.configured_columns for job in jobs)
+    resolved_columns = sum(job.resolved_columns for job in jobs)
+    missing_columns = sum(len(job.missing_columns) for job in jobs)
+    available_values = sum(job.available_values for job in jobs)
+    valid_values = sum(job.valid_values for job in jobs)
+    planned_outputs = sum(len(job.output_paths) for job in jobs)
+    written_outputs = sum(len(job.written_outputs) for job in jobs)
+    existing_outputs = sum(len(job.existing_outputs) for job in jobs)
 
-    if defaults.write_daily:
-        daily_df = build_daily_dataframe(hourly_df, defaults, instrument)
-        if daily_df is not None and not daily_df.is_empty():
-            daily_path = output_path(root, station, instrument.name, "daily", year)
-            write_parquet(daily_df, daily_path, defaults.parquet_compression)
-
-    LOGGER.info("Wrote hourly=%s daily=%s", hourly_path, daily_path)
-    return hourly_path, daily_path
+    print()
+    print("Summary")
+    print("-------")
+    print(f"Mode                     : {'write' if stats.write else 'dry run (no files written)'}")
+    print(f"Instrument-years checked : {len(jobs):,}")
+    print(f"Processed                : {len(processed):,}")
+    print(f"Skipped                  : {len(skipped):,}")
+    print(f"Source parquet files     : {source_files:,}")
+    print(f"Source parquet size      : {_format_bytes(source_bytes)}")
+    print(f"Level 1 rows loaded      : {level1_rows:,}")
+    print(f"Configured variables     : {configured_columns:,}")
+    print(f"Resolved variables       : {resolved_columns:,}")
+    print(f"Missing variables        : {missing_columns:,}")
+    print(f"Valid / available values : {_format_validity(valid_values, available_values)}")
+    for frequency in FREQUENCIES:
+        rows = sum(job.aggregate_rows.get(frequency, 0) for job in jobs)
+        outputs = sum(frequency in job.output_paths for job in jobs)
+        print(f"{frequency.capitalize():<25}: {rows:,} rows in {outputs:,} file(s)")
+    if not stats.write:
+        print(f"Outputs planned          : {planned_outputs:,}")
+        print(f"Would overwrite          : {existing_outputs:,}")
+    else:
+        print(f"Outputs written          : {written_outputs:,}")
+        print(f"Existing overwritten     : {existing_outputs:,}")
+    print(f"Errors                   : {stats.errors:,}")
 
 
 def run(
@@ -1025,24 +1183,13 @@ def run(
     config_section: str | None = None,
     instrument_name: str | None = None,
     year: int | None = None,
-) -> None:
-    """Run the level 2 collection workflow.
-
-    Args:
-        root: Repo root containing ``level1``.
-        station_config_path: Path to the station configuration YAML.
-        config_section: Optional section name inside the station configuration.
-        instrument_name: Optional instrument filter.
-        year: Optional year filter.
-
-    Example:
-        ``run(Path("/repo/gawkenyadata"), Path("mch-mkn.yml"), year=2026)``
-        ``run(Path("/repo/gawkenyadata"), Path("mch-nrb.yml"), config_section="nrb-aq", instrument_name="49i")``
-    """
+    *,
+    write: bool = False,
+) -> RunStats:
+    """Run the Level 1 -> Level 2 aggregation workflow and return statistics."""
 
     station_cfg = load_station_config(station_config_path, config_section=config_section)
     defaults = station_cfg.defaults
-    instruments = station_cfg.instruments
     station = station_cfg.station
 
     level1_root = root / "level1"
@@ -1050,35 +1197,55 @@ def run(
         raise FileNotFoundError(f"Missing level1 directory: {level1_root}")
 
     years = [year] if year is not None else discover_years(level1_root, station)
+    if instrument_name is not None:
+        instrument = station_cfg.instruments.get(instrument_name)
+        if instrument is None:
+            raise ConfigError(
+                f"Instrument '{instrument_name}' is not configured in {station_config_path}."
+            )
+        instruments = [instrument]
+    else:
+        instruments = list(station_cfg.instruments.values())
+
+    stats = RunStats(write=write)
     if not years:
         LOGGER.info("No years found for station=%s", station)
-        return
+        return stats
 
-    if instrument_name is not None:
-        instrument = instruments.get(instrument_name)
-        if instrument is None:
-            raise ConfigError(f"Instrument '{instrument_name}' is not configured in {station_config_path}.")
-        station_instruments = [instrument]
-    else:
-        station_instruments = list(instruments.values())
-
-    for one_instrument in station_instruments:
+    for instrument in instruments:
         for one_year in years:
-            process_station_instrument_year(
-                root=root,
-                station=station,
-                defaults=defaults,
-                instrument=one_instrument,
-                year=one_year,
-            )
+            try:
+                job = _process_station_instrument_year(
+                    root=root,
+                    station=station,
+                    defaults=defaults,
+                    instrument=instrument,
+                    year=one_year,
+                    write=write,
+                )
+            except Exception as exc:
+                job = JobStats(
+                    station=station,
+                    instrument=instrument.name,
+                    year=one_year,
+                    configured_columns=len(instrument.columns),
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+                LOGGER.error(
+                    "ERROR station=%s instrument=%s year=%s: %s",
+                    station,
+                    instrument.name,
+                    one_year,
+                    job.error,
+                )
+                LOGGER.debug("Aggregation failure", exc_info=True)
+            stats.jobs.append(job)
+
+    return stats
 
 
-def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments.
-
-    Returns:
-        Parsed command-line namespace.
-    """
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command-line arguments."""
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, help="Path to the gawkenyadata repository root.")
@@ -1091,10 +1258,23 @@ def parse_args() -> argparse.Namespace:
         "--config-section",
         type=str,
         default=None,
-        help="Optional top-level section name that contains the level2 block, e.g. nrb-aq.",
+        help="Optional top-level section containing level2, e.g. nrb-aq.",
     )
-    parser.add_argument("--instrument", type=str, default=None, help="Optional instrument name, e.g. 49i.")
+    parser.add_argument(
+        "--instrument",
+        type=str,
+        default=None,
+        help="Optional configured instrument name, e.g. 49i or ae31.",
+    )
     parser.add_argument("--year", type=int, default=None, help="Optional year, e.g. 2026.")
+    parser.add_argument(
+        "--write",
+        action="store_true",
+        help=(
+            "Write or overwrite the planned Level 2 parquet files. Without this "
+            "flag the command is a dry run and changes no data files."
+        ),
+    )
     parser.add_argument(
         "--write-example-station-config",
         type=Path,
@@ -1105,39 +1285,117 @@ def parse_args() -> argparse.Namespace:
         "--example-section",
         type=str,
         default=None,
-        help="Optional section name to use together with --write-example-station-config.",
+        help="Optional section name used with --write-example-station-config.",
     )
-    parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
+    parser.add_argument("--verbose", action="store_true", help="Enable variable-level debug statistics.")
 
-    args = parser.parse_args()
-    if args.write_example_station_config is None and (args.root is None or args.station_config is None):
-        parser.error("--root and --station-config are required unless --write-example-station-config is used.")
+    args = parser.parse_args(argv)
+    if args.write_example_station_config is None and (
+        args.root is None or args.station_config is None
+    ):
+        parser.error(
+            "--root and --station-config are required unless --write-example-station-config is used."
+        )
     return args
 
 
-def main() -> None:
-    """CLI entry point.
+class TeeStream:
+    """Write text to two streams, flushing both together."""
 
-    Example:
-        ``python compile_level1_to_level2_files.py --root /path/to/gawkenyadata --station-config mch-mkn.yml``
+    def __init__(self, primary: TextIO, secondary: TextIO) -> None:
+        self.primary = primary
+        self.secondary = secondary
+
+    def write(self, text: str) -> int:
+        self.primary.write(text)
+        self.secondary.write(text)
+        return len(text)
+
+    def flush(self) -> None:
+        self.primary.flush()
+        self.secondary.flush()
+
+    def isatty(self) -> bool:
+        return self.primary.isatty()
+
+
+def _safe_log_token(value: str) -> str:
+    """Return a filesystem-safe token for processing-log filenames."""
+
+    token = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
+    return token.strip("-._") or "all"
+
+
+def processing_log_path(
+    instrument_name: str | None,
+    *,
+    when: datetime | None = None,
+    log_dir: Path | None = None,
+) -> Path:
+    """Return the processing-log path for a write run.
+
+    Args:
+        instrument_name: Selected instrument, or ``None`` when all configured
+            instruments are processed.
+        when: Timestamp to use in the filename. Defaults to current UTC.
+        log_dir: Optional log directory. Defaults to ``<repo>/logs``.
+
+    Returns:
+        Timestamped log path such as
+        ``logs/compile_level1_to_level2_ae33_20261007T093645Z.log``.
     """
 
-    args = parse_args()
+    timestamp = (when or datetime.now(UTC)).astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    instrument = _safe_log_token(instrument_name or "all")
+    target_dir = log_dir or (Path(__file__).resolve().parent / "logs")
+    return target_dir / f"compile_level1_to_level2_{instrument}_{timestamp}.log"
+
+
+def _run_cli(args: argparse.Namespace) -> int:
+    """Execute a parsed CLI invocation."""
+
     setup_logging(args.verbose)
 
     if args.write_example_station_config is not None:
-        write_example_station_config(args.write_example_station_config, section=args.example_section)
+        write_example_station_config(
+            args.write_example_station_config,
+            section=args.example_section,
+        )
         LOGGER.info("Wrote example station config to %s", args.write_example_station_config)
-        return
+        return 0
 
-    run(
+    stats = run(
         root=args.root,
         station_config_path=args.station_config,
         config_section=args.config_section,
         instrument_name=args.instrument,
         year=args.year,
+        write=args.write,
     )
+    print_summary(stats)
+    return 2 if stats.errors else 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry point.
+
+    Dry runs write only to the terminal. Real write runs additionally tee the
+    complete stdout/stderr stream to a timestamped processing log.
+    """
+
+    args = parse_args(argv)
+    if not args.write:
+        return _run_cli(args)
+
+    log_path = processing_log_path(args.instrument)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("w", encoding="utf-8", buffering=1) as log_handle:
+        stdout_tee = TeeStream(sys.stdout, log_handle)
+        stderr_tee = TeeStream(sys.stderr, log_handle)
+        with redirect_stdout(stdout_tee), redirect_stderr(stderr_tee):
+            print(f"Processing log           : {log_path}")
+            return _run_cli(args)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

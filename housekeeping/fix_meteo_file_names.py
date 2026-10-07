@@ -6,7 +6,7 @@ import shutil
 
 # %%
 def fix_meteo_file_names(root: str, scope=["incoming", "archive"]) -> int:
-    """Rename VMSW43.\d{12}.* files to VRXA00.\d{12}.*; also remove .001 extension
+    r"""Rename VMSW43.\d{12}.* files to VRXA00.\d{12}.*; also remove .001 extension
 
     Args:
         root (str): path to root folder containing meteo bulletins

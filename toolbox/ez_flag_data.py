@@ -19,7 +19,7 @@ from IPython.display import display
 from ipywidgets import Button, HBox, Layout, Output, Text, VBox
 from ipywidgets.widgets import Dropdown
 
-from toolbox.flag_links import (
+from toolbox.flag_groups import (
     FlagGroups,
     active_flag_source,
     expand_linked_variables,
