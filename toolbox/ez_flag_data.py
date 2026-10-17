@@ -398,7 +398,12 @@ def on_dropdown_value_selected(change):
 
     # Swap previously selected variable's plotting flag back into its f_<old>
     if flags in df.columns and old is not None:
-        df = df.rename({flags: f"{flag_col_prefix}{old}"})
+        # Existing input data (e.g. TAHMO) already have f_<old>. Copy the
+        # edited plotting values back rather than renaming into an existing
+        # column, which raises Polars DuplicateError.
+        df = df.with_columns(
+            pl.col(flags).alias(f"{flag_col_prefix}{old}")
+        )
 
     # Bring selected variable's flags into the plotting alias. For a linked
     # AE33 variable, reuse its counterpart's flags when its own flag column
@@ -406,7 +411,7 @@ def on_dropdown_value_selected(change):
     flag_source = _active_flag_source(df, variable)
     if flag_source is not None:
         if flag_source == f_variable:
-            df = df.rename({f_variable: flags})
+            df = df.with_columns(pl.col(f_variable).alias(flags))
         else:
             df = df.with_columns(pl.col(flag_source).alias(flags))
 
@@ -578,9 +583,8 @@ def on_clicked_save_data(event):
     if dropdown_variable_select.value is not None:
         if flags in df.columns:
             f_col_name = f"{flag_col_prefix}{variable}"
-            if f_col_name in df.columns:
-                df = df.drop(f_col_name)
-            df = df.rename({flags: f_col_name})
+            df = df.with_columns(pl.col(flags).alias(f_col_name))
+            df = df.drop(flags)
 
         if colors in df.columns:
             df = df.drop(colors)

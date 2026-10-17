@@ -1,6 +1,4 @@
-# file organization depends on <buckets>.
-# if buckets==daily: <root>/<middle>/<folders>/<yyyy>/<mm>/<dd>
-# if buckets==monthly: <root>/<middle>/<folders>/<yyyy>/<mm>
+# MKN source and processing configuration.
 root: /product_data/data/pay/Kenya/MKN/
 logging: mch-mkn.log
 branches:
@@ -9,7 +7,7 @@ branches:
   issues: incoming_with_issues
   logs: logs
 folders:
-  - ae33  #/data
+  - ae33
   - fidas
   - meteo
   - 49c
@@ -19,34 +17,33 @@ folders:
   - hmp110-ae33
   - hmp110-inlet
   - avo
-ae33: 
+  # TAHMO filenames have mrids rather than dates; do not pass to date organizer.
+ae33:
   pattern: ae33-\d{12}.(zip|dat)
   buckets: daily
   split_parquet: month
   expected: 144
-fidas: 
+fidas:
   pattern: fidas-\d{10}.parquet
   buckets: daily
   split_parquet: month
   expected: 24
-meteo: 
+meteo:
   pattern: VRXA00.\d{12}
   buckets: daily
   split_parquet: month
   expected: 144
-49c: 
+49c:
   pattern: (?i)^49c-\d{10}\.(zip|dat)$
-  # header: pcdate pctime time date o3 flags cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   split_parquet: month
   expected: 24
-49i: 
+49i:
   pattern: (?i)^49i-\d{10}\.(zip|dat)$
-  # header: pcdate pctime time date flags o3 hio3 cellai cellbi bncht lmpt o3lt flowa flowb pres
   buckets: daily
   split_parquet: month
   expected: 24
-g2401: 
+g2401:
   pattern: CFKADS2320-\d{8}-\d{6}Z-DataLog_User_Sync.zip
   buckets: daily
   split_parquet: month
@@ -68,8 +65,33 @@ hmp110-inlet:
   expected: 24
 avo:
   pattern: (?i)^mt_kenya_g_a_w_met_station_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
-  split_parquet: month    
+  split_parquet: month
   read_archive: false
+
+tahmo:
+  device_sn: z6-02149
+  split_parquet: month
+  # Values remain in their native TAHMO units (see docs/data_variables.md).
+  variables:
+    Air Temperature: air_temperature
+    Atmospheric Pressure: atmospheric_pressure
+    Battery Percent: battery_percent
+    Battery Voltage: battery_voltage
+    Gust Speed: gust_speed
+    Lightning Activity: lightning_activity
+    Lightning Distance: lightning_distance
+    Logger Temperature: logger_temperature
+    Max Precip Rate: max_precip_rate
+    Precipitation: precipitation_amount
+    RH Sensor Temp: rh_sensor_temp
+    Reference Pressure: reference_pressure
+    Solar Radiation: solar_radiation
+    VPD: vpd
+    Vapor Pressure: vapor_pressure
+    Wind Direction: wind_direction
+    Wind Speed: wind_speed
+    X-axis Level: x_axis_level
+    Y-axis Level: y_axis_level
 
 level2:
   station: mkn
