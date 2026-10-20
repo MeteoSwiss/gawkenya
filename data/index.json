@@ -5,9 +5,9 @@
   "level": "level1",
   "timezone": "UTC",
   "period": "2026-10",
-  "generated_at": "2026-10-17T14:34:48Z",
+  "generated_at": "2026-10-20T06:43:20Z",
   "source_repository": "MeteoSwiss/gawkenyadata",
-  "data_commit": "17bb87b3f92e2f08630071d9348fdd731bac3fbc",
+  "data_commit": "be7d421cc53e87a99e715bc984cfce1e853d8640",
   "generator_commit": "f745e838b50b4ca90da38d8980857c72a89438cd",
   "stations": [
     {
