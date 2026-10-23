@@ -364,7 +364,6 @@ class Neph(Instrument):
         # Last resort: try a cast then enforce UTC (covers some odd inferred types)
         return df.with_columns(pl.col(dtm).cast(pl.Datetime).dt.replace_time_zone("UTC").cast(pl.Datetime("us", "UTC")))
     
-
     def auto_flag_ne300_data(
         self,
         df: pl.DataFrame,
@@ -378,85 +377,46 @@ class Neph(Instrument):
         overwrite: bool = False,
         assume_null_is_normal: bool = True,
     ) -> pl.DataFrame:
-        """Auto-flag NE300 measurement channels based on the 4035 state column.
+        """Auto-flag scattering channels using literal NE-300 operation 4035.
 
-        Mapping (requested)
-        -------------------
-        4035 -> key
-            0 -> 0 (valid)
-            1 -> 3 (zero)
-            2 -> 4 (span)
+        States 1 and 2 receive flag 2 (uncertain/transient), regardless of
+        subsequent completion records. Completion states 3..6 receive flags
+        3, 5, 4, 6 respectively. Upon returning to state 0, the existing
+        post-transition uncertainty window is retained. Explicit operation
+        states are never masked by this window.
 
-        Transition rule
-        ---------------
-        The first `minutes_after_transition` minutes after any transition *from* or *to*
-        {0,1,2} in 4035 are flagged as 2 (uncertain).
-
-        Flag columns
-        ------------
-        For each numeric channel column with `low <= nnn <= high`, create or update
-        `f_<nnn>` additively (fill only NULLs) unless `overwrite=True`.
+        Existing non-null QC flags remain intact by default; use the one-off
+        backfill utility to correct previously saved automatic flags.
         """
+        from processing.ne300_operation_flags import flags_for_operations
+
         if dtm not in df.columns or key_4035 not in df.columns:
             return df
-
         df = df.sort(dtm)
-
-        k = pl.col(key_4035)
-        if assume_null_is_normal:
-            k = pl.coalesce(k, pl.lit(0))
-        k = k.cast(pl.Int64)
-        k_prev = k.shift(1)
-
-        # Transition when 4035 changes and either side is in {0,1,2}
-        m_transition = (
-            k_prev.is_not_null()
-            & (k != k_prev)
-            & (k.is_in([0, 1, 2]) | k_prev.is_in([0, 1, 2]))
+        auto_flags = flags_for_operations(
+            df.get_column(key_4035).cast(pl.Int64, strict=False).to_list(),
+            df.get_column(dtm).to_list(),
+            minutes_after_transition=minutes_after_transition,
+            assume_null_is_normal=assume_null_is_normal,
         )
-
-        transition_time = pl.when(m_transition).then(pl.col(dtm)).otherwise(None)
-        last_transition_time = transition_time.forward_fill()
-
-        window = pl.duration(minutes=minutes_after_transition)
-        m_uncertain = (
-            last_transition_time.is_not_null()
-            & (pl.col(dtm) >= last_transition_time)
-            & ((pl.col(dtm) - last_transition_time) <= window)
-        )
-
-        base_flag = (
-            pl.when(k == 0)
-            .then(0)
-            .when(k == 1)
-            .then(3)
-            .when(k == 2)
-            .then(4)
-            .otherwise(None)
-        )
-
-        auto_flag = pl.when(m_uncertain).then(2).otherwise(base_flag).cast(pl.Int8)
-
+        helper = "__ne300_auto_qc__"
+        if helper in df.columns:
+            raise ValueError(f"Reserved helper column exists: {helper}")
+        df = df.with_columns(pl.Series(helper, auto_flags, dtype=pl.Int8))
         updates: list[pl.Expr] = []
-        for c in df.columns:
-            if c.isdigit():
-                n = int(c)
-                if low <= n <= high:
-                    fcol = f"{flag_col_prefix}{c}"
-                    cur = (
-                        pl.col(fcol).cast(pl.Int8)
-                        if fcol in df.columns
-                        else pl.lit(None, dtype=pl.Int8)
-                    )
-
-                    if overwrite:
-                        expr = pl.when(auto_flag.is_not_null()).then(auto_flag).otherwise(cur).alias(fcol)
-                    else:
-                        expr = pl.when(cur.is_null()).then(auto_flag).otherwise(cur).alias(fcol)
-
-                    updates.append(expr)
-
-        return df.with_columns(updates) if updates else df
+        for name in df.columns:
+            if not name.isdigit() or not low <= int(name) <= high:
+                continue
+            flag_name = f"{flag_col_prefix}{name}"
+            old = (pl.col(flag_name).cast(pl.Int8)
+                   if flag_name in df.columns else pl.lit(None, dtype=pl.Int8))
+            suggested = pl.col(helper)
+            if overwrite:
+                expr = pl.when(suggested.is_not_null()).then(suggested).otherwise(old)
+            else:
+                expr = pl.when(old.is_null()).then(suggested).otherwise(old)
+            updates.append(expr.alias(flag_name))
+        return (df.with_columns(updates) if updates else df).drop(helper)
 
 
     def auto_flag_aurora3000_data(

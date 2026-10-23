@@ -101,3 +101,55 @@ against TAHMO documentation before deriving products from it.
 Precipitation is named `precipitation_amount`, measured in millimetres per
 source observation interval; `max_precip_rate` is a rate in mm/h. The source
 examples are sampled every five minutes; they are not hourly totals.
+
+## NE-300 nephelometer (MKN)
+
+Parameter `4035` is an enumeration of instrument operating states, **not** a
+bit mask or a sum of states. Its calibration states `1` and `2` are treated as
+**uncertain / transient** (quality flag `2`) regardless of the subsequent
+completion record. Completion states `3`–`6` are individual logged records.
+
+| 4035 | Instrument operation (manufacturer's manual) | GAW Kenya QC flag |
+| ---: | --- | --- |
+| 0 | Normal monitoring | 0 — valid |
+| 1 | Zero calibration data | 2 — uncertain / transient |
+| 2 | Span calibration data | 2 — uncertain / transient |
+| 3 | Zero adjustment completed | 3 — zero |
+| 4 | Zero check completed | 5 — zero check |
+| 5 | Span calibration completed | 4 — span |
+| 6 | Span check completed | 6 — span check |
+
+There is **no look-ahead**: a sequence of `4035` states `0,1,1,4,0` is flagged
+`0,2,2,5,2` using the existing 10-minute post-calibration uncertainty window.
+The records with state `1` remain flag `2`, even when the subsequent completion
+record describes a zero check. Explicit completion records are *never*
+replaced by the transition uncertainty window. Unrecognized states such as
+`7` remain unclassified (flag `null` on fresh data).
+
+On return to normal state `0` from a non-zero state, the current automatic
+10-minute transition uncertainty is retained. The live auto-flagger changes
+only missing QC flags by default. It targets numeric scattering channel IDs
+1,000,000 through 8,000,000, not the `4035` status or `5002` pressure column.
+
+The flag legend in `ez_flag_data.py` remains a single row. Flags `5` (zero
+check, orange) and `6` (span check, purple) remain available. The existing
+legend wording `uncertain` for flag `2` includes **transient** records; it is
+intentionally not lengthened in order to preserve the compact one-line legend.
+
+The renamed `housekeeping/backfill_ne300_flags.py` corrects historical
+measurement flags for instrument states **1 through 6**. It never modifies
+normal state `0` or unknown-state flags. By default it replaces missing, valid
+(`0`), uncertain (`2`), and specifically recognized *previously generated
+incorrect automatic flags*: 
+
+- state 1: old flags 3 or 5 become 2;
+- state 2: old flags 4 or 6 become 2;
+- state 3: old flag 5 becomes 3;
+- state 4: old flag 3 becomes 5;
+- state 5: old flag 5 becomes 4;
+- state 6: old flag 4 becomes 6.
+
+Other non-null flags, including invalid (`1`), are preserved unless
+`--overwrite-all` is explicitly supplied. Historical data do not distinguish
+manual flags from previous automatic flags; **review dry-run changes** before
+writing if any historical calibration periods were manually edited.

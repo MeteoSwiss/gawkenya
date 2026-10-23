@@ -52,6 +52,8 @@ keys: dict[str, dict[str, Any]] = {
     "2": {"flag": 2, "color": "gray", "meaning": "uncertain"},
     "3": {"flag": 3, "color": "cyan", "meaning": "zero"},
     "4": {"flag": 4, "color": "brown", "meaning": "span"},
+    "5": {"flag": 5, "color": "orange", "meaning": "zero check"},
+    "6": {"flag": 6, "color": "purple", "meaning": "span check"},
 }
 flag_col_prefix = "f_"
 new_file_on_save = False
@@ -194,7 +196,7 @@ def add_legend_below_axes(
         )
 
     if ncol is None:
-        ncol = min(6, len(handles)) if handles else 1
+        ncol = max(1, len(handles))  # all QC flags on a single row
 
     # Make room below and place the legend just under the axes
     fig.subplots_adjust(bottom=bottom_pad)
@@ -204,6 +206,11 @@ def add_legend_below_axes(
         ncol=ncol,
         bbox_to_anchor=(0.5, 0.02),  # (x, y) in figure coords
         frameon=True,
+        fontsize=9,
+        columnspacing=0.6,
+        handletextpad=0.4,
+        handlelength=1.0,
+        borderpad=0.3,
     )
 
 

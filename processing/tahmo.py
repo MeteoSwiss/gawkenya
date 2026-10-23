@@ -19,7 +19,6 @@ row retains device_sn and mrid. Metadata warnings alone do not change flags.
 from __future__ import annotations
 
 import csv
-import logging
 import os
 import re
 import shutil
@@ -33,6 +32,8 @@ from zipfile import ZipFile
 
 import polars as pl
 
+from toolbox.utils import setup_logging
+
 
 class TAHMO:
     """Compile TAHMO ZENTRA exports into month-partitioned Level-1 data."""
@@ -41,7 +42,7 @@ class TAHMO:
         self.name = name
         self.variables: dict[str, str] = dict(config["variables"])
         self.device_sn = str(config["device_sn"])
-        self.logger = logging.getLogger(name)
+        self.logger = setup_logging(logger_name=name)
         if len(set(self.variables.values())) != len(self.variables):
             raise ValueError("TAHMO variable mappings must be one-to-one")
         if not all(re.fullmatch(r"[a-z][a-z0-9_]*", x) for x in self.variables.values()):
@@ -139,39 +140,49 @@ class TAHMO:
         append_parquet: bool = True,
         split: str = "month",
     ) -> tuple[pl.DataFrame, dict[str, str]]:
-        """Merge imports safely before archiving; supports historical overlap/retries."""
+        """Merge imports safely, with concise, instrument-style INFO messages."""
         if split != "month":
             raise ValueError("TAHMO supports monthly partitioning only")
         source = Path(source)
         target = Path(target)
         errors: dict[str, str] = {}
         result = pl.DataFrame()
+        new_rows_by_path: dict[Path, int] = defaultdict(int)
+
         if not source.exists():
-            return result, errors
-        for path in sorted(source.rglob("*")):
-            if not path.is_file() or not self.should_process_file(path):
-                continue
-            df, err = self.extract_to_dataframe(path)
-            if err:
-                errors[str(path)] = err
-                self.logger.error("Invalid TAHMO source %s: %s", path, err)
-                if issues is not None:
-                    self._move(path, Path(issues) / path.relative_to(source))
-                continue
-            try:
-                self._write(df, target, append_parquet)
-            except Exception as exc:
-                errors[str(path)] = str(exc)
-                self.logger.exception("Could not save %s; keeping source in incoming", path)
-                continue
-            result = pl.concat([result, df], how="diagonal_relaxed") if not result.is_empty() else df
-            if archive is not None:
-                first = df["dtm"].min()
-                dst = Path(archive) / f"{first.year:04d}" / f"{first.month:02d}" / path.name
+            self.logger.warning("TAHMO source directory not found: %s", source)
+        else:
+            for path in sorted(source.rglob("*")):
+                if not path.is_file() or not self.should_process_file(path):
+                    continue
+                self.logger.info("Processing %s", path.name)
+                df, err = self.extract_to_dataframe(path)
+                if err:
+                    errors[str(path)] = err
+                    self.logger.error("Invalid TAHMO source %s: %s", path, err)
+                    if issues is not None:
+                        self._move(path, Path(issues) / path.relative_to(source))
+                    continue
                 try:
-                    self._move(path, dst)
-                except OSError:
-                    self.logger.warning("Parquet saved but could not archive %s", path)
+                    written = self._write(df, target, append_parquet)
+                except Exception as exc:
+                    errors[str(path)] = str(exc)
+                    self.logger.exception("Could not save %s; keeping source in incoming", path)
+                    continue
+                for parquet_path, count in written.items():
+                    new_rows_by_path[parquet_path] += count
+                result = pl.concat([result, df], how="diagonal_relaxed") if not result.is_empty() else df
+                if archive is not None:
+                    first = df["dtm"].min()
+                    dst = Path(archive) / f"{first.year:04d}" / f"{first.month:02d}" / path.name
+                    try:
+                        self._move(path, dst)
+                    except OSError:
+                        self.logger.warning("Parquet saved but could not archive %s", path)
+
+        for parquet_path, count in sorted(new_rows_by_path.items()):
+            self.logger.info("✔ Written %s new rows to %s", count, parquet_path)
+        self.logger.info("✔ Parquet compilation completed. Total rows: %s", result.height)
         return result, errors
 
     @staticmethod
@@ -185,7 +196,9 @@ class TAHMO:
             raise FileExistsError(f"Archive name collision: {destination}")
         shutil.move(str(source), str(destination))
 
-    def _write(self, df: pl.DataFrame, target: Path, append: bool) -> None:
+    def _write(self, df: pl.DataFrame, target: Path, append: bool) -> dict[Path, int]:
+        """Write monthly partitions, returning genuine new-timestamp counts."""
+        newly_written: dict[Path, int] = {}
         for keys, group in df.with_columns(
             pl.col("dtm").dt.year().alias("_year"),
             pl.col("dtm").dt.month().alias("_month"),
@@ -194,8 +207,10 @@ class TAHMO:
             path = target / f"{year:04d}" / f"{month:02d}" / f"{self.name}.parquet"
             path.parent.mkdir(parents=True, exist_ok=True)
             group = group.drop(["_year", "_month"])
+            existing_rows = 0
             if append and path.exists():
                 old = pl.read_parquet(path)
+                existing_rows = old.height
                 # Older Level-1 files have f_* but no *_err columns.
                 # Their original source error_flag cannot be reconstructed
                 # reliably from an editable QC flag. Retain null for old rows
@@ -222,4 +237,5 @@ class TAHMO:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
-            self.logger.info("Saved %s: %s readings", path, group.height)
+            newly_written[path] = group.height - existing_rows
+        return newly_written
