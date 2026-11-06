@@ -17,6 +17,7 @@ folders:
   - hmp110-ae33
   - hmp110-inlet
   - avo
+  - eaton
   # TAHMO filenames have mrids rather than dates; do not pass to date organizer.
 ae33:
   pattern: ae33-\d{12}.(zip|dat)
@@ -67,6 +68,11 @@ avo:
   pattern: (?i)^mt_kenya_g_a_w_met_station_avo_(instant|hourly|daily|weekly|monthly|yearly|annual)-\d{6,8}\.(parquet|zip|csv|txt)$
   split_parquet: month
   read_archive: false
+
+eaton:
+  pattern: (?i)^eaton-\d{10}\.(zip|csv)$
+  split_parquet: month
+  expected: 60
 
 tahmo:
   device_sn: z6-02149
@@ -173,3 +179,18 @@ level2:
         - "62"
         - "63"
         - "64"
+    eaton:
+      columns:
+        - {name: output_source_code, agg: {hourly: last, daily: last}}
+        - {name: on_battery, agg: {hourly: max, daily: max}}
+        - {name: battery_status_code, agg: {hourly: last, daily: last}}
+        - battery_voltage
+        - battery_capacity_pct
+        - battery_runtime_min
+        - {name: seconds_on_battery, agg: {hourly: max, daily: max}}
+        - input_voltage
+        - input_frequency
+        - output_voltage
+        - output_frequency
+        - output_load
+        - {name: active_alarms, agg: {hourly: max, daily: max}}
