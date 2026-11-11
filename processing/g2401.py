@@ -21,6 +21,59 @@ class G2401(Instrument):
             'DataLog_User_Sync': [pl.Utf8]*2 + [pl.Float64]*4 + [pl.Int64]*2 + [pl.Float64]*14,
         }
 
+    def auto_flag_g2401_data(
+        self,
+        df: pl.DataFrame,
+        *,
+        key_valve: str = "solenoid_valves",
+        dtm: str = "dtm",
+        flag_col_prefix: str = "f_",
+        overwrite: bool = False,
+    ) -> pl.DataFrame:
+        """Flag numeric Picarro data from the solenoid valve state.
+
+        solenoid_valves = 0 -> 0 (valid); = 1 -> 4 (span);
+        > 1 -> 2 (uncertain). Missing, negative or unparseable states
+        remain unclassified (null). Timing/source metadata and the valve
+        state itself are not measurement variables.
+
+        Existing non-null flags (including manual QC flags) are preserved
+        unless overwrite=True.
+        """
+        if key_valve not in df.columns:
+            return df
+
+        valve = pl.col(key_valve).cast(pl.Float64, strict=False)
+        suggested = (
+            pl.when(valve == 0).then(pl.lit(0, dtype=pl.Int8))
+            .when(valve == 1).then(pl.lit(4, dtype=pl.Int8))
+            .when(valve > 1).then(pl.lit(2, dtype=pl.Int8))
+            .otherwise(pl.lit(None, dtype=pl.Int8))
+        )
+
+        excluded = {
+            dtm, "source", key_valve, "DATE", "TIME",
+            "FRAC_DAYS_SINCE_JAN1", "FRAC_HRS_SINCE_JAN1",
+            "JULIAN_DAYS", "EPOCH_TIME",
+        }
+        updates: list[pl.Expr] = []
+        for name, dtype in df.schema.items():
+            if (name in excluded or name.startswith(flag_col_prefix)
+                    or not dtype.is_numeric()):
+                continue
+            flag_name = f"{flag_col_prefix}{name}"
+            existing = (
+                pl.col(flag_name).cast(pl.Int8, strict=False)
+                if flag_name in df.columns
+                else pl.lit(None, dtype=pl.Int8)
+            )
+            updated = (
+                pl.when(suggested.is_not_null()).then(suggested).otherwise(existing)
+                if overwrite
+                else pl.when(existing.is_null()).then(suggested).otherwise(existing)
+            )
+            updates.append(updated.alias(flag_name))
+        return df.with_columns(updates) if updates else df
 
     def extract_to_dataframe(self, path: Path, dtm="dtm") -> tuple[pl.DataFrame, str | None]:
         """
@@ -54,6 +107,12 @@ class G2401(Instrument):
                         pl.lit(str(path)).alias('source'),
                         pl.format("{} {}", "DATE", "TIME").str.to_datetime(time_unit="us", time_zone="UTC").alias(dtm)
                     )
+                    if "solenoid_valves" not in df.columns:
+                        self.logger.warning(
+                            "G2401 file %s has no solenoid_valves column; "
+                            "automatic QC flags were not assigned.", path
+                        )
+                    df = self.auto_flag_g2401_data(df, dtm=dtm)
                     return df, None
                 else:
                     return pl.DataFrame(), str(ValueError(f"File is empty."))

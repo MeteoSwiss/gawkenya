@@ -563,74 +563,52 @@ def on_key_pressed_flag_points(event):
 
 
 def on_clicked_save_data(event):
+    """Save flags to Parquet while preserving the interactive plot dataframe.
+
+    The _flag_ and _color_ columns are temporary plotting state: they must
+    remain in df for additional flagging, but must not be written to disk.
     """
-    Save the current dataframe back to the *source* file (no target dir).
-
-    If the current variable is '5002', propagate SPAN/ZERO flags (3/4)
-    from 5002 to all >1_000_000 channels before saving.
-    """
-    global df, dropdown_variable_select, file_chooser, variable, infobox
-
-    # # If the user is on 5002, propagate 2/3/4 to the other channels.
-    # try:
-    #     if dropdown_variable_select.value == "5002":
-    #         if Neph is not None:
-    #             df = Neph(name="neph").propagate_zero_span_flags_from_5002(
-    #                 df,
-    #                 dtm="dtm",
-    #                 source_flag_col=flags,  # use the plotting alias as the source
-    #                 overwrite=True,  # set wherever 5002 has 2/3/4
-    #             )
-    # except Exception as e:
-    #     try:
-    #         infobox.value = f"Propagation failed: {e}"
-    #     except Exception:
-    #         pass
-
-    if dropdown_variable_select.value is not None:
-        if flags in df.columns:
-            f_col_name = f"{flag_col_prefix}{variable}"
-            df = df.with_columns(pl.col(flags).alias(f_col_name))
-            df = df.drop(flags)
-
-        if colors in df.columns:
-            df = df.drop(colors)
-
-        df = _synchronize_linked_flags(df, variable)
-
     source_file = _selected_path_from_filechooser(file_chooser)
     if not source_file:
         infobox.value = "No selected file to save."
         return
 
-    if new_file_on_save:
-        if source_file.exists():
-            infobox.value = (
-                f"'{source_file.name}' exists already. "
-                "A unique name will be created."
+    if new_file_on_save and source_file.exists():
+        infobox.value = (
+            f"'{source_file.name}' exists already. A unique name will be created."
+        )
+        source_file = source_file.with_name(
+            f"{source_file.stem}-"
+            f"{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            f"{source_file.suffix}"
+        )
+
+    # Clone before modifying: this does NOT replace the module's live df.
+    save_df = df.clone()
+    selected_variable = dropdown_variable_select.value
+
+    if selected_variable is not None:
+        if flags in save_df.columns:
+            save_df = save_df.with_columns(
+                pl.col(flags).alias(f"{flag_col_prefix}{selected_variable}")
             )
-            source_file = source_file.with_name(
-                f"{source_file.stem}-"
-                f"{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                f"{source_file.suffix}"
-            )
+        save_df = _synchronize_linked_flags(save_df, selected_variable)
+
+    # These aliases are for displaying the plot, never for persisted data.
+    temporary = [col for col in (flags, colors) if col in save_df.columns]
+    if temporary:
+        save_df = save_df.drop(temporary)
+
+    try:
+        save_df = pl_simplify_dtypes(save_df)
+    except Exception:
+        pass
 
     source_file.parent.mkdir(parents=True, exist_ok=True)
     infobox.value = f"Saving to '{source_file}'."
+    save_df.write_parquet(source_file)
+    infobox.value = f"Saved to '{source_file}'."
 
-    try:
-        df = pl_simplify_dtypes(df)
-    except Exception:
-        pass
-
-    df.write_parquet(source_file)
-
-    try:
-        fig.canvas.draw_idle()
-    except Exception:
-        pass
-
-    return
 
 
 def ez_flag_data(design: int = 2, width: int = 10, height: int = 5):
