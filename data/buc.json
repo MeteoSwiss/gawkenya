@@ -16,8 +16,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "cellai",
@@ -29,8 +29,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "cellbi",
@@ -42,8 +42,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "flowa",
@@ -55,8 +55,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "flowb",
@@ -68,8 +68,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "hio3",
@@ -81,8 +81,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "lmpt",
@@ -94,8 +94,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "o3",
@@ -107,8 +107,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "o3lt",
@@ -120,8 +120,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     },
     {
       "variable": "pres",
@@ -133,8 +133,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325
+      "expected_rows": 18132,
+      "availability_pct": 75.48
     }
   ],
   "sources": {
@@ -150,8 +150,8 @@
       "duplicate_timestamps": 0,
       "null_timestamps": 0,
       "available_slots": 13686,
-      "expected_rows": 15152,
-      "availability_pct": 90.325,
+      "expected_rows": 18132,
+      "availability_pct": 75.48,
       "timestamps": [
         "2026-11-01T00:00:32Z",
         "2026-11-01T00:05:35Z",
